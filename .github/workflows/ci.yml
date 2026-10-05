@@ -40,7 +40,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: android-actions/setup-android@v3
+      # Az ubuntu-latest futtatón az Android SDK előre telepítve van (ANDROID_HOME)
+      - run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
       - run: npm ci
       - run: npm run android:sync
       - name: Gradle assembleDebug
