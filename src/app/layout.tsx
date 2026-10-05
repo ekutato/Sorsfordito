@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const metadata: Metadata = {
   title: 'Pénzügyi Sorsfordító',
   description:
     'Pénzügyi tudatossági szimulációs játék valós magyar gazdasági adatokkal. ' +
     'Hozd meg a döntéseidet, kezeld a pénzedet, és nézd meg, mire jutsz!',
-  manifest: '/sorsfordito/manifest.json',
-  icons: { icon: '/sorsfordito/icon.svg', apple: '/sorsfordito/icon-192.png' },
+  manifest: `${BASE}/manifest.json`,
+  icons: { icon: `${BASE}/icon.svg`, apple: `${BASE}/icon-192.png` },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
