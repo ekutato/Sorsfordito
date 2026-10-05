@@ -307,3 +307,35 @@ A fiókodban elérhető a Claude Design ("Design" típusú artifact: élő artbo
 - Távoli játékhoz TURN kell. Az ingyenes keret 10 fős szöveges játékra várhatóan bőven elég (kis adatforgalom), ezt a megvalósításkor ellenőrzöm.
 - A PeerJS nyilvános broker külső függőség: ha leáll, nincs szobanyitás. Ez a transport-réteg mögött cserélhető.
 - A jóllét-hatások kalibrálása tesztjátékot igényel, mert az első értékek becslések lesznek.
+
+## Kiegészítések (2026-10-05, a felhasználó kérései alapján)
+
+### Dinamikus képernyő
+A felület mindig azt mutatja nagyobban, ami éppen fontos:
+- **Dobáskor:** kinyílik a tábla, és a célmező ki van emelve.
+- **Kártyánál, kvíznél és tanulásnál:** a tábla egy sávvá zsugorodik, és a szöveg kerül előre.
+
+A dizájnvásznon a "Tábla - alapnézet", a "Tábla - dobáskor" és a "Kérdésnél" artboard mutatja.
+
+### Kockadobás
+- **Alapeset:** a host gépén kriptográfiai forrásból (WebCrypto) vett kezdőértékkel, determinisztikusan visszajátszható módon dob.
+- **Kezdőérték:** a seed nem jut el a kliensekhez, így a dobások előre nem számolhatók ki.
+- **Fizikai kocka:** a beállítások között választható (`diceSource: 'physical'`). A játékos beírja az eredményt, vagy egy Bluetooth-kocka küldi.
+- **Bluetooth-kocka:** a nyílt API-val rendelkező termékek közül a GoDice (JavaScript-, Android- és iOS-SDK) és a Pixels (nyílt forrású, Web Bluetooth) jöhet szóba. A Web Bluetooth csak Chrome-alapú böngészőben működik, iPhone-on nem; az Android-appban natív BLE-bővítménnyel minden telefonon megy.
+
+### Életpálya mód (16 évestől)
+- **Lépésköz:** évente egy lépés, 9 fordulóponttal; a rutinéveket a játék összevonja.
+- **Cél:** szerencsés, de reális esetben 40 év körül érhető el a teljes pénzügyi függetlenség. Ehhez 22 éves kortól kb. 50%-os megtakarítási ráta kell, vagy egy jó befektetés vagy vállalkozás. A számítás 4% reálhozammal és óvatos, 3,5%-os kivételi rátával készül.
+- **Fokozatos célok:** 1 havi tartalék, 6 havi tartalék, adósságmentesség, részleges, majd teljes függetlenség.
+
+### Egyszerűsített adózás (Magyarország) - tervezett
+- **Munkabér:** SZJA 15%, TB-járulék 18,5%. A munkáltató szochója (13%) csak magyarázatként jelenik meg.
+- **Megtakarítás:** bankbetétnél 15% SZJA és 13% szocho, állampapírnál és 5 éves TBSZ-nél 0%.
+- **Kedvezmények:** a 25 év alattiak kedvezménye, a családi kedvezmény, a nyugdíjpénztár és a NYESZ visszatérítése.
+- **Vállalkozás:** egyéni vállalkozó átalányadóval, illetve egy egyszerűsített társas forma. A helyi iparűzési adó településenként eltér.
+- **Adatforrás:** minden adókulcs a heti adatcsomagból jön, forrással; a NAV-oldal a felhőből nem érhető el, ezért ott másodlagos forrás és jelölés szükséges.
+
+### Költözés Magyarországon belül - tervezett
+- **Lakóhelyváltás:** Budapest, megyeszékhely vagy kisváros, eltérő albérlet- és négyzetméterárakkal (KSH-lakbérindex, KSH lakásárak), ingázással és munkalehetőséggel.
+- **Vállalkozás székhelyének áthelyezése:** a helyi iparűzési adó és a bérleti díj különbségén múlik.
+- **Később:** külföldre költözés, ha a felhasználó kéri.
