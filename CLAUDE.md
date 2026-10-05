@@ -87,7 +87,7 @@ M6:                                          ████████
    - CSOK Plusz: max 3% kamat, 1 gyerek: 15M, 2 gyerek: 30M, 3 gyerek: 50M Ft
    - Babaváró: 11M Ft, 0%, feltétel: 3 év TB jogviszony
    - GYES: 28 500 Ft/hó (nyugdíjminimum), GYED: fizetés 70%-a, max ~330k/hó
-   - Kamatjövedelem adó: 15% SZJA (nincs EHO 2019 óta)
+   - Kamatjövedelem: bankbetétnél 15% SZJA + 13% szocho (2023. júl. óta, összesen 28%); lakossági állampapír és 5 éves TBSZ: mentes. Forrás: docs/kutatas.md
 5. **Epilógus értékelés:** Negatív nettó vagyon és rossz gazdálkodás NEM kaphat bronz szintet sem. A legalacsonyabb szint legyen „Tanulópénz" (nem fém), nem „Bronz".
 6. **Glossary kiemelés:** Ha egy szó (pl. „infláció") többször előfordul egy szövegben, csak az ELSŐ előfordulásnál legyen kiemelve/klikkelhető.
 7. **Többjátékos mód:** 2026-10-től fejlesztés alatt (2-10 fő, egy asztalnál és távolról is). Ld. `docs/fejlesztesi-terv-2026-10.md`.

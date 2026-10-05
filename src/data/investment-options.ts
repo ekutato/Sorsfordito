@@ -118,7 +118,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldInfo:
       'A bankbetétet az OBA (Országos Betétbiztosítási Alap) védi személyenként ' +
       'és bankonként 100 000 EUR-ig. 2026-ban: feltétel nélkül ~3,5%, akciósan 5-6% (Gránit, K&H). ' +
-      'A kamatból 15% SZJA-t levon a bank (2019 óta nincs külön EHO a kamatjövedelemre).',
+      'A kamatból a bank levonja a 15% SZJA-t és a 13% szochót (2023. július óta), összesen 28%-ot. Az állampapír és az 5 évet kitöltött TBSZ hozama ez alól mentes.',
     isDynamic: true,
     dynamicDataKey: 'mnb.baseRate',
     tier: 'free',
