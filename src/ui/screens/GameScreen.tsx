@@ -14,6 +14,12 @@ import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import { LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import type { LifeSituationId } from '@/types/game';
 import type { Investment } from '@/types/financial';
+import type { GameState } from '@/types/game';
+import { BOARD, FIELD_LABELS } from '@/data/board';
+import { cardForField, FIELD_HINTS } from '@/data/field-cards';
+import { rollBoard, resolveFieldCard, emptyBoard, continueBoard } from '@/store/board-actions';
+import { BoardFull, BoardStrip, DiceButton } from '@/ui/board/BoardView';
+import { FieldCardView } from '@/ui/board/FieldCardView';
 
 export function GameScreen() {
   const game = useGameStore((s) => s.game);
@@ -23,6 +29,8 @@ export function GameScreen() {
   const player = game.players[game.activePlayerIndex];
   const tsConfig = TIME_SCALE_CONFIGS[game.config.timeScale];
   const progressPercent = (game.currentRound / tsConfig.totalRounds) * 100;
+  // A kör tartalma csak a dobás és a mezőkártya után jön (táblás mód)
+  const boardDone = isBoardDone(game);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -111,14 +119,17 @@ export function GameScreen() {
           );
         })()}
 
+        {/* Táblás mód: dobás → mezőkártya → a kör megszokott menete */}
+        <BoardLayer />
+
         {/* Penzugyi dashboard (mindig latszik) */}
         <FinancialDashboard
           sheet={player.financialSheet}
-          compact={game.phase !== 'round_income' && game.phase !== 'round_summary'}
+          compact={!boardDone || (game.phase !== 'round_income' && game.phase !== 'round_summary')}
         />
 
         {/* Fazis-specifikus tartalom */}
-        {(game.phase === 'round_income' || game.phase === 'round_expenses') && (
+        {boardDone && (game.phase === 'round_income' || game.phase === 'round_expenses') && (
           <IncomeExpensePhase />
         )}
 
@@ -989,4 +1000,78 @@ function formatGameDate(dateStr: string): string {
     'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.',
   ];
   return `${year}. ${months[parseInt(month) - 1]}`;
+}
+
+
+// --- Táblás mód ---
+
+function isBoardDone(game: GameState): boolean {
+  if (game.board?.awaitingContinue) return false;
+  const b = game.board ?? emptyBoard();
+  if (b.rolledRound !== game.currentRound) return false;
+  const field = BOARD[b.position].type;
+  const card = cardForField(field, b.visits[field] ?? 0);
+  return !card || b.resolvedRound === game.currentRound;
+}
+
+function BoardLayer() {
+  const game = useGameStore((s) => s.game);
+  const [expanded, setExpanded] = useState(false);
+  if (!game) return null;
+  const player = game.players[game.activePlayerIndex];
+  const b = game.board ?? emptyBoard();
+  const rolledNow = b.rolledRound === game.currentRound;
+  const field = BOARD[b.position];
+  const visit = b.visits[field.type] ?? 0;
+  const card = rolledNow ? cardForField(field.type, visit) : undefined;
+  const cardOpen = !!card && b.resolvedRound !== game.currentRound;
+
+  // 1) Dobás előtt és közvetlenül utána: a tábla kinyílik, a bábu lép, a célmező kiemelt
+  if (!rolledNow || b.awaitingContinue) {
+    return (
+      <section className="space-y-3" aria-label="Tábla">
+        <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined} pawnLabel={player.name} />
+        <div className="sticky bottom-3 z-10 space-y-2">
+          {!rolledNow ? (
+            <DiceButton onRoll={rollBoard} />
+          ) : (
+            <>
+              <div className="rounded-xl px-3 py-2 text-sm border border-white/10" style={{ background: "#0E1525" }}>
+                Dobtál: <b>{b.lastRoll}</b> → <b>{FIELD_LABELS[field.type]}</b> mező
+              </div>
+              <button onClick={continueBoard} className="w-full h-14 rounded-2xl font-extrabold text-lg"
+                style={{ background: '#F2A33A', color: '#0E1525' }}>
+                Tovább
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // 2) Mezőkártya: a szöveg kerül előre, a tábla sávvá zsugorodik
+  if (cardOpen && card) {
+    const hasKnowledge = !!card.highlightWithKnowledge && player.financialSheet.acquiredKnowledge.includes(card.highlightWithKnowledge);
+    return (
+      <section className="space-y-3">
+        {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        <p className="text-xs text-[var(--color-text-muted)]">Dobtál: <b>{b.lastRoll}</b></p>
+        <FieldCardView card={card} hasKnowledge={hasKnowledge} onChoose={(o) => { resolveFieldCard(field.type, o); setExpanded(false); }} />
+      </section>
+    );
+  }
+
+  // 3) A kör többi része: keskeny sáv + a mező üzenete
+  return (
+    <section className="space-y-2">
+      {expanded
+        ? <div className="space-y-2"><BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} />
+            <button onClick={() => setExpanded(false)} className="w-full h-10 rounded-lg text-sm font-semibold bg-white/5">Tábla bezárása</button></div>
+        : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+      {b.lastOutcome
+        ? <div className="rounded-xl px-3 py-2 text-xs bg-white/5">{b.lastOutcome}</div>
+        : FIELD_HINTS[field.type] && <div className="rounded-xl px-3 py-2 text-xs bg-white/5">Dobtál: <b>{b.lastRoll}</b> · {FIELD_HINTS[field.type]}</div>}
+    </section>
+  );
 }

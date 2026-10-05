@@ -123,6 +123,12 @@ M6:                                          ████████
 - **Generikus:** 16 db alap + 6 db tudáspróbás + storyline események
 - **Hír-generált:** `PreGameContext.fateEventPool`-ból (bekötve: StartScreen → GameStore)
 
+### Táblás mód (egyjátékos, 2026-10)
+- `src/data/board.ts` — 24 mezős városi útvonal; `src/data/field-cards.ts` — csapda, kísértés, feltöltődés, találkozás, hivatal, piaci hír kártyák
+- `src/store/board-actions.ts` — `rollBoard()` (kriptográfiai kocka), `continueBoard()`, `resolveFieldCard()`; állapot: `GameState.board`
+- `src/ui/board/` — `BoardFull` (dobáskor nagy tábla), `BoardStrip` (sáv a kör többi részére), `DiceButton`, `FieldCardView`
+- Menet: kör eleje → dobás → célmező kiemelve → (mezőkártya) → a kör megszokott fázisai
+
 ### UI Komponensek
 - `GameScreen.tsx` — Fő játékképernyő + InvestPhase (tudáskártyák + befektetések)
 - `DecisionView.tsx` — Döntési kártyák renderelése + `replaceVars()` dinamikus változókkal

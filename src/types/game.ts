@@ -121,6 +121,9 @@ export interface GameState {
   /** Jatek vege eredmeny */
   result?: GameResult;
 
+  /** Táblás mód (egyjátékos): bábu helyzete, dobás, mezőkártya */
+  board?: SoloBoardState;
+
   /** T-90 gazdasagi kontextus (elo adatok, hir-generalt sorsforditok) */
   preGameContext?: import('../data-sources/types').PreGameContext;
 }
@@ -469,4 +472,26 @@ export interface GameEvent {
   financialImpact?: HUF;
   /** Reszletek */
   details?: Record<string, unknown>;
+}
+
+
+// --- Táblás mód (egyjátékos) ---
+
+export interface SoloBoardState {
+  /** A bábu mezője (0-23) */
+  position: number;
+  /** Az utolsó dobás */
+  lastRoll?: number;
+  /** Melyik körben dobott utoljára (körönként egy dobás) */
+  rolledRound?: number;
+  /** Dobás után a nagy tábla nyitva marad, amíg a játékos a "Tovább" gombra nem nyom */
+  awaitingContinue?: boolean;
+  /** A mezőkártya lezárva ebben a körben */
+  resolvedRound?: number;
+  /** Mezőtípusonként hányszor járt ott (a kártyák ismétlés nélkül körbejárnak) */
+  visits: Record<string, number>;
+  /** A mezőkártya választásának eredménye (a kártyán megjelenítve) */
+  lastOutcome?: string;
+  /** Időleges kiadás-hatások visszaállítása (pl. részletfizetés vége) */
+  reverts: Array<{ atRound: number; target: string; amount: number }>;
 }
