@@ -96,7 +96,7 @@ function mapFateEventsToScale(
  * döntések UTÁN kerülnek, ha maradnak üres körök.
  * Ezek mindegyik élethelyzetre egyformák.
  */
-const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
+export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
   {
     id: 'gen-career-review',
     category: 'Karrier',
@@ -524,7 +524,7 @@ function fillGapsWithGenericDecisions(
 /**
  * Generikus sorsfordító események a sprint utáni körökre.
  */
-const GENERIC_FATE_EVENTS: FateEventEntry[] = [
+export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   // --- Pozitív események (fizetés kell) ---
   {
     id: 'fate-gen-01', round: 0, title: 'Fizetésemelés',
@@ -1080,7 +1080,7 @@ const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
 // Az outcome a döntés pillanatában eldől (random) és a PendingStoryline-ban tárolódik.
 // ============================================================================
 
-const STORYLINE_FATE_EVENTS: FateEventEntry[] = [
+export const STORYLINE_FATE_EVENTS: FateEventEntry[] = [
   {
     id: 'fate-story-friend-loan',
     round: 0,
@@ -1255,7 +1255,7 @@ export function getDecisionsFor(
   lifeSituation: LifeSituationId,
   timeScale: TimeScale
 ): DecisionCard[] {
-  return DECISION_REGISTRY[lifeSituation]?.[timeScale] ?? [];
+  return (DECISION_REGISTRY[lifeSituation]?.[timeScale] ?? []).map(withWellbeingDecision);
 }
 
 /**
@@ -1356,7 +1356,8 @@ export function getFateEventForRound(
   events: FateEventEntry[],
   round: number
 ): FateEventEntry | undefined {
-  return events.find((e) => e.round === round);
+  const e = events.find((ev) => ev.round === round);
+  return e ? withWellbeingFate(e) : undefined;
 }
 
 // --- Statisztikák (debug/admin) ---
@@ -1383,6 +1384,7 @@ export function getContentStats() {
 // --- Élő adatok: hír-alapú sorsfordítók beillesztése ---
 
 import type { PreGameContext } from '@/data-sources/types';
+import { withWellbeingDecision, withWellbeingFate } from '../wellbeing-merge';
 
 /**
  * PreGameContext.fateEventPool elemeit FateEventEntry formátumra konvertálja.

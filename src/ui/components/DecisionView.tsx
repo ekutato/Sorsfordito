@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
-import { formatHUF } from '@/engine/financial-calculator';
+import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
 import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
@@ -258,7 +258,7 @@ export function DecisionView() {
                     {/* Penzugyi hatasok elozetese */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {option.financialEffects.map((effect, i) => {
-                        const isIncomeTarget = ['balance', 'salary'].includes(effect.target);
+                        const isIncomeTarget = ['balance', 'salary'].includes(effect.target) || effect.target.startsWith('wellbeing.');
                         const isGood = isIncomeTarget
                           ? effect.amount >= 0
                           : effect.amount <= 0;
@@ -271,7 +271,7 @@ export function DecisionView() {
                                 : 'bg-money-negative/10 text-money-negative'
                             }`}
                           >
-                            {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                            {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                             {!isIncomeTarget ? '/hó' : ''}
                           </span>
                         );
@@ -320,15 +320,15 @@ export function DecisionView() {
                     </span>
                     <span className={`font-mono text-xs font-bold ${
                       effect.amount >= 0
-                        ? effect.target === 'balance' || effect.target === 'salary'
+                        ? effect.target === 'balance' || effect.target === 'salary' || effect.target.startsWith('wellbeing.')
                           ? 'text-money-positive'
                           : 'text-money-negative'
-                        : effect.target === 'balance' || effect.target === 'salary'
+                        : effect.target === 'balance' || effect.target === 'salary' || effect.target.startsWith('wellbeing.')
                           ? 'text-money-negative'
                           : 'text-money-positive'
                     }`}>
-                      {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
-                      {!['balance'].includes(effect.target) ? '/hó' : ''}
+                      {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
+                      {!['balance'].includes(effect.target) && !effect.target.startsWith('wellbeing.') ? '/hó' : ''}
                     </span>
                   </div>
                 ))}

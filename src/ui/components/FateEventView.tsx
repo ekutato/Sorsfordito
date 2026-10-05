@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
-import { formatHUF } from '@/engine/financial-calculator';
+import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
 import {
   getScriptedFateEvents,
   getFateEventForRound,
@@ -169,7 +169,7 @@ export function FateEventView() {
                   <span className={`font-mono text-sm font-bold ${
                     resolution.isPositive ? 'text-money-positive' : 'text-money-negative'
                   }`}>
-                    {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                    {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                   </span>
                 </div>
               ))}
@@ -464,7 +464,7 @@ export function FateEventView() {
                           {translateTarget(effect.target)}
                         </span>
                         <span className="font-mono text-sm font-bold text-money-negative">
-                          {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                         </span>
                       </div>
                     ))}
@@ -588,7 +588,7 @@ export function FateEventView() {
                           {translateTarget(effect.target)}
                         </span>
                         <span className="font-mono text-sm font-bold text-green-400">
-                          {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                         </span>
                       </div>
                     ))}
@@ -607,7 +607,7 @@ export function FateEventView() {
                         <span className={`font-mono text-xs font-bold ${
                           effect.amount >= 0 ? 'text-money-positive' : 'text-money-negative'
                         }`}>
-                          {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                         </span>
                       </div>
                     ))}
@@ -651,7 +651,7 @@ export function FateEventView() {
                           {translateTarget(effect.target)}
                         </span>
                         <span className="font-mono text-xs font-bold text-money-negative">
-                          {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                         </span>
                       </div>
                     ))}
@@ -736,7 +736,7 @@ export function FateEventView() {
                   <span className={`font-mono text-sm font-bold ${
                     isGood ? 'text-money-positive' : 'text-money-negative'
                   }`}>
-                    {effect.amount >= 0 ? '+' : ''}{formatHUF(effect.amount)}
+                    {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
                   </span>
                 </div>
               );

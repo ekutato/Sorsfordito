@@ -12,6 +12,7 @@ import type {
   Percentage,
 } from '@/types/financial';
 import type { TimeScaleConfig } from '@/types/game';
+import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
 
 /**
  * Ujraszamolja a Penzugyi Lap szamitott mezeit
@@ -233,4 +234,16 @@ export function getAmountColor(amount: HUF): string {
 export function monthsToSave(targetAmount: HUF, monthlySavings: HUF): number | null {
   if (monthlySavings <= 0) return null; // Soha nem eri el
   return Math.ceil(targetAmount / monthlySavings);
+}
+
+
+const WB_LABELS = RULESETS[DEFAULT_RULESET_ID].labels.wellbeing;
+
+/** Hatás összegének megjelenítése: jólléti célpontnál pont, egyébként Ft */
+export function formatEffectAmount(target: string, amount: number): string {
+  if (target.startsWith('wellbeing.')) {
+    const key = target.slice(10) as keyof typeof WB_LABELS;
+    return `${amount} ${WB_LABELS[key] ?? 'pont'}`;
+  }
+  return formatHUF(amount);
 }
