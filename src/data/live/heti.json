@@ -136,16 +136,16 @@
       "unit": "%",
       "asOf": "2026-03-01",
       "verified": false,
-      "source": "Előző (márciusi) érték - nincs friss megerősítés",
+      "source": "Előző (márciusi) érték - a friss források ellentmondanak (lakossági ~1 éves DKJ 4,83%, aukciós átlaghozam-hírek 6,8% körül, eltérő dátumokkal); a játékvezető döntése szükséges",
       "url": ""
     },
     "akk.fiveYearBondYield": {
-      "value": 5.57,
+      "value": 5.28,
       "unit": "%",
-      "asOf": "2026-05-18",
-      "verified": false,
-      "source": "5 éves referenciahozam, május (nem friss)",
-      "url": "https://allampapirkalkulator.hu/mak"
+      "asOf": "2026-10-01",
+      "verified": true,
+      "source": "ÁKK 5 éves referenciahozam, 2026. október 1-től hatályos (OTP referenciakamat-oldal)",
+      "url": "https://www.otpbank.hu/portal/hu/kondiciok/referencia-kamat"
     },
     "realEstate.budapestRentAvg": {
       "value": 260000,
@@ -156,12 +156,12 @@
       "url": "https://www.ksh.hu/s/kiserleti-statisztika/kiadvanyok/kshingatlancom-lakberindex-2026-augusztus/"
     },
     "realEstate.budapestRent2Room": {
-      "value": 320000,
+      "value": 380000,
       "unit": "Ft/hó",
-      "asOf": "2026-02-15",
-      "verified": false,
-      "source": "Előző (februári) érték - nincs friss megerősítés",
-      "url": ""
+      "asOf": "2026",
+      "verified": true,
+      "source": "Global Property Guide: budapesti kétszobás lakás átlagos bérleti díja (jellemző sáv 320-450 ezer Ft)",
+      "url": "https://www.globalpropertyguide.com/europe/hungary/2-bed-rent"
     },
     "realEstate.ruralRentAvg": {
       "value": 200000,
@@ -180,12 +180,12 @@
       "url": "https://www.ksh.hu/s/kiadvanyok/lakaspiaci-arak-lakasarindex-2026-i-negyedev/index.html"
     },
     "realEstate.ruralSqmPrice": {
-      "value": 450000,
+      "value": 733000,
       "unit": "Ft/m²",
-      "asOf": "2026-02-15",
-      "verified": false,
-      "source": "Előző (februári) érték - nincs friss megerősítés",
-      "url": ""
+      "asOf": "2026-Q1",
+      "verified": true,
+      "source": "KSH, 2026. I. negyedév: Kecskemét átlagos négyzetméterára (vármegyeszékhelyek sávja 304-941 ezer Ft/m²)",
+      "url": "https://biztosdontes.hu/cikkek/megtorpano-ingatlanar-emelkedes-2026"
     },
     "stockMarket.buxIndex": {
       "value": 140050,
@@ -204,12 +204,12 @@
       "url": "https://www.bet.hu/oldalak/piac_most"
     },
     "stockMarket.buxYearlyChange": {
-      "value": 12.3,
+      "value": 50,
       "unit": "%",
-      "asOf": "2026-03-01",
-      "verified": false,
-      "source": "Előző (márciusi) érték - nincs friss megerősítés",
-      "url": ""
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "Pénzcentrum, 2026.10.02.: a BUX egy év alatt nagyjából 50%-kal emelkedett",
+      "url": "https://www.penzcentrum.hu/megtakaritas/20261002/elkepeszto-szarnyalas-a-magyar-tozsden-elarultak-a-profik-melyik-reszvenyekkel-lehet-meg-most-is-rengeteg-penzt-keresni-1206441"
     }
   },
   "trendek": {
