@@ -16,6 +16,8 @@ import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import type { LifeSituationId } from '@/types/game';
 import type { PendingStoryline } from '@/types/financial';
+import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
+import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
 
 type KnowledgeCheckPhase =
   | 'idle'           // Nincs tudáspróba, normál sorsfordító
@@ -31,6 +33,7 @@ export function FateEventView() {
   const modifyBalance = useGameStore((s) => s.modifyBalance);
   const modifyIncome = useGameStore((s) => s.modifyIncome);
   const modifyExpenses = useGameStore((s) => s.modifyExpenses);
+  const modifyWellbeing = useGameStore((s) => s.modifyWellbeing);
   const logEvent = useGameStore((s) => s.logEvent);
   const addStoryline = useGameStore((s) => s.addStoryline);
   const resolveStorylineAction = useGameStore((s) => s.resolveStoryline);
@@ -102,6 +105,8 @@ export function FateEventView() {
           modifyBalance(pid, effect.amount, `Sztorivonal: ${resolution.title}`);
         } else if (effect.target === 'salary') {
           modifyIncome(pid, 'salary', effect.amount);
+        } else if (isWellbeingTarget(effect.target)) {
+          modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
         } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
           modifyExpenses(pid, effect.target as any, effect.amount);
         }
@@ -235,6 +240,8 @@ export function FateEventView() {
         modifyBalance(pid, effect.amount, fateEvent.title);
       } else if (effect.target === 'salary') {
         modifyIncome(pid, 'salary', effect.amount);
+      } else if (isWellbeingTarget(effect.target)) {
+        modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
       } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
         modifyExpenses(pid, effect.target as any, effect.amount);
       }
@@ -322,6 +329,8 @@ export function FateEventView() {
         modifyBalance(pid, effect.amount, fateEvent.title);
       } else if (effect.target === 'salary') {
         modifyIncome(pid, 'salary', effect.amount);
+      } else if (isWellbeingTarget(effect.target)) {
+        modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
       } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
         modifyExpenses(pid, effect.target as any, effect.amount);
       }
@@ -334,6 +343,8 @@ export function FateEventView() {
           modifyBalance(pid, effect.amount, `${fateEvent.title} – Tudáspróba jutalom`);
         } else if (effect.target === 'salary') {
           modifyIncome(pid, 'salary', effect.amount);
+        } else if (isWellbeingTarget(effect.target)) {
+          modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
         } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
           modifyExpenses(pid, effect.target as any, effect.amount);
         }
@@ -915,6 +926,9 @@ function translateTarget(target: string): string {
     other: 'Egyéb kiadás/hó',
     passive: 'Passzív jövedelem/hó',
     oneTime: 'Egyszeri bevétel',
+    'wellbeing.eletero': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.eletero,
+    'wellbeing.egeszseg': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.egeszseg,
+    'wellbeing.egyensuly': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.egyensuly,
   };
   return labels[target] ?? target;
 }

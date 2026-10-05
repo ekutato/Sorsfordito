@@ -1,0 +1,303 @@
+{
+  "het": "2026-W41",
+  "frissitve": "2026-10-05",
+  "megjegyzes": "Heti élő adatcsomag. A heti rutin frissíti; minden érték forrással. verified=false: nem sikerült friss forrásból megerősíteni, az előző érték maradt - a játékvezető döntése szükséges.",
+  "ertekek": {
+    "mnb.baseRate": {
+      "value": 5.5,
+      "unit": "%",
+      "asOf": "2026-09-22",
+      "verified": true,
+      "source": "MNB Monetáris Tanács, 2026.09.22.",
+      "url": "https://www.mnb.hu/letoltes/hu-sajtotajekoztato-a-monetaris-tanacs-2026-szeptember-22-i-dontese-utan.pdf"
+    },
+    "mnb.eurHufRate": {
+      "value": 367.87,
+      "unit": "Ft",
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "MNB hivatalos devizaárfolyam",
+      "url": "https://www.mnb.hu/arfolyamok"
+    },
+    "mnb.usdHufRate": {
+      "value": 326.94,
+      "unit": "Ft",
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "MNB hivatalos devizaárfolyam",
+      "url": "https://www.mnb.hu/arfolyamok"
+    },
+    "mnb.chfHufRate": {
+      "value": 394.71,
+      "unit": "Ft",
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "MNB hivatalos devizaárfolyam",
+      "url": "https://www.mnb.hu/arfolyamok"
+    },
+    "ksh.annualInflation": {
+      "value": 1.3,
+      "unit": "%",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "KSH fogyasztói árak, 2026. augusztus",
+      "url": "https://www.ksh.hu/arak"
+    },
+    "ksh.monthlyInflation": {
+      "value": 0.2,
+      "unit": "%",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "KSH fogyasztói árak, 2026. augusztus",
+      "url": "https://www.ksh.hu/arak"
+    },
+    "ksh.grossAverageWage": {
+      "value": 745500,
+      "unit": "Ft",
+      "asOf": "2026-07",
+      "verified": true,
+      "source": "KSH keresetek, 2026. július",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/ker/ker2607.html"
+    },
+    "ksh.netAverageWage": {
+      "value": 523300,
+      "unit": "Ft",
+      "asOf": "2026-07",
+      "verified": true,
+      "source": "KSH keresetek, 2026. július",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/ker/ker2607.html"
+    },
+    "ksh.netMedianWage": {
+      "value": 437900,
+      "unit": "Ft",
+      "asOf": "2026-07",
+      "verified": true,
+      "source": "KSH keresetek, 2026. július",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/ker/ker2607.html"
+    },
+    "ksh.minimumWage": {
+      "value": 322800,
+      "unit": "Ft",
+      "asOf": "2026-01-01",
+      "verified": true,
+      "source": "Kormányrendelet, 2026. január 1-től",
+      "url": "https://berfigyelo.hu/minimalber"
+    },
+    "ksh.guaranteedMinimumWage": {
+      "value": 373200,
+      "unit": "Ft",
+      "asOf": "2026-01-01",
+      "verified": true,
+      "source": "Kormányrendelet, 2026. január 1-től",
+      "url": "https://berfigyelo.hu/minimalber"
+    },
+    "ksh.unemploymentRate": {
+      "value": 4.7,
+      "unit": "%",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "KSH foglalkoztatottság, 2026. augusztus",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/fem/fem2608.html"
+    },
+    "ksh.prevYearAvgInflation": {
+      "value": 4.4,
+      "unit": "%",
+      "asOf": "2025",
+      "verified": true,
+      "source": "KSH, 2025. évi átlagos infláció (2026.01.13.)",
+      "url": "https://allampapirkalkulator.hu/hirek/hivatalos-megvan-a-2025-os-inflacios-adat-ilyen-hatassal-van-az-allampapirkamatokra-347"
+    },
+    "akk.pmapYield": {
+      "value": 4.5,
+      "unit": "%",
+      "asOf": "2026",
+      "verified": true,
+      "source": "PMÁP 2026-os kamata új sorozatoknál: 2025. átlagos infláció (4,4%) + 0,1% prémium",
+      "url": "https://allampapirkalkulator.hu/hirek/pmap-2026-megeri-e-venni-ha-a-kamat-csak-4-5-395"
+    },
+    "akk.mapPlusYield": {
+      "value": 5.48,
+      "unit": "%",
+      "asOf": "2026-10",
+      "verified": true,
+      "source": "MÁP Plusz átlagos éves kamata (5,00-6,00% sávos)",
+      "url": "https://allampapirkalkulator.hu/mapp"
+    },
+    "akk.dkjYield": {
+      "value": 5.26,
+      "unit": "%",
+      "asOf": "2026-10",
+      "verified": true,
+      "source": "DKJ aktuális hozam",
+      "url": "https://allampapirkalkulator.hu/allampapirok"
+    },
+    "akk.oneYearBondYield": {
+      "value": 6.0,
+      "unit": "%",
+      "asOf": "2026-03-01",
+      "verified": false,
+      "source": "Előző (márciusi) érték - nincs friss megerősítés",
+      "url": ""
+    },
+    "akk.fiveYearBondYield": {
+      "value": 5.57,
+      "unit": "%",
+      "asOf": "2026-05-18",
+      "verified": false,
+      "source": "5 éves referenciahozam, május (nem friss)",
+      "url": "https://allampapirkalkulator.hu/mak"
+    },
+    "realEstate.budapestRentAvg": {
+      "value": 260000,
+      "unit": "Ft/hó",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "KSH-ingatlan.com lakbérindex, 2026. augusztus",
+      "url": "https://www.ksh.hu/s/kiserleti-statisztika/kiadvanyok/kshingatlancom-lakberindex-2026-augusztus/"
+    },
+    "realEstate.budapestRent2Room": {
+      "value": 320000,
+      "unit": "Ft/hó",
+      "asOf": "2026-02-15",
+      "verified": false,
+      "source": "Előző (februári) érték - nincs friss megerősítés",
+      "url": ""
+    },
+    "realEstate.ruralRentAvg": {
+      "value": 200000,
+      "unit": "Ft/hó",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "ingatlan.com: Győr, Kecskemét, Szeged mediánja 200 ezer Ft (megyeszékhelyek sávja 120-220 ezer)",
+      "url": "https://tudastar.ingatlan.com/hirek/lakberindex-lassult-augusztusban-az-alberletek-dragulasa/"
+    },
+    "realEstate.budapestSqmPrice": {
+      "value": 1200000,
+      "unit": "Ft/m²",
+      "asOf": "2026-Q1",
+      "verified": true,
+      "source": "KSH lakáspiaci árak, 2026. I. negyedév (használt lakás, Budapest)",
+      "url": "https://www.ksh.hu/s/kiadvanyok/lakaspiaci-arak-lakasarindex-2026-i-negyedev/index.html"
+    },
+    "realEstate.ruralSqmPrice": {
+      "value": 450000,
+      "unit": "Ft/m²",
+      "asOf": "2026-02-15",
+      "verified": false,
+      "source": "Előző (februári) érték - nincs friss megerősítés",
+      "url": ""
+    },
+    "stockMarket.buxIndex": {
+      "value": 140050,
+      "unit": "pont",
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "BÉT záróérték, 2026.10.02.",
+      "url": "https://www.bet.hu/oldalak/piac_most"
+    },
+    "stockMarket.buxDailyChange": {
+      "value": 0.09,
+      "unit": "%",
+      "asOf": "2026-10-02",
+      "verified": true,
+      "source": "BÉT záróérték, 2026.10.02.",
+      "url": "https://www.bet.hu/oldalak/piac_most"
+    },
+    "stockMarket.buxYearlyChange": {
+      "value": 12.3,
+      "unit": "%",
+      "asOf": "2026-03-01",
+      "verified": false,
+      "source": "Előző (márciusi) érték - nincs friss megerősítés",
+      "url": ""
+    }
+  },
+  "trendek": {
+    "inflationTrend": "falling",
+    "interestRateTrend": "stable",
+    "rentTrend": "rising",
+    "stockMarketTrend": "rising"
+  },
+  "hirek": [
+    {
+      "title": "Az MNB 5,50%-on tartotta az alapkamatot, és 2028-tól 2,5%-ra csökkenti az inflációs célt",
+      "category": "interest_rates",
+      "publishedAt": "2026-09-22",
+      "source": "MNB",
+      "url": "https://www.mnb.hu/letoltes/hu-sajtotajekoztato-a-monetaris-tanacs-2026-szeptember-22-i-dontese-utan.pdf",
+      "jatekEsemeny": {
+        "title": "Kamatdöntés: marad az 5,50%",
+        "description": "A jegybank most nem változtatott a kamaton, így a hiteltörlesztők és a betéti kamatok sem mozdulnak. Ha van félretett pénzed, hasonlítsd össze a lekötött betét és az állampapír hozamát - ugyanannyi pénz eltérően dolgozhat.",
+        "type": "decision",
+        "effects": []
+      }
+    },
+    {
+      "title": "Augusztusban 1,3% volt az éves infláció, az élelmiszerek olcsóbbak lettek",
+      "category": "inflation",
+      "publishedAt": "2026-09-08",
+      "source": "KSH",
+      "url": "https://www.ksh.hu/arak",
+      "jatekEsemeny": {
+        "title": "Olcsóbb lett a bevásárlás",
+        "description": "Az élelmiszerek egy év alatt átlagosan 1,4%-kal olcsóbbak lettek. Kicsit kevesebb megy el a havi kosárra.",
+        "type": "positive",
+        "effects": [
+          {
+            "target": "food",
+            "amount": -1000
+          }
+        ]
+      }
+    },
+    {
+      "title": "Júliusban 523 300 Ft volt a nettó átlagkereset, 9,1%-kal több, mint egy éve",
+      "category": "wages",
+      "publishedAt": "2026-09-16",
+      "source": "KSH",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/ker/ker2607.html",
+      "jatekEsemeny": {
+        "title": "Nőttek a bérek - és a tiéd?",
+        "description": "A nettó átlagkereset egy év alatt 9,1%-kal nőtt. Rákérdeztél a béremelésre, és sikerült: havonta valamivel több marad.",
+        "type": "positive",
+        "effects": [
+          {
+            "target": "salary",
+            "amount": 10000
+          }
+        ]
+      }
+    },
+    {
+      "title": "Budapesten 5,2%-kal drágultak a lakbérek egy év alatt",
+      "category": "real_estate",
+      "publishedAt": "2026-09-11",
+      "source": "KSH-ingatlan.com",
+      "url": "https://www.ksh.hu/s/kiserleti-statisztika/kiadvanyok/kshingatlancom-lakberindex-2026-augusztus/",
+      "jatekEsemeny": {
+        "title": "Drágul az albérlet",
+        "description": "Budapesten egy év alatt 5,2%-kal nőttek a lakbérek. A szerződésed megújításakor a bérbeadó emel.",
+        "type": "negative",
+        "effects": [
+          {
+            "target": "housing",
+            "amount": 10000
+          }
+        ]
+      }
+    },
+    {
+      "title": "4,7%-ra nőtt a munkanélküliségi ráta augusztusban",
+      "category": "wages",
+      "publishedAt": "2026-09-25",
+      "source": "KSH",
+      "url": "https://www.ksh.hu/gyorstajekoztatok/fem/fem2608.html",
+      "jatekEsemeny": {
+        "title": "Szűkül a munkaerőpiac",
+        "description": "4,7%-ra nőtt a munkanélküliség. Most különösen sokat ér, ha van legalább 3 havi kiadásnyi tartalékod.",
+        "type": "decision",
+        "effects": []
+      }
+    }
+  ]
+}

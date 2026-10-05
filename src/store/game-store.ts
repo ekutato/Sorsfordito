@@ -29,6 +29,7 @@ import type {
 import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
+import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
 
 // --- Seged fuggvenyek ---
 
@@ -124,6 +125,7 @@ function createFinancialSheet(
     acquiredKnowledge: [],
     pendingStorylines: [],
     activeOngoingEffects: [],
+    wellbeing: neutralWellbeing(),
     computed: {} as ComputedFinancials,
     history: [],
   };
@@ -154,6 +156,7 @@ interface GameStoreActions {
   modifyBalance: (playerId: string, amount: HUF, description: string) => void;
   modifyIncome: (playerId: string, field: keyof Income, amount: HUF) => void;
   modifyExpenses: (playerId: string, field: keyof Expenses, amount: HUF) => void;
+  modifyWellbeing: (playerId: string, key: WellbeingKey, delta: number) => void;
   addInvestment: (playerId: string, investment: Investment) => void;
   removeInvestment: (playerId: string, investmentOptionId: string) => void;
   addDebt: (playerId: string, debt: Debt) => void;
@@ -295,6 +298,17 @@ export const useGameStore = create<GameStore>()(
             const newExpenses = { ...p.financialSheet.expenses, [field]: p.financialSheet.expenses[field] + amount };
             const newSheet = { ...p.financialSheet, expenses: newExpenses };
             newSheet.computed = computeFinancials(newSheet);
+            return { ...p, financialSheet: newSheet };
+          });
+          return { game: { ...state.game, players } };
+        }),
+
+      modifyWellbeing: (playerId, key, delta) =>
+        set((state) => {
+          if (!state.game) return state;
+          const players = state.game.players.map((p) => {
+            if (p.playerId !== playerId) return p;
+            const newSheet = { ...p.financialSheet, wellbeing: applyWellbeingDelta(p.financialSheet.wellbeing, key, delta) };
             return { ...p, financialSheet: newSheet };
           });
           return { game: { ...state.game, players } };

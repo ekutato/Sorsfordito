@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { FinancialSheet, HUF, Percentage } from './financial';
+import type { WellbeingTarget } from './wellbeing';
 
 // --- Jatek allapot ---
 
@@ -270,7 +271,8 @@ export interface FinancialEffect {
     | 'food'             // Elelmiszer valtozas
     | 'transport'        // Kozlekedes valtozas
     | 'loanPayments'     // Hiteltorlesztes valtozas
-    | 'other';           // Egyeb kiadas valtozas
+    | 'other'            // Egyeb kiadas valtozas
+    | WellbeingTarget;   // Jólléti jelölő (pont, nem Ft)
 
   /** Valtozas osszege (pozitiv = novekmeny, negativ = csokkenes) */
   amount: HUF;

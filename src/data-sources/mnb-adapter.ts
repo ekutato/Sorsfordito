@@ -6,6 +6,7 @@
 
 import type { DataSourceAdapter } from './types';
 import type { MNBData } from '@/types/data-sources';
+import { LIVE_ECONOMIC_DATA } from '@/data/live';
 
 /**
  * MNB SOAP Webservice adapter
@@ -151,7 +152,7 @@ export const mnbAdapter: DataSourceAdapter<MNBData> = {
     this.lastFetchedAt = new Date();
 
     return {
-      baseRate: 6.5, // Az alapkamatot külön API-ból kellene, de ritkán változik
+      baseRate: LIVE_ECONOMIC_DATA.mnb.baseRate, // heti élő adatcsomagból
       eurHufRate: rates.eurHuf,
       usdHufRate: rates.usdHuf,
       lastUpdated: new Date().toISOString().split('T')[0],
@@ -171,19 +172,14 @@ export const mnbAdapter: DataSourceAdapter<MNBData> = {
     }
 
     return rates.map((r) => ({
-      baseRate: 6.5,
+      baseRate: LIVE_ECONOMIC_DATA.mnb.baseRate,
       eurHufRate: r.rate,
-      usdHufRate: r.rate * 0.92, // Becsült USD/EUR arány
+      usdHufRate: r.rate * (LIVE_ECONOMIC_DATA.mnb.usdHufRate / LIVE_ECONOMIC_DATA.mnb.eurHufRate),
       lastUpdated: r.date,
     }));
   },
 
   getFallbackData(): MNBData {
-    return {
-      baseRate: 6.5,
-      eurHufRate: 408.5,
-      usdHufRate: 385.2,
-      lastUpdated: '2026-03-01',
-    };
+    return { ...LIVE_ECONOMIC_DATA.mnb };
   },
 };

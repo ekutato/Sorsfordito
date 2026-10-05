@@ -6,7 +6,9 @@
 
 **Név:** Pénzügyi Sorsfordító
 **Típus:** Magyar pénzügyi tudatossági szimulációs játék
-**GDD:** v1.0 (2026. március) — `C:\Users\zombo\Downloads\PÜI-tudatosság_játék\Penzugyi_Sorsfordito_GDD_v1.md`
+**GDD:** v1.0 (2026. március) — `docs/Penzugyi_Sorsfordito_GDD_v1.md`
+**Fejlesztési terv (2026-10):** `docs/fejlesztesi-terv-2026-10.md` — többjátékos online táblajáték, heti élő adatok, csapdakártyák, jólléti index
+**Repo:** `ekutato/Sorsfordito` (GitHub). Deploy: a `out/` tartalma a `ekutato/nexai-hu` repó `sorsfordito/` mappájába kerül, a Netlify élesít.
 **Platform:** Mobile-first PWA (böngészőben, installálható)
 
 ### Tech Stack
@@ -42,7 +44,7 @@
 | M1 | Adatmotor | ✅ KÉSZ | API-k + PreGameContext bekötve a játékba (StartScreen async fetch, DecisionView/FateEventView valós adatok, GameScreen banner) |
 | M2 | Játékmotor | ⚠️ 75% | 3 karakter döntésfája kész, értékelő motor részleges |
 | M3 | Frontend | ⚠️ 85% | Fő képernyők kész, hírfolyam nézet hiányzik |
-| M4 | Tesztelés | ❌ 0% | Nem kezdődött |
+| M4 | Tesztelés | ⚠️ 10% | Vitest elindult (`npm test`): jólléti index, szabálycsomag, élő adatcsomag |
 | M5 | Bővítés | ⚠️ 30% | 3 karakter + Maraton/Ultra kész, multiplayer nincs |
 | M6 | Launch | ❌ 0% | Nem kezdődött |
 
@@ -80,7 +82,7 @@ M6:                                          ████████
 2. **Válasz hosszúság:** A helyes válasz NE legyen mindig a leghosszabb opció. Legyenek rövid helyes válaszok is. A hosszúság ne legyen "tipp" a helyes válaszra.
 3. **Diákhitel (DH2):** NEM alapértelmezett — a játékos a `dani-d03` döntésnél választja, hogy felvette-e. A preset-ben nincs DH2 adósság.
 4. **Adatok valóssága:** Minden pénzügyi adat 2026-os magyar valóság. Ha nem biztos, ellenőrizd online. Főbb referencia értékek:
-   - Minimálbér: bruttó 322 800 Ft, garantált bérminimum: 423 000 Ft
+   - Minimálbér: bruttó 322 800 Ft, garantált bérminimum: 373 200 Ft
    - SZJA: 15%, TB: 18.5%, SZOCHO: 13%
    - CSOK Plusz: max 3% kamat, 1 gyerek: 15M, 2 gyerek: 30M, 3 gyerek: 50M Ft
    - Babaváró: 11M Ft, 0%, feltétel: 3 év TB jogviszony
@@ -88,7 +90,11 @@ M6:                                          ████████
    - Kamatjövedelem adó: 15% SZJA (nincs EHO 2019 óta)
 5. **Epilógus értékelés:** Negatív nettó vagyon és rossz gazdálkodás NEM kaphat bronz szintet sem. A legalacsonyabb szint legyen „Tanulópénz" (nem fém), nem „Bronz".
 6. **Glossary kiemelés:** Ha egy szó (pl. „infláció") többször előfordul egy szövegben, csak az ELSŐ előfordulásnál legyen kiemelve/klikkelhető.
-7. **Páros mód:** Későbbi milestone — még NEM implementálandó, de a döntésfák figyelembe veszik a lehetőséget.
+7. **Többjátékos mód:** 2026-10-től fejlesztés alatt (2-10 fő, egy asztalnál és távolról is). Ld. `docs/fejlesztesi-terv-2026-10.md`.
+8. **Jólléti index:** három jelölő -5..+5 skálán, belső kulcsok: `eletero`, `egeszseg`, `egyensuly` (feliratok: Életerő, Egészség, Egyensúly). A feliratok a szabálycsomagból (`src/rulesets/`) jönnek — Milion-paraméterezésnél ott cserélhetők. Hatás-célpont: `wellbeing.<kulcs>` (pont, nem Ft).
+9. **Milion-függetlenség:** a Milion-specifikus elemek (koncentrikus körök, életcélmezők, "Vacak" pakli, adomány, mentordíj) csak a kikapcsolt `milion-szemlelet` csomagban lehetnek, élesben nem aktiválhatók.
+10. **Csapdakártyák:** minden csaló ajánlatnak legyen ellenőrizhető vészjele és kivédési útja; a kimenetel a játékos tudásán múljon, ne szerencsén.
+11. **Semlegesség:** nincs termékajánlás, nincs pártpolitikai állásfoglalás; hírből csak saját megfogalmazás + forráslink.
 
 ---
 
@@ -99,12 +105,11 @@ M6:                                          ████████
 - `GameState` tartalmazza: config, phase, currentRound, players[], eventLog[]
 - `FinancialSheet` tartalmazza: balance, income, expenses, investments[], debts[], acquiredKnowledge[], pendingStorylines[]
 
-### Adatforrások (M1)
-- `/api/data/mnb` — MNB SOAP proxy (árfolyamok)
-- `/api/data/news` — RSS aggregátor (Portfolio.hu, 24.hu, Index.hu)
-- `/api/data/bet` — BUX index (BÉT / Stooq.com fallback)
-- `/api/data/rent` — Albérletárak (ingatlan.com, alberlet.hu scraping)
-- `/api/data/pregame` — Orchestrátor (T-90 összesítés)
+### Adatforrások
+- **Heti élő adatcsomag:** `src/data/live/heti.json` — az egyetlen igazságforrás (érték + forrás + url + `verified`). A `src/data/live/index.ts` ebből építi a `LIVE_ECONOMIC_DATA`-t és a `livePreGameContext()`-et. A hírekhez tartozó játékhatás (`jatekEsemeny`) ember által jóváhagyott.
+- `verified: false` = nem sikerült friss forrásból megerősíteni → a játékvezetőt meg kell kérdezni (1. szabály).
+- `/api/data/pregame` — statikus kimenet a heti csomagból (a kliens közvetlenül importálja, nincs fetch).
+- A korábbi `mnb`/`news`/`bet`/`rent` route-ok törölve (szerzői jogi kockázat, elavult fallback); az adapterek (`src/data-sources/`) a heti frissítő rutinhoz megmaradtak.
 - `PreGameContext` típus: economicSummary + fateEventPool + currentData
 
 ### Döntésfa rendszer

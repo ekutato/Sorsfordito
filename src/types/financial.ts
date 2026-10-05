@@ -3,6 +3,8 @@
 // A jatekos penzugyi allapotat leiro tipusok
 // ============================================================================
 
+import type { Wellbeing } from './wellbeing';
+
 /** Penznem - minden osszeg Ft-ban */
 export type HUF = number;
 
@@ -42,6 +44,9 @@ export interface FinancialSheet {
 
   /** Aktív tartós hatások (döntésekből származó havi bevétel/kiadás változások) */
   activeOngoingEffects: ActiveOngoingEffect[];
+
+  /** Jólléti jelölők (-5..+5); régi mentésekben hiányozhat */
+  wellbeing?: Wellbeing;
 
   /** Szamitott ertekek (minden kor vegen ujraszamolva) */
   computed: ComputedFinancials;

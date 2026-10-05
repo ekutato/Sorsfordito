@@ -5,6 +5,7 @@ import type { FinancialSheet } from '@/types/financial';
 import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
 import { useGameStore } from '@/store/game-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
+import { WellbeingStrip } from './WellbeingStrip';
 
 interface Props {
   sheet: FinancialSheet;
@@ -135,6 +136,8 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
           }
         />
       </div>
+
+      <WellbeingStrip sheet={sheet} />
 
       {/* Befektetesek + Adossag jelzo */}
       {(sheet.investments.length > 0 || sheet.debts.length > 0) && (

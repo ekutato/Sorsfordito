@@ -13,6 +13,7 @@ import { rentAdapter } from './rent-adapter';
 import { betAdapter } from './bet-adapter';
 import { newsAdapter } from './news-adapter';
 import { MOCK_ECONOMIC_DATA_2026_Q1, MOCK_NEWS_EVENTS } from '@/data/mock-economic-data';
+import { LIVE_ECONOMIC_DATA, livePreGameContext } from '@/data/live';
 
 const T_DAYS = 90; // 90 napos előfeldolgozás
 
@@ -286,19 +287,19 @@ export async function processPreGameContext(
         interestRateTrend: 'stable',
         rentTrend: 'rising',
         stockMarketTrend: stockTrend,
-        inflation: 3.8,
+        inflation: LIVE_ECONOMIC_DATA.ksh.annualInflation,
         buxChange: latestBet.buxYearlyChange,
       }),
     },
     fateEventPool: fatePool,
     currentData: {
-      inflation: 3.8,
+      inflation: LIVE_ECONOMIC_DATA.ksh.annualInflation,
       baseRate: mnb.baseRate,
       avgRentBudapest: rent.budapestRentAvg,
       avgRentRural: rent.ruralRentAvg,
-      pmapYield: 6.5, // ÁKK adatból kellene
+      pmapYield: LIVE_ECONOMIC_DATA.akk.pmapYield,
       buxIndex: latestBet.buxIndex,
-      avgNetWage: 548_700, // KSH
+      avgNetWage: LIVE_ECONOMIC_DATA.ksh.netAverageWage,
     },
     generatedAt: new Date().toISOString(),
   };
@@ -313,27 +314,5 @@ export async function processPreGameContext(
  * Mock T-90 kontextus (offline fejlesztéshez)
  */
 function createMockPreGameContext(): PreGameContext {
-  const fatePool = generateFateEventsFromNews(MOCK_NEWS_EVENTS);
-
-  return {
-    economicSummary: {
-      inflationTrend: 'stable',
-      interestRateTrend: 'falling',
-      rentTrend: 'rising',
-      stockMarketTrend: 'rising',
-      headline:
-        'Az elmúlt 90 napban: infláció stabil (3,8%), BUX erősödött (+12,3%), albérletek drágultak.',
-    },
-    fateEventPool: fatePool,
-    currentData: {
-      inflation: 3.8,
-      baseRate: 6.5,
-      avgRentBudapest: 250_000,
-      avgRentRural: 140_000,
-      pmapYield: 6.5,
-      buxIndex: 78_500,
-      avgNetWage: 548_700,
-    },
-    generatedAt: new Date().toISOString(),
-  };
+  return livePreGameContext();
 }

@@ -57,7 +57,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     unlocks: [],
     realWorldKnowledge:
       'Családi adókedvezmény: 1 gyerek után 66 670 Ft/hó adóalap-csökkentés. ' +
-      '25 év alatti fiatalok SZJA-mentessége: évi ~5.2M Ft jövedelemig 0% SZJA (2026-ban is). ' +
+      '25 év alatti fiatalok SZJA-mentessége: a bruttó átlagkereset szintjéig 0% SZJA (2026-ban évi ~8 millió Ft nagyságrendig; a pontos határt a NAV teszi közzé). ' +
       'Négy vagy több gyermekes anyák élethosszig SZJA-mentesek.',
     sourceUrl: 'https://www.nav.gov.hu',
     tier: 'free',
@@ -76,7 +76,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
           'Csak az első munkahelyen dolgozók',
         ],
         correctIndex: 1,
-        explanation: 'Minden 25 év alatti fiatal jogosult, a bruttó átlagbér összegéig (~5,2M Ft/év). Ez havi 40-50 000 Ft megtakarítást jelent!',
+        explanation: 'Minden 25 év alatti fiatal jogosult, a bruttó átlagkereset szintjéig (2026-ban évi ~8 millió Ft nagyságrend). Ez havi 40-50 000 Ft megtakarítást jelent!',
       },
     ],
   },
@@ -253,7 +253,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       '2) Felmondási idő: min. 30 nap, minden 3 ledolgozott év után +5 nap. ' +
       '3) Túlóra: +50% pótlék hétköznapon, +100% pihenőnapon. ' +
       '4) Alapszabadság: 20 nap + életkor után pótszabadság (+1-10 nap). ' +
-      '5) 2026-ban a minimálbér bruttó 322 800 Ft, garantált bérminimum 423 000 Ft.',
+      '5) 2026-ban a minimálbér bruttó 322 800 Ft, garantált bérminimum 373 200 Ft.',
     sourceUrl: 'https://www.munkajog.hu',
     tier: 'free',
     quiz: [
@@ -739,7 +739,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     effectTarget: 'none',
     unlocks: [],
     realWorldKnowledge:
-      'Magyar CPI-t (fogyasztói árindex) a KSH méri. Inflációs történet: 2022: 24,5% (csúcs), 2023: 17,6%, 2024: ~3,7%, 2025: ~3,5%. ' +
+      'Magyar CPI-t (fogyasztói árindex) a KSH méri. Inflációs történet: 2022: 24,5% (csúcs), 2023: 17,6%, 2024: ~3,7%, 2025: 4,4%. ' +
       'Reálhozam képlet: nominális hozam – infláció. Ha 7% hozam és 4% infláció → 3% reálhozam. ' +
       'Inflációvédelem eszközei: ' +
       'PMÁP (Prémium Magyar Állampapír): inflációkövető kamat + prémium. ' +

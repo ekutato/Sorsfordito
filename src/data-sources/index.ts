@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { PreGameContext } from './types';
+import { livePreGameContext } from '@/data/live';
 
 /**
  * Pre-game kontextus lekérdezése
@@ -11,23 +12,10 @@ import type { PreGameContext } from './types';
  *
  * @param useLiveData - true: valós adatok az API-ból, false: mock adatok
  */
-export async function fetchPreGameContext(useLiveData: boolean): Promise<PreGameContext> {
-  try {
-    const response = await fetch(`/api/data/pregame?live=${useLiveData}`, {
-      signal: AbortSignal.timeout(8000), // 8 sec max — ha ennyi idő alatt nincs válasz, mock-kal megy
-    });
-
-    const json = await response.json();
-
-    if (json.success && json.data) {
-      return json.data as PreGameContext;
-    }
-
-    throw new Error(json.error || 'Unknown error');
-  } catch (error) {
-    console.warn('[DataSources] Pre-game context fetch failed, using fallback:', error);
-    return getFallbackPreGameContext();
-  }
+export async function fetchPreGameContext(_useLiveData: boolean): Promise<PreGameContext> {
+  // Statikus export: a heti élő adatcsomag a buildbe van fordítva (src/data/live/heti.json),
+  // így nincs hálózati hívás, és nincs basePath-hiba sem.
+  return livePreGameContext();
 }
 
 /**
@@ -135,26 +123,7 @@ export async function fetchRentPrices(
 // --- Fallback ---
 
 function getFallbackPreGameContext(): PreGameContext {
-  return {
-    economicSummary: {
-      inflationTrend: 'stable',
-      interestRateTrend: 'falling',
-      rentTrend: 'rising',
-      stockMarketTrend: 'rising',
-      headline: 'Offline mód – Mock gazdasági adatokkal játszol.',
-    },
-    fateEventPool: [],
-    currentData: {
-      inflation: 3.8,
-      baseRate: 6.5,
-      avgRentBudapest: 220_000,
-      avgRentRural: 140_000,
-      pmapYield: 6.75,
-      buxIndex: 72_500,
-      avgNetWage: 380_000,
-    },
-    generatedAt: new Date().toISOString(),
-  };
+  return livePreGameContext();
 }
 
 // Re-exportok

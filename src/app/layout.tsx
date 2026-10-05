@@ -6,7 +6,8 @@ export const metadata: Metadata = {
   description:
     'Pénzügyi tudatossági szimulációs játék valós magyar gazdasági adatokkal. ' +
     'Hozd meg a döntéseidet, kezeld a pénzedet, és nézd meg, mire jutsz!',
-  manifest: '/manifest.json',
+  manifest: '/sorsfordito/manifest.json',
+  icons: { icon: '/sorsfordito/icon.svg', apple: '/sorsfordito/icon-192.png' },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -17,8 +18,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#0F172A',
 };
 

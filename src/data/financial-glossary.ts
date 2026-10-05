@@ -92,7 +92,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
       'Magyarországon a személyi jövedelemadó egységesen 15%. ' +
       'Fontos: 25 év alattiak számára az SZJA mentes a bruttó átlagbér összegéig!',
     pros: [
-      '25 év alatti kedvezmény (2026-ban ~5,2M Ft-ig mentes)',
+      '25 év alatti kedvezmény (2026-ban évi ~8 millió Ft nagyságrendig mentes)',
       'Családi adókedvezmény gyermekek után',
       'Önkéntes nyugdíjpénztári adó-visszatérítés (20%)',
     ],

@@ -4,68 +4,13 @@
 // ============================================================================
 
 import type { EconomicData, NewsItem } from '@/types/data-sources';
+import { LIVE_ECONOMIC_DATA } from '@/data/live';
 
 /**
- * Valós adatokon alapuló mock dataset (2026 márc.)
- * Források: KSH, MNB, ÁKK, ingatlan.com, TradingView chartok
- *
- * Frissítve 2026-03-13 15:30 UTC+1 (élő chart adatokból):
- * - MNB alapkamat: 6.25% (feb. 2026-ban csökkentette 6.5%-ról)
- * - EUR/HUF: 390.6 (TradingView OANDA, 2026-03-13)
- * - USD/HUF: 340.7 (TradingView OANDA, 2026-03-13)
- * - Brent olaj: ~$100/hordó (csúcs $120, iráni háború miatt felfutás)
- * - Arany: $5,091/oz (+73% YoY!) — menedékeszköz a geopolitikai válságban
- * - Ezüst: $82.46/oz
- * - Infláció: 2.1% (jan. 2026), de emelkedhet az energiaárak miatt
- * - Bruttó átlagbér: 789 223 Ft (dec. 2025, KSH)
+ * Korábban kézzel frissített mock adatkészlet - mostantól a heti élő adatcsomag
+ * (src/data/live/heti.json) az egyetlen igazságforrás.
  */
-export const MOCK_ECONOMIC_DATA_2026_Q1: EconomicData = {
-  lastUpdated: '2026-03-13T15:30:00+01:00',
-
-  mnb: {
-    baseRate: 6.25,
-    eurHufRate: 390.6,     // TradingView OANDA 2026-03-13 15:28
-    usdHufRate: 340.7,     // TradingView OANDA 2026-03-13 15:28
-    lastUpdated: '2026-03-13',
-  },
-
-  ksh: {
-    annualInflation: 2.1,     // Jan. 2026 (KSH), de emelkedhet iráni háború miatt
-    monthlyInflation: 0.2,
-    grossAverageWage: 789_223, // Dec. 2025 (KSH)
-    netAverageWage: 548_700,
-    netMedianWage: 427_500,
-    minimumWage: 322_800,      // 2026. jan. 1-től (+11%)
-    guaranteedMinimumWage: 373_200, // 2026. jan. 1-től (+7%)
-    unemploymentRate: 4.2,
-    lastUpdated: '2026-03-01',
-  },
-
-  akk: {
-    pmapYield: 6.5,
-    mapPlusYield: 5.8,
-    dkjYield: 6.2,
-    oneYearBondYield: 6.0,
-    fiveYearBondYield: 6.8,
-    lastUpdated: '2026-03-01',
-  },
-
-  realEstate: {
-    budapestRentAvg: 250_000,
-    budapestRent2Room: 320_000,
-    ruralRentAvg: 140_000,
-    budapestSqmPrice: 1_050_000,
-    ruralSqmPrice: 450_000,
-    lastUpdated: '2026-02-15',
-  },
-
-  stockMarket: {
-    buxIndex: 78_500,
-    buxDailyChange: 0.45,
-    buxYearlyChange: 12.3,
-    lastUpdated: '2026-03-01',
-  },
-};
+export const MOCK_ECONOMIC_DATA_2026_Q1: EconomicData = LIVE_ECONOMIC_DATA;
 
 /**
  * Eloirott hiresemenyek a mock modhoz

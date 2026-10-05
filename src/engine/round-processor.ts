@@ -27,6 +27,8 @@ import {
   applyInflation,
 } from './financial-calculator';
 import type { EconomicData } from '@/types/data-sources';
+import { LIVE_ECONOMIC_DATA } from '@/data/live';
+import { isWellbeingTarget, wellbeingKeyOf, applyWellbeingDelta } from '@/types/wellbeing';
 
 // --- Kor fazisok sorrendben ---
 
@@ -309,6 +311,10 @@ export function applyDecision(
           ...updatedSheet.expenses,
           other: updatedSheet.expenses.other + effect.amount,
         };
+        break;      default:
+        if (isWellbeingTarget(effect.target)) {
+          updatedSheet.wellbeing = applyWellbeingDelta(updatedSheet.wellbeing, wellbeingKeyOf(effect.target), effect.amount);
+        }
         break;
     }
   }
@@ -428,7 +434,7 @@ export function processInvestmentReturns(
 
   const updatedInvestments = sheet.investments.map((inv) => {
     // Alapertelmezett eves hozam: 6% (PMAP szintu)
-    const annualRate = economicData?.akk.pmapYield ?? 6.0;
+    const annualRate = economicData?.akk.pmapYield ?? LIVE_ECONOMIC_DATA.akk.pmapYield;
     const returnAmount = calculateInvestmentReturn(inv, annualRate, months);
     totalReturns += returnAmount;
 
@@ -518,6 +524,10 @@ export function applyFateEvent(
         };
         break;
       default:
+        if (isWellbeingTarget(effect.target)) {
+          updatedSheet.wellbeing = applyWellbeingDelta(updatedSheet.wellbeing, wellbeingKeyOf(effect.target), effect.amount);
+          break;
+        }
         // Egyeb kiadasi kategoriak
         if (effect.target in updatedSheet.expenses) {
           (updatedSheet.expenses as any)[effect.target] += effect.amount;

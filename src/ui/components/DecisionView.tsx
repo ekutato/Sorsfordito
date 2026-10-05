@@ -7,6 +7,10 @@ import { formatHUF } from '@/engine/financial-calculator';
 import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
+import { liveCurrentData } from '@/data/live';
+import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
+
+const LIVE = liveCurrentData();
 
 export function DecisionView() {
   const game = useGameStore((s) => s.game);
@@ -14,6 +18,7 @@ export function DecisionView() {
   const modifyBalance = useGameStore((s) => s.modifyBalance);
   const modifyExpenses = useGameStore((s) => s.modifyExpenses);
   const modifyIncome = useGameStore((s) => s.modifyIncome);
+  const modifyWellbeing = useGameStore((s) => s.modifyWellbeing);
   const logEvent = useGameStore((s) => s.logEvent);
   const addKnowledge = useGameStore((s) => s.addKnowledge);
 
@@ -83,9 +88,9 @@ export function DecisionView() {
         const pgc = game.preGameContext?.currentData;
         const econLookup: Record<string, number> = {
           'economicData.interestRates.dh1': 0,
-          'economicData.interestRates.pmapYield': pgc?.pmapYield ?? 7.5,
-          'economicData.inflation.latest': pgc?.inflation ?? 4.2,
-          'economicData.realEstate.budapestRentAvg': pgc?.avgRentBudapest ?? 200_000,
+          'economicData.interestRates.pmapYield': pgc?.pmapYield ?? LIVE.pmapYield,
+          'economicData.inflation.latest': pgc?.inflation ?? LIVE.inflation,
+          'economicData.realEstate.budapestRentAvg': pgc?.avgRentBudapest ?? LIVE.avgRentBudapest,
         };
         raw = econLookup[path];
       }
@@ -98,14 +103,14 @@ export function DecisionView() {
   // Gazdasági értékek: valós PreGameContext adatokból, vagy fallback mock
   const cd = game.preGameContext?.currentData;
   const economicDefaults: Record<string, number> = {
-    inflation: cd?.inflation ?? 4.2,
-    pmap_yield: cd?.pmapYield ?? 7.5,
+    inflation: cd?.inflation ?? LIVE.inflation,
+    pmap_yield: cd?.pmapYield ?? LIVE.pmapYield,
     dh1_rate: 0,
-    rent_bp: cd?.avgRentBudapest ?? 200_000,
-    rent_rural: cd?.avgRentRural ?? 140_000,
-    bux_index: cd?.buxIndex ?? 72_500,
-    avg_wage: cd?.avgNetWage ?? 380_000,
-    base_rate: cd?.baseRate ?? 6.5,
+    rent_bp: cd?.avgRentBudapest ?? LIVE.avgRentBudapest,
+    rent_rural: cd?.avgRentRural ?? LIVE.avgRentRural,
+    bux_index: cd?.buxIndex ?? LIVE.buxIndex,
+    avg_wage: cd?.avgNetWage ?? LIVE.avgNetWage,
+    base_rate: cd?.baseRate ?? LIVE.baseRate,
   };
 
   /** Szövegben lévő {{változók}} cseréje */
@@ -145,6 +150,11 @@ export function DecisionView() {
         case 'loanPayments':
         case 'other':
           modifyExpenses(pid, effect.target, effect.amount);
+          break;
+        default:
+          if (isWellbeingTarget(effect.target)) {
+            modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
+          }
           break;
       }
     }

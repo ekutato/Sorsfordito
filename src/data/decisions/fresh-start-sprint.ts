@@ -76,7 +76,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'food', amount: 30_000, description: 'Saját étkezés' },
         ],
         nextDecisionId: 'fs-d02',
-        didYouKnow: '25 év alatti fiatalok SZJA-mentesek a minimálbér szintjéig (2026-ban ~326 000 Ft bruttó). Ez havi 40-50 000 Ft megtakarítás!',
+        didYouKnow: 'A 25 év alatti fiatalok a bruttó átlagkeresethez kötött havi határig nem fizetnek SZJA-t (a pontos összeget a NAV teszi közzé). Minimálbéres (bruttó 322 800 Ft) fizetésnél ez havi kb. 48 000 Ft-tal több nettót jelent!',
       },
     ],
     characterPresets: ['fresh_start'],
