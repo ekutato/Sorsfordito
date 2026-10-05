@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --color-bg: #0F172A;
+    --color-bg-card: #1E293B;
+    --color-bg-elevated: #334155;
+    --color-text: #F1F5F9;
+    --color-text-muted: #94A3B8;
+    --color-accent: #3B82F6;
+    --color-positive: #22C55E;
+    --color-negative: #EF4444;
+  }
+
+  body {
+    @apply bg-[var(--color-bg)] text-[var(--color-text)] font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Mobile-first: nincs scrollbar flash */
+  html {
+    overflow-y: scroll;
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Kartya alap */
+  .game-card {
+    @apply bg-[var(--color-bg-card)] rounded-2xl p-5 shadow-lg
+           border border-white/5 backdrop-blur-sm;
+  }
+
+  /* Penzugyi szam kijelzo */
+  .money-display {
+    @apply font-mono text-2xl font-bold tracking-tight;
+  }
+
+  .money-positive {
+    @apply text-money-positive;
+  }
+
+  .money-negative {
+    @apply text-money-negative;
+  }
+
+  /* Dontesi gomb */
+  .decision-button {
+    @apply game-card cursor-pointer transition-all duration-200
+           hover:border-brand-400/50 hover:shadow-brand-500/20 hover:shadow-xl
+           active:scale-[0.98];
+  }
+
+  /* Kartya tipusok szinei */
+  .card-type-decision {
+    @apply border-l-4 border-l-card-decision;
+  }
+
+  .card-type-investment {
+    @apply border-l-4 border-l-card-investment;
+  }
+
+  .card-type-fate {
+    @apply border-l-4 border-l-card-fate;
+  }
+
+  .card-type-knowledge {
+    @apply border-l-4 border-l-card-knowledge;
+  }
+
+  .card-type-epilogue {
+    @apply border-l-4 border-l-card-epilogue;
+  }
+
+  /* Progress bar */
+  .round-progress {
+    @apply h-1.5 rounded-full bg-white/10 overflow-hidden;
+  }
+
+  .round-progress-fill {
+    @apply h-full rounded-full bg-brand-500 transition-all duration-500 ease-out;
+  }
+
+  /* Animalt szam valtozas */
+  .balance-change {
+    @apply inline-block font-mono font-bold text-sm
+           animate-money-up;
+  }
+
+  .balance-change-negative {
+    @apply text-money-negative animate-money-down;
+  }
+
+  .balance-change-positive {
+    @apply text-money-positive animate-money-up;
+  }
+}
+
+@layer utilities {
+  /* Safe area insets mobilra */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Szoveg truncate tobb sorhoz */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
