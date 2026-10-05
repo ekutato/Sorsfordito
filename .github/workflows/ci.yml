@@ -30,6 +30,8 @@ jobs:
     name: Android - debug APK
     runs-on: ubuntu-latest
     needs: web
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,3 +54,23 @@ jobs:
           name: sorsfordito-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+      - name: APK atnevezese
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk sorsfordito-teszt.apk
+      # Allando letoltesi oldal: https://github.com/ekutato/Sorsfordito/releases/tag/teszt-apk
+      - name: Teszt APK kiadas frissitese
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: teszt-apk
+          name: Teszt APK (legfrissebb)
+          prerelease: true
+          make_latest: false
+          target_commitish: ${{ github.sha }}
+          files: sorsfordito-teszt.apk
+          body: |
+            Automatikusan frissülő tesztváltozat (debug, aláíratlan).
+            Ág: ${{ github.ref_name }} · commit: ${{ github.sha }}
+
+            Telepítés: töltsd le lent az Assets alatt a sorsfordito-teszt.apk fájlt a telefonodra,
+            nyisd meg, és engedélyezd a telepítést ebből a forrásból. Ha a Play Protect
+            figyelmeztet, válaszd a "Telepítés mindenképp" lehetőséget.
