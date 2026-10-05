@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createTable, reduceTable, generateRoomCode, MAX_PLAYERS, type TableState } from '@/engine/table/state';
+import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, type TableState } from '@/engine/table/state';
 import { moveOnBoard, BOARD_SIZE, BOARD } from '@/data/board';
 
 function lobbyWith(n: number): TableState {
-  let s = createTable('ABCD', 'host', 'Host');
+  let s = createTable('ABCD', 'host', 'Host', DEFAULT_CONFIG, 12345);
   for (let i = 1; i < n; i++) s = reduceTable(s, { type: 'join', playerId: `p${i}`, name: `P${i}`, remote: i % 2 === 0 });
   return s;
 }
@@ -70,5 +70,33 @@ describe('asztali állapot', () => {
 
   it('a szobakód 4 betű, félreolvasható karakterek nélkül', () => {
     for (let i = 0; i < 50; i++) expect(generateRoomCode()).toMatch(/^[ABCDEFGHJKLMNPRSTUVZ]{4}$/);
+  });
+
+  it('a seed nem jut el a kliensekhez, és két szoba seedje eltér', () => {
+    const a = createTable('ABCD', 'host', 'Host');
+    const b = createTable('ABCD', 'host', 'Host');
+    expect(a.seed).not.toBe(b.seed);
+    expect(publicView(a).seed).toBe(0);
+  });
+
+  it('fizikai kockánál csak 1-6 közötti egész érték fogadható el', () => {
+    let s = reduceTable(lobbyWith(1), { type: 'configure', by: 'host', config: { diceSource: 'physical' } });
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    expect(reduceTable(s, { type: 'roll', playerId: 'host', value: 7 })).toBe(s);
+    expect(reduceTable(s, { type: 'roll', playerId: 'host', value: 2.5 })).toBe(s);
+    expect(reduceTable(s, { type: 'roll', playerId: 'host', value: 5 }).players[0].lastRoll).toBe(5);
+  });
+
+  it('az alkalmazás kockája egyenletes eloszlású (khi-négyzet, 6000 dobás)', () => {
+    const counts = [0, 0, 0, 0, 0, 0];
+    let s = reduceTable(createTable('EGYE', 'host', 'H', DEFAULT_CONFIG, 777), { type: 'start', by: 'host' });
+    for (let i = 0; i < 6000; i++) {
+      const r = reduceTable(s, { type: 'roll', playerId: 'host' });
+      counts[(r.players[0].lastRoll as number) - 1]++;
+      s = { ...s, rngCalls: r.rngCalls };
+    }
+    const chi = counts.reduce((acc, c) => acc + (c - 1000) ** 2 / 1000, 0);
+    // 5 szabadsági fok, 0,1%-os kritikus érték: 20,52
+    expect(chi).toBeLessThan(20.52);
   });
 });

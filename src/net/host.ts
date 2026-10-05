@@ -1,6 +1,6 @@
 // Host-oldali szoba: fogadja a kliensek akcióit, alkalmazza a hiteles állapotra,
 // és mindenkinek kiküldi az új állapotot. Az állapotot helyben menti (folytatható).
-import { createTable, reduceTable, PROTOCOL_VERSION, type TableAction, type TableState } from '@/engine/table/state';
+import { createTable, reduceTable, publicView, PROTOCOL_VERSION, type TableAction, type TableState } from '@/engine/table/state';
 import { parseClientMessage, bindActionToPlayer, isCompatible, type HostMessage } from './protocol';
 import { openHost, type HostTransport } from './transport';
 
@@ -23,7 +23,7 @@ export async function startHostRoom(
   const publish = () => {
     saveState(state);
     onState(state);
-    const msg: HostMessage = { v: PROTOCOL_VERSION, t: 'state', state };
+    const msg: HostMessage = { v: PROTOCOL_VERSION, t: 'state', state: publicView(state) };
     transport?.broadcast(msg);
   };
   const apply = (a: TableAction) => { state = reduceTable(state, a); publish(); };

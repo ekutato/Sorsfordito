@@ -106,7 +106,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
           '5 év után 0% adó a teljes hozamra',
         ],
         correctIndex: 2,
-        explanation: 'A TBSZ 5 év után teljesen adómentes hozamot biztosít (normálisan 15% SZJA lenne). Ez Magyarország legnagyobb befektetési adóelőnye!',
+        explanation: 'A TBSZ 5 év után teljesen adómentes hozamot biztosít (normál esetben 15% SZJA + 13% szocho terhelné). Ez Magyarország legnagyobb befektetési adóelőnye!',
       },
       {
         question: 'Melyik állítás IGAZ az ETF-ről (tőzsdén kereskedett alap)?',

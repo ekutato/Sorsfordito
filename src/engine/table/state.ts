@@ -1,6 +1,6 @@
 // Asztali (többjátékos) játékállapot - a host gépén fut, ez a hiteles állapot.
 // Tiszta függvények: (állapot, akció) -> új állapot. Hálózat és UI nélkül tesztelhető.
-import { createRng, rollDie, seedFromString } from '@/engine/rng';
+import { createRng, rollDie } from '@/engine/rng';
 import { moveOnBoard, BOARD } from '@/data/board';
 import type { FieldType } from '@/data/board';
 import type { RulesetId } from '@/rulesets';
@@ -21,6 +21,11 @@ export interface TableConfig {
   /** Fordulóidő másodpercben (0 = nincs) */
   turnSeconds: number;
   ruleset: RulesetId;
+  /**
+   * A dobás forrása: 'app' = a host gépén kriptográfiai véletlen,
+   * 'physical' = valódi kocka, a játékos beírja / a Bluetooth-kocka küldi az eredményt.
+   */
+  diceSource: 'app' | 'physical';
 }
 
 export interface TablePlayer {
@@ -61,17 +66,28 @@ export type TableAction =
   | { type: 'setProfile'; playerId: string; profileId: string; goal?: string }
   | { type: 'configure'; by: string; config: Partial<TableConfig> }
   | { type: 'start'; by: string; sharedFateId?: string }
-  | { type: 'roll'; playerId: string }
+  | { type: 'roll'; playerId: string; /** Csak fizikai kockánál: a dobott érték (1-6) */ value?: number }
   | { type: 'finishTurn'; playerId: string }
   | { type: 'pause'; by: string }
   | { type: 'resume'; by: string }
   | { type: 'skipRound'; by: string; sharedFateId?: string };
 
-export const DEFAULT_CONFIG: TableConfig = { mode: 'sprint', totalRounds: 12, monthsPerRound: 1, turnSeconds: 0, ruleset: 'sorsfordito-alap' };
+export const DEFAULT_CONFIG: TableConfig = { mode: 'sprint', totalRounds: 12, monthsPerRound: 1, turnSeconds: 0, ruleset: 'sorsfordito-alap', diceSource: 'app' };
 
-export function createTable(roomCode: string, hostId: string, hostName: string, config: TableConfig = DEFAULT_CONFIG): TableState {
+/** 32 bites kezdőérték a böngésző kriptográfiai véletlenforrásából (WebCrypto) */
+export function secureSeed(): number {
+  try {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0];
+  } catch {
+    return Math.floor(Math.random() * 2 ** 32) >>> 0;
+  }
+}
+
+export function createTable(roomCode: string, hostId: string, hostName: string, config: TableConfig = DEFAULT_CONFIG, seed: number = secureSeed()): TableState {
   const base: TableState = {
-    v: PROTOCOL_VERSION, roomCode, seed: seedFromString(roomCode + hostId), rngCalls: 0, hostId,
+    v: PROTOCOL_VERSION, roomCode, seed, rngCalls: 0, hostId,
     phase: 'lobby', config, round: 0, players: [], log: [],
   };
   return reduceTable(base, { type: 'join', playerId: hostId, name: hostName, remote: false });
@@ -127,7 +143,13 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       if (s.phase !== 'playing') return s;
       const p = s.players.find((x) => x.id === a.playerId);
       if (!p || p.done || p.lastRoll !== undefined) return s;
-      const { roll, rngCalls } = nextRoll(s);
+      let roll: number, rngCalls = s.rngCalls;
+      if (s.config.diceSource === 'physical') {
+        if (!Number.isInteger(a.value) || (a.value as number) < 1 || (a.value as number) > 6) return s;
+        roll = a.value as number;
+      } else {
+        ({ roll, rngCalls } = nextRoll(s));
+      }
       const moved = moveOnBoard(p.position, roll);
       return {
         ...s, rngCalls,
@@ -156,6 +178,14 @@ export function closeRoundIfDone(s: TableState, nextSharedFateId?: string): Tabl
   if (active.length === 0 || !active.every((p) => p.done)) return s;
   if (s.round >= s.config.totalRounds) return { ...s, phase: 'finished' };
   return startRound(s, nextSharedFateId);
+}
+
+/**
+ * A klienseknek kiküldött nézet: a seed és a hívásszámláló a hostnál marad,
+ * különben a játékosok előre kiszámolhatnák a következő dobásokat.
+ */
+export function publicView(s: TableState): TableState {
+  return { ...s, seed: 0, rngCalls: 0 };
 }
 
 /** Szobakód: 4 betű, összetéveszthető karakterek nélkül */
