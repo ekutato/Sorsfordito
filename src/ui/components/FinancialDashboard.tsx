@@ -5,7 +5,7 @@ import type { FinancialSheet } from '@/types/financial';
 import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
 import { useGameStore } from '@/store/game-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
-import { WellbeingStrip } from './WellbeingStrip';
+import { WellbeingStrip, WellbeingMini } from './WellbeingStrip';
 
 interface Props {
   sheet: FinancialSheet;
@@ -49,6 +49,7 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
             )}
           </div>
         </div>
+        <WellbeingMini sheet={sheet} />
       </div>
     );
   }
