@@ -6,3 +6,9 @@ out/
 \!START
 *.log
 .vercel/
+
+# next-pwa által buildkor generált service worker
+public/sw.js
+public/workbox-*.js
+public/sw.js.map
+public/workbox-*.js.map
