@@ -102,6 +102,7 @@ export function ColorPicker({ table, playerId, onPick }: { table: TableState; pl
 export function LateJoin() {
   const { table, setProfile, setColor, playerId, leave } = useTableStore();
   if (!table) return null;
+  const hostProfile = PRESETS_BY_DIFFICULTY.find((x) => x.id === table.players.find((p) => p.id === table.hostId)?.profileId);
   return (
     <div className="flex-1 flex flex-col px-5 py-6 space-y-5">
       <div>
@@ -116,7 +117,14 @@ export function LateJoin() {
       </section>
       <section className="space-y-2">
         <h2 className="text-lg font-bold">A karaktered</h2>
-        <CharacterPicker onPick={setProfile} />
+        {table.config.sameProfile && hostProfile ? (
+          <button onClick={() => setProfile(hostProfile.id)} className="w-full h-14 rounded-2xl text-lg font-extrabold pulse-cta" style={{ background: '#F2A33A', color: '#0E1525' }}>
+            Beszállok: {hostProfile.avatar} {hostProfile.name}
+          </button>
+        ) : (
+          <CharacterPicker onPick={setProfile} />
+        )}
+        {table.config.sameProfile && <p className="text-sm text-[var(--color-text-muted)]">Ennél az asztalnál mindenki ugyanazzal a karakterrel játszik.</p>}
       </section>
       <ConnectionBanner details />
       <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
@@ -198,8 +206,19 @@ export function TableLobby() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-bold">A karaktered</h2>
-        <CharacterPicker selected={me?.profileId} onPick={setProfile} />
+        <h2 className="text-lg font-bold">{table.config.sameProfile ? 'Közös karakter' : 'A karaktered'}</h2>
+        {isHost && (
+          <label className="flex items-start gap-3 rounded-xl px-3 py-2 bg-white/5">
+            <input type="checkbox" className="mt-1 w-5 h-5" checked={!!table.config.sameProfile}
+              onChange={(e) => configure({ sameProfile: e.target.checked })} />
+            <span className="text-sm"><b>Mindenki ugyanazzal a karakterrel</b> - egyenlő verseny: te választasz, és mindenkire érvényes.</span>
+          </label>
+        )}
+        {table.config.sameProfile && !isHost ? (
+          <p className="text-base">{me?.profileId ? `A játékvezető választása: ${PRESETS_BY_DIFFICULTY.find((x) => x.id === me.profileId)?.avatar ?? ''} ${PRESETS_BY_DIFFICULTY.find((x) => x.id === me.profileId)?.name ?? ''}` : 'A karaktert a játékvezető választja…'}</p>
+        ) : (
+          <CharacterPicker selected={me?.profileId} onPick={setProfile} />
+        )}
       </section>
 
       {isHost ? (

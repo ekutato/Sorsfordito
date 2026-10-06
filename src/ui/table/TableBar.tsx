@@ -3,7 +3,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { useTableStore, inviteLink } from '@/store/table-store';
-import { isCatchingUp, displayColor } from '@/engine/table/state';
+import { isCatchingUp, displayColor, rankPlayers } from '@/engine/table/state';
+import { PRESETS_BY_DIFFICULTY } from '@/data/character-presets';
 import { formatHUF } from '@/engine/financial-calculator';
 import type { TableState } from '@/engine/table/state';
 import { useDiag, diagText } from '@/net/diag';
@@ -148,30 +149,36 @@ export function ConnectionDetails({ initiallyOpen = false }: { initiallyOpen?: b
 
 /** Ranglista: nem csak a pénz - mindhárom index látszik */
 export function Leaderboard({ table, final }: { table: TableState; final?: boolean }) {
-  const rows = table.players.filter((p) => p.report);
+  const rows = rankPlayers(table.players);
   const best = (f: (r: NonNullable<(typeof rows)[number]['report']>) => number) =>
     rows.length ? rows.reduce((a, b) => (f(b.report!) > f(a.report!) ? b : a)) : undefined;
-  const richest = best((r) => r.netWorth);
   const balanced = best((r) => r.wellbeing);
   const safest = best((r) => r.safety);
+  const avatar = (id?: string) => PRESETS_BY_DIFFICULTY.find((x) => x.id === id)?.avatar ?? '';
   return (
     <div className="space-y-2">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-xs text-[var(--color-text-muted)]"><th>Játékos</th><th>Vagyon</th><th>Jóllét</th><th>Bizt. kör</th></tr></thead>
+        <thead><tr className="text-left text-xs text-[var(--color-text-muted)]"><th>#</th><th>Játékos</th><th>Függetl.</th><th>Bizt. kör</th><th>Jóllét</th><th>Vagyon</th></tr></thead>
         <tbody>
-          {[...rows].sort((a, b) => b.report!.netWorth - a.report!.netWorth).map((p) => (
+          {rows.map((p, i) => (
             <tr key={p.id} className="border-t border-white/5">
-              <td className="py-1"><span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style={{ background: displayColor(p) }} />{p.name}{p.lateJoinRound !== undefined ? <span className="text-xs text-[var(--color-text-muted)]"> (később csatlakozott)</span> : null}</td>
-              <td className="font-mono">{formatHUF(p.report!.netWorth)}</td>
-              <td>{p.report!.wellbeing}/100</td>
+              <td className="py-1 pr-1 font-bold">{i + 1}.</td>
+              <td className="py-1 whitespace-nowrap max-w-[7.5rem] truncate"><span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style={{ background: displayColor(p) }} />{avatar(p.profileId)} {p.name}{p.lateJoinRound !== undefined ? <span className="text-xs text-[var(--color-text-muted)]"> (később csatlakozott)</span> : null}</td>
+              <td className="font-bold">{p.report!.freedom}%</td>
               <td>{p.report!.safety}%</td>
+              <td>{p.report!.wellbeing}/100</td>
+              <td className="font-mono text-xs">{formatHUF(p.report!.netWorth)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      <p className="text-xs text-[var(--color-text-muted)]">
+        Rangsor: pénzügyi függetlenség (a passzív jövedelem a havi kiadás hány százalékát fedezi), holtversenyben a biztonsági kör, majd a jóllét.
+        {table.config.sameProfile ? ' Mindenki ugyanazzal a karakterrel indult.' : ' A vagyon csak tájékoztató: a karakterek különböző helyzetből indulnak.'}
+      </p>
       {final && rows.length > 0 && (
         <ul className="text-sm space-y-1">
-          {richest && <li>💰 Legnagyobb vagyon: <b>{richest.name}</b></li>}
+          <li>🗝️ Legközelebb a pénzügyi függetlenséghez: <b>{rows[0].name}</b></li>
           {balanced && <li>🌿 Legkiegyensúlyozottabb: <b>{balanced.name}</b></li>}
           {safest && <li>🛡️ Legbiztosabb tartalék: <b>{safest.name}</b></li>}
         </ul>

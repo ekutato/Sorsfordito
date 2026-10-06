@@ -27,6 +27,8 @@ export interface TableConfig {
    * 'physical' = valódi kocka, a játékos beírja / a Bluetooth-kocka küldi az eredményt.
    */
   diceSource: 'app' | 'physical';
+  /** Egyenlő verseny: mindenki a host által választott karakterrel játszik */
+  sameProfile?: boolean;
   /** Időtáv: ebből jön a fordulók száma és a hónapok (a saját telefonos játék ezt használja) */
   timeScale?: TimeScale;
   /** A host játékmesteri szabályai - minden játékos ugyanezzel indul (egyenlő esélyek) */
@@ -168,6 +170,8 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       const name = a.name.trim().slice(0, 24) || `Játékos ${s.players.length + 1}`;
       const player: TablePlayer = {
         id: a.playerId, name, color: '',
+        // Közös karakteres lobby: az érkező is a host karakterét kapja
+        ...(!late && s.config.sameProfile ? { profileId: s.players.find((x) => x.id === s.hostId)?.profileId } : {}),
         connected: true, remote: a.remote, position: 0, done: false,
         ...(late ? { lateJoinRound: s.round } : {}),
       };
@@ -180,6 +184,17 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       return { ...s, players: mapPlayer(s, a.playerId, (p) => ({ ...p, connected: true })) };
     case 'setProfile': {
       const p = s.players.find((x) => x.id === a.playerId);
+      if (s.config.sameProfile) {
+        const hostProfile = s.players.find((x) => x.id === s.hostId)?.profileId;
+        if (s.phase === 'lobby') {
+          // Közös karakter: csak a host választ, és mindenkire érvényes
+          if (!isHost(s, a.playerId)) return s;
+          return { ...s, players: s.players.map((x) => ({ ...x, profileId: a.profileId })) };
+        }
+        // Késői játékos közös karakteres asztalnál: a host karakterét kapja
+        if (!(p?.lateJoinRound !== undefined && !p.profileId) || !hostProfile) return s;
+        return { ...s, players: withFallbackColors(mapPlayer(s, p.id, (x) => ({ ...x, profileId: hostProfile }))) };
+      }
       // A lobbyban bárki válthat; játék közben csak a késői játékos választhat egyszer
       if (s.phase !== 'lobby' && !(p?.lateJoinRound !== undefined && !p.profileId)) return s;
       const players = mapPlayer(s, a.playerId, (x) => ({ ...x, profileId: a.profileId, goal: a.goal?.slice(0, 140) }));
@@ -194,9 +209,16 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       if (s.players.some((x) => x.id !== p.id && x.color === a.color)) return s;
       return { ...s, players: mapPlayer(s, p.id, (x) => ({ ...x, color: a.color })) };
     }
-    case 'configure':
+    case 'configure': {
       if (!isHost(s, a.by) || s.phase !== 'lobby') return s;
-      return { ...s, config: { ...s.config, ...a.config } };
+      const config = { ...s.config, ...a.config };
+      if (config.sameProfile && !s.config.sameProfile) {
+        // Bekapcsoláskor mindenki a host karakterét kapja (ha már választott)
+        const hostProfile = s.players.find((x) => x.id === s.hostId)?.profileId;
+        return { ...s, config, players: s.players.map((x) => ({ ...x, profileId: hostProfile })) };
+      }
+      return { ...s, config };
+    }
     case 'start':
       if (!isHost(s, a.by) || s.phase !== 'lobby' || s.players.length < 1) return s;
       return startRound({ ...s, phase: 'playing', players: withFallbackColors(s.players) }, a.sharedFateId);
@@ -246,6 +268,15 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       if (!isHost(s, a.by) || s.phase !== 'playing') return s;
       return s.round >= s.config.totalRounds ? { ...s, phase: 'finished' } : startRound(s, a.sharedFateId);
   }
+}
+
+/**
+ * Rangsor: a pénzügyi függetlenség (passzív jövedelem / kiadás) - ez a kiinduló vagyontól kevésbé függ,
+ * mint a nettó vagyon. Holtversenynél a biztonsági kör, majd a jóllét dönt.
+ */
+export function rankPlayers<T extends { report?: PlayerReport }>(players: T[]): T[] {
+  return players.filter((p) => p.report).sort((a, b) =>
+    b.report!.freedom - a.report!.freedom || b.report!.safety - a.report!.safety || b.report!.wellbeing - a.report!.wellbeing);
 }
 
 /** Későn csatlakozott, és még nem érte utol az asztali fordulót: nem tartja fel a többieket */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, PLAYER_COLORS, type TableState } from '@/engine/table/state';
+import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, PLAYER_COLORS, rankPlayers, type TableState } from '@/engine/table/state';
 import { moveOnBoard, BOARD_SIZE, BOARD, DISTRICTS, FIELD_LABELS, districtOf } from '@/data/board';
 
 function lobbyWith(n: number): TableState {
@@ -241,5 +241,41 @@ describe('színválasztás', () => {
     expect(s.players[1].color).toBe('');
     s = reduceTable(s, { type: 'setColor', playerId: 'late1', color: PLAYER_COLORS[4] });
     expect(s.players[1].color).toBe(PLAYER_COLORS[4]);
+  });
+});
+
+describe('rangsor és közös karakter', () => {
+  const rep = (freedom: number, safety: number, wellbeing: number, netWorth: number) =>
+    ({ finishedRound: 1, currentRound: 2, position: 0, balance: 0, netWorth, wellbeing, freedom, safety });
+
+  it('a pénzügyi függetlenség dönt, nem a vagyon; holtversenyben a biztonsági kör, majd a jóllét', () => {
+    const players = [
+      { id: 'gazdag', report: rep(5, 40, 60, 6_000_000) },
+      { id: 'fuggetlen', report: rep(30, 10, 50, 200_000) },
+      { id: 'tartalekos', report: rep(5, 80, 40, 100_000) },
+      { id: 'nincs' },
+    ];
+    expect(rankPlayers(players).map((p) => p.id)).toEqual(['fuggetlen', 'tartalekos', 'gazdag']);
+  });
+
+  it('közös karakter: csak a host választ, mindenkire érvényes, az érkező is megkapja', () => {
+    let s = lobbyWith(2);
+    s = reduceTable(s, { type: 'setProfile', playerId: 'host', profileId: 'career_start' });
+    s = reduceTable(s, { type: 'configure', by: 'host', config: { sameProfile: true } });
+    expect(s.players.every((p) => p.profileId === 'career_start')).toBe(true);
+    expect(reduceTable(s, { type: 'setProfile', playerId: 'p1', profileId: 'inheritance' }).players[1].profileId).toBe('career_start');
+    s = reduceTable(s, { type: 'setProfile', playerId: 'host', profileId: 'fresh_start' });
+    expect(s.players.every((p) => p.profileId === 'fresh_start')).toBe(true);
+    s = reduceTable(s, { type: 'join', playerId: 'p9', name: 'Új', remote: true });
+    expect(s.players.find((p) => p.id === 'p9')?.profileId).toBe('fresh_start');
+  });
+
+  it('közös karakter: a késői játékos a host karakterét kapja, bármit kér', () => {
+    let s = reduceTable(lobbyWith(1), { type: 'setProfile', playerId: 'host', profileId: 'career_start' });
+    s = reduceTable(s, { type: 'configure', by: 'host', config: { sameProfile: true } });
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    s = reduceTable(s, { type: 'join', playerId: 'late1', name: 'Késő', remote: true });
+    s = reduceTable(s, { type: 'setProfile', playerId: 'late1', profileId: 'inheritance' });
+    expect(s.players[1].profileId).toBe('career_start');
   });
 });
