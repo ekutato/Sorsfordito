@@ -1108,7 +1108,7 @@ function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules }: {
     <section ref={ref} className="space-y-3 scroll-mt-24" aria-label="Tábla">
       <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined}
         from={rolledNow ? b.from : undefined} reveal={rolledNow ? { field: field.type, hasCard } : undefined}
-        fitViewport onArrived={() => setArrived(true)} pawnLabel={playerName} />
+        fitViewport onArrived={() => setArrived(true)} onRevealClick={continueBoard} pawnLabel={playerName} />
       <div className="sticky bottom-3 z-10 space-y-2">
         {!rolledNow ? (
           <DiceControls rules={rules} rolls={b.rolls ?? []} />

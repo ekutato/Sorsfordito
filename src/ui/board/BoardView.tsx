@@ -40,6 +40,8 @@ interface FullProps {
   fitViewport?: boolean;
   /** A bábu megérkezett a célmezőre */
   onArrived?: () => void;
+  /** A kiemelkedő kártyára koppintva (ugyanaz, mint a "Felfordítom" / "Tovább" gomb) */
+  onRevealClick?: () => void;
   pawnColor?: string;
   pawnLabel?: string;
 }
@@ -48,7 +50,7 @@ interface FullProps {
 const RESERVED_H = 250;
 
 /** A teljes városi tábla - dobáskor kinyílik, a bábu mezőről mezőre lép */
-export function BoardFull({ position, highlight, from, reveal, fitViewport, onArrived, pawnColor = '#F2A33A', pawnLabel = 'Te' }: FullProps) {
+export function BoardFull({ position, highlight, from, reveal, fitViewport, onArrived, onRevealClick, pawnColor = '#F2A33A', pawnLabel = 'Te' }: FullProps) {
   const ref = useRef<HTMLDivElement>(null);
   const L = layout();
   const [box, setBox] = useState({ w: BASE_W, h: 0 });
@@ -85,7 +87,7 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
   const target = L.tiles[position % BOARD_SIZE];
   const pawnKeys = steps ? [pawnAt(from!), ...path.map(pawnAt)] : [pawnAt(position)];
   const revealSt = reveal ? FIELD_STYLE[reveal.field] : undefined;
-  const cardW = 230, cardH = 168;
+  const cardW = 230, cardH = 186;
   // A kártya ne takarja a megtett utat: felső félnél a célsor alá, alsó félnél fölé kerül
   const cardTop = target.y < L.height / 2
     ? Math.min(L.height - cardH - 8, target.y + TILE + 22)
@@ -97,7 +99,7 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
         <div
           className="absolute top-0 origin-top-left rounded-2xl overflow-hidden"
           style={{ left: offsetX, width: BASE_W, height: L.height, transform: `scale(${scale})`, background: BOARD_PAPER }}
-          role="img"
+          role="group"
           aria-label={`Tábla, a bábud a(z) ${position + 1}. mezőn áll: ${FIELD_LABELS[BOARD[position].type]}${steps ? `, ${steps} mezőt lépett` : ''}`}
         >
           {L.rows.map((d) => (
@@ -149,9 +151,13 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
 
           {/* A célmezőből kiemelkedő kártya */}
           {reveal && revealSt && arrived && (
-            <motion.div
-              className="absolute z-20 rounded-2xl overflow-hidden flex flex-col"
+            <motion.button
+              type="button"
+              onClick={onRevealClick}
+              aria-label={reveal.hasCard ? `${FIELD_LABELS[reveal.field]} kártya - koppints a felfordításhoz` : `${FIELD_LABELS[reveal.field]} mező - koppints a továbblépéshez`}
+              className="absolute z-20 rounded-2xl overflow-hidden flex flex-col text-left cursor-pointer"
               style={{ background: '#FBF7EE', boxShadow: '0 12px 30px rgba(0,0,0,.45)', border: `3px solid ${revealSt.color}` }}
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               initial={{ left: target.x, top: target.y, width: TILE, height: TILE, opacity: 0.4 }}
               animate={{ left: (BASE_W - cardW) / 2, top: cardTop, width: cardW, height: cardH, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 160, damping: 18, delay: 0.25 }}
@@ -165,8 +171,13 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
                   {reveal.hasCard ? `${FIELD_LABELS[reveal.field]} kártyát húztál` : `${FIELD_LABELS[reveal.field]} mezőre léptél`}
                 </p>
                 <p className="text-[13px] leading-snug mt-1" style={{ color: '#4A3F2C' }}>{FIELD_EXPLAIN[reveal.field]}</p>
+                {onRevealClick && (
+                  <p className="text-xs font-bold mt-1.5" style={{ color: '#8A4B0B' }}>
+                    {reveal.hasCard ? 'Koppints rá: felfordul ↻' : 'Koppints rá: tovább →'}
+                  </p>
+                )}
               </div>
-            </motion.div>
+            </motion.button>
           )}
         </div>
       </div>
