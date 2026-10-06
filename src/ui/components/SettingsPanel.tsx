@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { useState, type ReactNode } from 'react';
 import { useSettingsStore, gameRules } from '@/store/settings-store';
 import { useGameStore } from '@/store/game-store';
@@ -53,7 +54,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const game = useGameStore((st) => st.game);
   const current = game ? gameRules(game.config) : undefined;
   const patch = (p: Partial<GameRules>) => s.set(p);
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={onClose}>
       <div role="dialog" aria-label="Játékmesteri beállítások" onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#172036] border border-white/10 p-5 safe-bottom">
@@ -100,7 +101,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
         <div className="pt-4 text-center"><VersionTag /></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

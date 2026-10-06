@@ -4,6 +4,7 @@ import { createRng, rollDie } from '@/engine/rng';
 import { moveOnBoard, BOARD } from '@/data/board';
 import type { FieldType } from '@/data/board';
 import type { RulesetId } from '@/rulesets';
+import type { GameRules, TimeScale } from '@/types/game';
 
 export const PROTOCOL_VERSION = 1;
 export const MAX_PLAYERS = 10;
@@ -26,6 +27,29 @@ export interface TableConfig {
    * 'physical' = valódi kocka, a játékos beírja / a Bluetooth-kocka küldi az eredményt.
    */
   diceSource: 'app' | 'physical';
+  /** Időtáv: ebből jön a fordulók száma és a hónapok (a saját telefonos játék ezt használja) */
+  timeScale?: TimeScale;
+  /** A host játékmesteri szabályai - minden játékos ugyanezzel indul (egyenlő esélyek) */
+  rules?: GameRules;
+}
+
+/** Amit a játékos telefonja a saját játékáról jelent (a ranglistához és a táblához) */
+export interface PlayerReport {
+  /** Hányadik fordulót fejezte be (0 = még egyet sem) */
+  finishedRound: number;
+  /** Melyik fordulóban tart most */
+  currentRound: number;
+  position: number;
+  balance: number;
+  netWorth: number;
+  /** Jólléti index 0-100 */
+  wellbeing: number;
+  /** Pénzügyi szabadság % (passzív jövedelem / kiadás) */
+  freedom: number;
+  /** Biztonsági kör % */
+  safety: number;
+  /** Véget ért-e a játéka (epilógus) */
+  ended?: boolean;
 }
 
 export interface TablePlayer {
@@ -42,6 +66,8 @@ export interface TablePlayer {
   landedOn?: FieldType;
   /** Ebben a fordulóban végzett-e */
   done: boolean;
+  /** A saját játékának legutóbbi jelentése */
+  report?: PlayerReport;
 }
 
 export interface TableState {
@@ -68,6 +94,7 @@ export type TableAction =
   | { type: 'start'; by: string; sharedFateId?: string }
   | { type: 'roll'; playerId: string; /** Csak fizikai kockánál: a dobott érték (1-6) */ value?: number }
   | { type: 'finishTurn'; playerId: string }
+  | { type: 'report'; playerId: string; report: PlayerReport }
   | { type: 'pause'; by: string }
   | { type: 'resume'; by: string }
   | { type: 'skipRound'; by: string; sharedFateId?: string };
@@ -162,6 +189,21 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       const next = { ...s, players: mapPlayer(s, a.playerId, (p) => (p.lastRoll !== undefined ? { ...p, done: true } : p)) };
       return closeRoundIfDone(next);
     }
+    case 'report': {
+      if (s.phase !== 'playing' && s.phase !== 'paused') return s;
+      if (!s.players.some((p) => p.id === a.playerId)) return s;
+      const r = sanitizeReport(a.report);
+      if (!r) return s;
+      const next = {
+        ...s,
+        players: mapPlayer(s, a.playerId, (p) => ({
+          ...p, report: r, position: r.position % BOARD.length,
+          // Kész a fordulóval, ha a saját játékában lezárta a mostani asztali fordulót
+          done: r.ended === true || r.finishedRound >= s.round,
+        })),
+      };
+      return s.phase === 'playing' ? closeRoundIfDone(next) : next;
+    }
     case 'pause':
       return isHost(s, a.by) && s.phase === 'playing' ? { ...s, phase: 'paused' } : s;
     case 'resume':
@@ -178,6 +220,28 @@ export function closeRoundIfDone(s: TableState, nextSharedFateId?: string): Tabl
   if (active.length === 0 || !active.every((p) => p.done)) return s;
   if (s.round >= s.config.totalRounds) return { ...s, phase: 'finished' };
   return startRound(s, nextSharedFateId);
+}
+
+const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
+
+/** A kliens jelentésének ellenőrzése (a host nem bízik vakon a számokban) */
+export function sanitizeReport(r: unknown): PlayerReport | null {
+  if (!r || typeof r !== 'object') return null;
+  const o = r as Record<string, unknown>;
+  const keys = ['finishedRound', 'currentRound', 'position', 'balance', 'netWorth', 'wellbeing', 'freedom', 'safety'] as const;
+  if (!keys.every((k) => finite(o[k]))) return null;
+  const int = (k: (typeof keys)[number], lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(o[k] as number)));
+  return {
+    finishedRound: int('finishedRound', 0, 1000),
+    currentRound: int('currentRound', 0, 1000),
+    position: int('position', 0, BOARD.length - 1),
+    balance: int('balance', -1e11, 1e11),
+    netWorth: int('netWorth', -1e11, 1e11),
+    wellbeing: int('wellbeing', 0, 100),
+    freedom: int('freedom', 0, 10000),
+    safety: int('safety', 0, 100),
+    ended: o.ended === true,
+  };
 }
 
 /**

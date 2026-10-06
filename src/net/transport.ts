@@ -49,7 +49,57 @@ async function createPeer(id?: string): Promise<PeerType> {
   return id ? new Peer(id, opts) : new Peer(opts);
 }
 
+/**
+ * Helyi tesztcsatorna (?halo=helyi): ugyanabban a böngészőben, több lapon,
+ * internet és jelzőszerver nélkül (BroadcastChannel). Fejlesztéshez és automatikus teszthez.
+ */
+export function isLocalNet(): boolean {
+  try { return new URLSearchParams(window.location.search).get('halo') === 'helyi'; } catch { return false; }
+}
+
+type LocalMsg = { kind: 'open' | 'data' | 'close'; from: string; to: string; data?: unknown };
+
+function openLocalHost(roomCode: string, h: HostHandlers): HostTransport {
+  const ch = new BroadcastChannel(`sorsfordito-${roomCode}`);
+  const conns = new Set<string>();
+  ch.onmessage = (e: MessageEvent<LocalMsg>) => {
+    const m = e.data;
+    if (m.to !== 'host') return;
+    if (m.kind === 'open') { conns.add(m.from); ch.postMessage({ kind: 'open', from: 'host', to: m.from } satisfies LocalMsg); h.onConnect(m.from); }
+    else if (m.kind === 'data' && conns.has(m.from)) h.onMessage(m.from, m.data);
+    else if (m.kind === 'close') { conns.delete(m.from); h.onDisconnect(m.from); }
+  };
+  setTimeout(() => h.onOpen(), 0);
+  return {
+    sendTo: (id, msg) => ch.postMessage({ kind: 'data', from: 'host', to: id, data: msg } satisfies LocalMsg),
+    broadcast: (msg) => conns.forEach((id) => ch.postMessage({ kind: 'data', from: 'host', to: id, data: msg } satisfies LocalMsg)),
+    close: () => { conns.forEach((id) => ch.postMessage({ kind: 'close', from: 'host', to: id } satisfies LocalMsg)); ch.close(); },
+  };
+}
+
+function joinLocalHost(roomCode: string, h: ClientHandlers): Transport {
+  const ch = new BroadcastChannel(`sorsfordito-${roomCode}`);
+  const me = `c-${Math.random().toString(36).slice(2, 10)}`;
+  let open = false;
+  ch.onmessage = (e: MessageEvent<LocalMsg>) => {
+    const m = e.data;
+    if (m.to !== me) return;
+    if (m.kind === 'open' && !open) { open = true; h.onOpen(); }
+    else if (m.kind === 'data') h.onMessage(m.data);
+    else if (m.kind === 'close') h.onClose();
+  };
+  // A host lehet, hogy még nem figyel: néhányszor újrapróbáljuk
+  let tries = 0;
+  const knock = () => { if (open || tries++ > 20) return; ch.postMessage({ kind: 'open', from: me, to: 'host' } satisfies LocalMsg); setTimeout(knock, 300); };
+  knock();
+  return {
+    send: (msg) => ch.postMessage({ kind: 'data', from: me, to: 'host', data: msg } satisfies LocalMsg),
+    close: () => { ch.postMessage({ kind: 'close', from: me, to: 'host' } satisfies LocalMsg); ch.close(); },
+  };
+}
+
 export async function openHost(roomCode: string, h: HostHandlers): Promise<HostTransport> {
+  if (isLocalNet()) return openLocalHost(roomCode, h);
   const peer = await createPeer(hostPeerId(roomCode));
   const conns = new Map<string, DataConnection>();
   peer.on('open', () => h.onOpen());
@@ -74,6 +124,7 @@ export interface ClientHandlers {
 }
 
 export async function joinHost(roomCode: string, h: ClientHandlers): Promise<Transport> {
+  if (isLocalNet()) return joinLocalHost(roomCode, h);
   const peer = await createPeer();
   let conn: DataConnection | undefined;
   peer.on('open', () => {

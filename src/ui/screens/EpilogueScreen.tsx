@@ -9,10 +9,14 @@ import { LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import type { LifeSituationId } from '@/types/game';
 
 import { gameRules } from '@/store/settings-store';
+import { useTableStore } from '@/store/table-store';
+import { Leaderboard } from '@/ui/table/TableBar';
 
 export function EpilogueScreen() {
   const game = useGameStore((s) => s.game);
   const resetGame = useGameStore((s) => s.resetGame);
+  const table = useTableStore((s) => s.table);
+  const leaveTable = useTableStore((s) => s.leave);
   const [shareState, setShareState] = useState<'idle' | 'generating' | 'done'>('idle');
 
   if (!game) return null;
@@ -201,6 +205,13 @@ export function EpilogueScreen() {
 
   return (
     <div className="flex flex-col min-h-screen p-6">
+      {game.config.table && table && (
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2">
+          <h2 className="text-lg font-bold">Az asztal eredménye{table.phase !== 'finished' ? ' (még játszanak)' : ''}</h2>
+          <Leaderboard table={table} final />
+          <button onClick={() => { leaveTable(); resetGame(); }} className="w-full h-11 rounded-xl text-sm font-semibold bg-white/10">Kilépés az asztalról</button>
+        </div>
+      )}
       {gameRules(game.config).testMode && (
         <div role="note" className="mb-4 rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-200">
           Tesztjáték - tesztmódban (kézi beállításokkal) játszott eredmény

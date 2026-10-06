@@ -263,8 +263,8 @@
       "value": 13.14,
       "unit": "% THM",
       "asOf": "2026-08",
-      "verified": false,
-      "source": "MNB kamatstatisztika, 2026. augusztus: ÁRUHITELEK átlagos THM-je (autóhitelre külön adat nincs - játékvezetői döntés kell)",
+      "verified": true,
+      "source": "MNB kamatstatisztika, 2026. augusztus: áruhitelek átlagos THM-je - autóhitel-közelítésként, játékvezetői döntés (2026.10.06.)",
       "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf"
     },
     "diakhitel.dh1Rate": {

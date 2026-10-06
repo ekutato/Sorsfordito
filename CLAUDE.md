@@ -45,7 +45,7 @@
 | M2 | Játékmotor | ⚠️ 75% | 3 karakter döntésfája kész, értékelő motor részleges |
 | M3 | Frontend | ⚠️ 85% | Fő képernyők kész, hírfolyam nézet hiányzik |
 | M4 | Tesztelés | ⚠️ 10% | Vitest elindult (`npm test`): jólléti index, szabálycsomag, élő adatcsomag |
-| M5 | Bővítés | ⚠️ 30% | 3 karakter + Maraton/Ultra kész, multiplayer nincs |
+| M5 | Bővítés | ⚠️ 50% | 3 karakter + Maraton/Ultra kész; asztali többjátékos mód (lobby, közös körzárás, ranglista) első változat |
 | M6 | Launch | ❌ 0% | Nem kezdődött |
 
 Részletek: `.claude/milestones/M0.md` – `M6.md`
@@ -131,6 +131,15 @@ M6:                                          ████████
 - `src/store/board-actions.ts` — `rollBoard()` (kriptográfiai kocka), `continueBoard()`, `resolveFieldCard()`; állapot: `GameState.board`
 - `src/ui/board/` — `BoardFull` (dobáskor nagy tábla), `BoardStrip` (sáv a kör többi részére), `DiceButton`, `FieldCardView`
 - Menet: kör eleje → dobás → célmező kiemelve → (mezőkártya) → a kör megszokott fázisai
+
+### Asztali (többjátékos) mód (2026-10)
+- Mindenki a saját telefonján a saját (táblás) játékát játssza; a szobát nyitó telefon az "asztal" (host).
+- `src/engine/table/state.ts` — `reduceTable` (lobby, indítás, `report` → közös körzárás, ranglista), `sanitizeReport` (a host nem bízik vakon a kliens számaiban), `publicView` (a seed nem megy ki)
+- `src/net/` — PeerJS (WebRTC) a `0.peerjs.com` jelzőszerverrel + STUN; `?halo=helyi` = BroadcastChannel tesztcsatorna (több lap, internet nélkül; ilyenkor a mentés sessionStorage-ba megy)
+- `src/store/table-store.ts` — szoba nyitása/csatlakozás/újracsatlakozás (munkamenet a localStorage-ban), reakciók
+- `src/ui/table/` — `TableEntry`, `TableLobby` (kód, meghívólink, karakterválasztás, időtáv), `TableBar` (ki hol tart, reakciók, `Leaderboard`), `useTableSync` (saját játék indítása és jelentése)
+- Körzárás: a kör végén "Kész vagyok a fordulóval" → a következő forduló, ha minden csatlakozott játékos kész. A host szabályai (`GameConfig.rules`) mindenkire érvényesek.
+- CSP (nexai-hu `netlify.toml` és `sorsfordito/.htaccess`): `connect-src` engedi a `0.peerjs.com`-ot. TURN (távoli, szigorú hálózatok) még nincs.
 
 ### UI Komponensek
 - `GameScreen.tsx` — Fő játékképernyő + InvestPhase (tudáskártyák + befektetések)

@@ -38,6 +38,9 @@ export interface GameConfig {
 
   /** Játékmesteri szabályok - indításkor rögzülnek, a játék alatt nem változnak */
   rules?: GameRules;
+
+  /** Asztali (többjátékos) játék: melyik szobához tartozik ez a saját játék */
+  table?: { roomCode: string };
 }
 
 export interface GameRules {
@@ -88,24 +91,24 @@ export const TIME_SCALE_CONFIGS: Record<TimeScale, TimeScaleConfig> = {
   sprint: {
     totalRounds: 12,
     monthsPerRound: 1,
-    displayName: 'Sprint (1 ev)',
-    description: 'Gyors, intenziv, taktikai. 12 honap, havi dontesek.',
+    displayName: 'Sprint (1 év)',
+    description: 'Gyors, intenzív, taktikai. 12 hónap, havi döntések.',
     applyInflation: false,
     applyCareerProgression: false,
   },
   marathon: {
     totalRounds: 20,
     monthsPerRound: 3,
-    displayName: 'Maraton (5 ev)',
-    description: 'Strategiai. Befektetesek elkezdik kitermelni magukat.',
+    displayName: 'Maraton (5 év)',
+    description: 'Stratégiai. A befektetések elkezdik kitermelni magukat.',
     applyInflation: true,
     applyCareerProgression: true,
   },
   ultra: {
     totalRounds: 20,
     monthsPerRound: 6,
-    displayName: 'Ultra (10 ev)',
-    description: 'Nagystrategia. Kamatos kamat, karriervaltas, feleves dontesek.',
+    displayName: 'Ultra (10 év)',
+    description: 'Nagystratégia. Kamatos kamat, karrierváltás, féléves döntések.',
     applyInflation: true,
     applyCareerProgression: true,
   },
@@ -150,6 +153,9 @@ export interface GameState {
 
   /** Táblás mód (egyjátékos): bábu helyzete, dobás, mezőkártya */
   board?: SoloBoardState;
+
+  /** Asztali játékban: melyik fordulót jelentette késznek a játékos (a közös körzáráshoz) */
+  tableDoneRound?: number;
 
   /** T-90 gazdasagi kontextus (elo adatok, hir-generalt sorsforditok) */
   preGameContext?: import('../data-sources/types').PreGameContext;

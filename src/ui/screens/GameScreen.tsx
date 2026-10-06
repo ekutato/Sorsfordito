@@ -28,6 +28,8 @@ import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel } from '@/ui/components/SettingsPanel';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
+import { TableBar } from '@/ui/table/TableBar';
+import { useTableStore } from '@/store/table-store';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
@@ -72,6 +74,9 @@ export function GameScreen() {
 
       {/* Fo tartalom - fazis szerint */}
       <div className="flex-1 px-4 py-4 space-y-4">
+        {/* Asztali játék: ki hol tart, reakciók */}
+        {game.config.table && <TableBar />}
+
         {/* Táblás mód: dobás → mezőkártya → a kör megszokott menete */}
         <BoardLayer />
 
@@ -1040,8 +1045,16 @@ function isBoardDone(game: GameState): boolean {
   return !card || b.resolvedRound === game.currentRound;
 }
 
+/** A többi játékos bábuja a táblán (asztali játékban) */
+function useOtherPawns() {
+  const table = useTableStore((s) => s.table);
+  const me = useTableStore((s) => s.playerId);
+  return (table?.players ?? []).filter((p) => p.id !== me && p.report).map((p) => ({ position: p.position, color: p.color, label: p.name }));
+}
+
 function BoardLayer() {
   const game = useGameStore((s) => s.game);
+  const others = useOtherPawns();
   const [expanded, setExpanded] = useState(false);
   if (!game) return null;
   const rules = gameRules(game.config);
@@ -1059,7 +1072,7 @@ function BoardLayer() {
   if (!rolledNow || b.awaitingContinue) {
     return (
       <BoardOpen key={`${game.currentRound}-${b.rolledRound ?? 'x'}-${b.position}`}
-        rolledNow={rolledNow} b={b} field={field} hasCard={!!card} playerName={player.name} rules={rules} />
+        rolledNow={rolledNow} b={b} field={field} hasCard={!!card} playerName={player.name} rules={rules} others={others} />
     );
   }
 
@@ -1068,7 +1081,7 @@ function BoardLayer() {
     const hasKnowledge = !!card.highlightWithKnowledge && player.financialSheet.acquiredKnowledge.includes(card.highlightWithKnowledge);
     return (
       <section className="space-y-3">
-        {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        {expanded ? <BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
         {b.lastRoll ? <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]"><DieFace value={b.lastRoll} size={28} /> Dobtál: <b>{b.lastRoll}</b> · {FIELD_LABELS[field.type]}, {districtOf(field.index).label}</p> : null}
         <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
           onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
@@ -1080,7 +1093,7 @@ function BoardLayer() {
   if (b.awaitingOutcomeAck && b.lastResult && b.lastOutcome) {
     return (
       <section className="space-y-3">
-        {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        {expanded ? <BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
         <FieldOutcomeView result={b.lastResult} outcome={b.lastOutcome} onContinue={() => { acknowledgeOutcome(); setExpanded(false); }} />
       </section>
     );
@@ -1090,7 +1103,7 @@ function BoardLayer() {
   return (
     <section className="space-y-2">
       {expanded
-        ? <div className="space-y-2"><BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} />
+        ? <div className="space-y-2"><BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} />
             <button onClick={() => setExpanded(false)} className="w-full h-10 rounded-lg text-sm font-semibold bg-white/5">Tábla bezárása</button></div>
         : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
       {b.lastOutcome
@@ -1101,7 +1114,8 @@ function BoardLayer() {
 }
 
 
-function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules }: {
+function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules, others }: {
+  others: Array<{ position: number; color: string; label: string }>;
   rolledNow: boolean; b: SoloBoardState; field: (typeof BOARD)[number]; hasCard: boolean; playerName: string; rules: GameRules;
 }) {
   const [arrived, setArrived] = useState(!rolledNow);
@@ -1109,7 +1123,7 @@ function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules }: {
   useEffect(() => { ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, [rolledNow]);
   return (
     <section ref={ref} className="space-y-3 scroll-mt-24" aria-label="Tábla">
-      <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined}
+      <BoardFull others={others} position={b.position} highlight={rolledNow ? b.position : undefined}
         from={rolledNow ? b.from : undefined} reveal={rolledNow ? { field: field.type, hasCard } : undefined}
         fitViewport onArrived={() => setArrived(true)} onRevealClick={continueBoard} pawnLabel={playerName} />
       <div className="sticky bottom-3 z-10 space-y-2">
@@ -1207,9 +1221,9 @@ function GameMenu() {
             </>
           ) : (
             <div className="p-2 space-y-2">
-              <p className="text-sm">Biztosan újrakezded? A mostani játék elvész.</p>
+              <p className="text-sm">Biztosan újrakezded? A mostani játék elvész{useTableStore.getState().role ? ', és kilépsz az asztalról' : ''}.</p>
               <div className="flex gap-2">
-                <button onClick={() => { resetGame(); setOpen(false); }} className="flex-1 h-10 rounded-lg bg-red-600 text-white text-sm font-bold">Igen, újra</button>
+                <button onClick={() => { useTableStore.getState().leave(); resetGame(); setOpen(false); }} className="flex-1 h-10 rounded-lg bg-red-600 text-white text-sm font-bold">Igen, újra</button>
                 <button onClick={() => setConfirm(false)} className="flex-1 h-10 rounded-lg bg-white/10 text-sm">Mégse</button>
               </div>
             </div>

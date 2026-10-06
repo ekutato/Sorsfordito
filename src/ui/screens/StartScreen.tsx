@@ -11,6 +11,7 @@ import { useSettingsStore } from '@/store/settings-store';
 import { SettingsButton } from '@/ui/components/SettingsPanel';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { LiveDataButton } from '@/ui/components/LiveDataPanel';
+import { useTableStore } from '@/store/table-store';
 import { TEST_MODE_MAX_BALANCE } from '@/types/game';
 import type { LifeSituationId, TimeScale } from '@/types/game';
 
@@ -97,6 +98,12 @@ export function StartScreen() {
           Valós adatok. Valós döntések. Valós tanulságok.
         </p>
         <LiveDataButton className="mt-3 text-sm underline text-brand-300" />
+        <div className="mt-4">
+          <button onClick={() => useTableStore.getState().openEntry()}
+            className="h-12 px-5 rounded-2xl text-base font-extrabold" style={{ background: '#F2A33A', color: '#0E1525' }}>
+            Asztali játék társasággal
+          </button>
+        </div>
       </motion.div>
 
       <div className="absolute right-4 top-4 safe-top"><SettingsButton /></div>

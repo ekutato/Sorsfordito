@@ -7,6 +7,9 @@ import { GameScreen } from '@/ui/screens/GameScreen';
 import { EpilogueScreen } from '@/ui/screens/EpilogueScreen';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { VersionTag } from '@/ui/components/AppVersion';
+import { useTableStore, loadSession } from '@/store/table-store';
+import { TableEntry, TableLobby } from '@/ui/table/TableLobby';
+import { useTableAutoStart, useTableReporter } from '@/ui/table/useTableSync';
 
 export default function Home() {
   const game = useGameStore((s) => s.game);
@@ -23,12 +26,32 @@ export default function Home() {
     if (hydrated && !game) setResumeAnswered(true);
   }, [hydrated, game]);
 
+  // Asztali játék: meghívólink (?szoba=ABCD), korábbi szoba folytatása, saját játék indítása és jelentése
+  const tableRole = useTableStore((s) => s.role);
+  const table = useTableStore((s) => s.table);
+  const entry = useTableStore((s) => s.entry);
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('szoba');
+    if (code && !loadSession()) useTableStore.getState().openEntry(code.toUpperCase().slice(0, 4));
+    else useTableStore.getState().resume();
+  }, []);
+  useTableAutoStart();
+  useTableReporter();
+  const inTableGame = !!game?.config.table && game.config.table.roomCode === table?.roomCode;
+
+  if (tableRole && table?.phase === 'lobby') return <TableLobby />;
+  if (tableRole && !table) return <TableLobby />;
+  if (!tableRole && entry) return <TableEntry initialCode={entry.code} onBack={() => useTableStore.getState().closeEntry()} />;
+  if (tableRole && table && table.phase !== 'lobby' && !inTableGame) {
+    return <div className="flex-1 flex items-center justify-center p-6 text-lg">A játék indul…</div>;
+  }
+
   // Ha nincs jatek → Kezdokepernyo
   if (!game) {
     return <StartScreen />;
   }
 
-  if (!resumeAnswered) {
+  if (!resumeAnswered && !inTableGame) {
     const player = game.players[game.activePlayerIndex];
     const total = TIME_SCALE_CONFIGS[game.config.timeScale].totalRounds;
     return (

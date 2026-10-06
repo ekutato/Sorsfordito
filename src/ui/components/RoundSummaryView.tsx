@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
+import { useTableStore } from '@/store/table-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
 
@@ -10,6 +11,7 @@ export function RoundSummaryView() {
   const advanceRound = useGameStore((s) => s.advanceRound);
   const takeFinancialSnapshot = useGameStore((s) => s.takeFinancialSnapshot);
   const endGame = useGameStore((s) => s.endGame);
+  const table = useTableStore((s) => s.table);
 
   if (!game) return null;
 
@@ -27,6 +29,14 @@ export function RoundSummaryView() {
     (sum, e) => sum + (e.financialImpact ?? 0),
     0
   );
+
+  // Asztali játék: a következő forduló csak akkor indul, ha mindenki kész
+  const inTable = !!game.config.table && !!table;
+  const iAmDone = (game.tableDoneRound ?? 0) >= game.currentRound;
+  const tableMovedOn = !!table && (table.phase === 'finished' || table.round > game.currentRound);
+  const others = table?.players.filter((p) => p.connected) ?? [];
+  const doneCount = others.filter((p) => p.done || (p.report?.finishedRound ?? 0) >= game.currentRound).length;
+  const markDone = () => useGameStore.setState((st) => (st.game ? { game: { ...st.game, tableDoneRound: st.game.currentRound } } : st));
 
   const handleNext = () => {
     takeFinancialSnapshot();
@@ -116,8 +126,21 @@ export function RoundSummaryView() {
         </div>
       )}
 
+      {/* Asztali játék: közös körzárás */}
+      {inTable && !iAmDone && (
+        <button onClick={markDone} className="pulse-cta w-full font-bold py-3.5 rounded-xl text-[#0E1525]" style={{ background: '#F2A33A' }}>
+          ✓ Kész vagyok a fordulóval
+        </button>
+      )}
+      {inTable && iAmDone && !tableMovedOn && (
+        <div className="game-card text-center space-y-1" role="status">
+          <p className="text-base font-semibold">Várunk a többiekre… ({doneCount}/{others.length} kész)</p>
+          <p className="text-sm text-[var(--color-text-muted)]">A következő forduló akkor indul, ha mindenki végzett. Addig noszogathatod őket a fenti reakciókkal.</p>
+        </div>
+      )}
+
       {/* Tovabb gomb */}
-      <button
+      {(!inTable || (iAmDone && tableMovedOn)) && <button
         onClick={handleNext}
         className={`pulse-cta w-full font-bold py-3.5 rounded-xl transition-colors ${
           isLastRound
@@ -126,7 +149,7 @@ export function RoundSummaryView() {
         }`}
       >
         {isLastRound ? '🏁 Játék vége – Eredmények!' : `→ ${game.currentRound + 1}. kör`}
-      </button>
+      </button>}
     </motion.div>
   );
 }

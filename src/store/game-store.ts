@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   GameState,
   GamePhase,
@@ -643,6 +643,9 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: 'penzugyi-sorsfordito-game',
+      // Helyi többjátékos teszt (?halo=helyi): minden lap saját játékot ment
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('halo') === 'helyi' ? sessionStorage : localStorage),
     }
   )
 );

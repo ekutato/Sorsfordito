@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { secureDieRoll, readRollStats } from '@/store/board-actions';
 import type { DiceRollSource } from '@/types/game';
@@ -42,7 +43,7 @@ export function DiceInfo({ rolls, onClose }: { rolls: Array<{ value: number; sou
     for (let i = 0; i < 100; i++) c[secureDieRoll() - 1] += 1;
     setTrial(c);
   };
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={onClose}>
       <div role="dialog" aria-label="Honnan jön a véletlen?" onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#172036] border border-white/10 p-5 space-y-4 safe-bottom">
@@ -74,6 +75,7 @@ export function DiceInfo({ rolls, onClose }: { rolls: Array<{ value: number; sou
           {trial && <Bars counts={trial} title="Próbadobások (nem számítanak a játékba)" />}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

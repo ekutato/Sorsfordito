@@ -115,3 +115,53 @@ describe('asztali állapot', () => {
     expect(chi).toBeLessThan(20.52);
   });
 });
+
+describe('asztali játék: jelentések és közös körzárás', () => {
+  const rep = (finishedRound: number, extra: Partial<import('@/engine/table/state').PlayerReport> = {}) => ({
+    finishedRound, currentRound: finishedRound + 1, position: 3, balance: 100_000, netWorth: 150_000, wellbeing: 55, freedom: 0, safety: 10, ...extra,
+  });
+
+  function started(n: number) {
+    let s = lobbyWith(n);
+    s = reduceTable(s, { type: 'configure', by: 'host', config: { totalRounds: 2 } });
+    return reduceTable(s, { type: 'start', by: 'host' });
+  }
+
+  it('a forduló csak akkor lép tovább, ha minden csatlakozott játékos kész', () => {
+    let s = started(3);
+    expect(s.round).toBe(1);
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(1) });
+    s = reduceTable(s, { type: 'report', playerId: 'p1', report: rep(1) });
+    expect(s.round).toBe(1);
+    s = reduceTable(s, { type: 'report', playerId: 'p2', report: rep(0) });
+    expect(s.round).toBe(1);
+    s = reduceTable(s, { type: 'report', playerId: 'p2', report: rep(1) });
+    expect(s.round).toBe(2);
+    expect(s.players.every((p) => !p.done)).toBe(true);
+  });
+
+  it('kiesett játékos nem tartja fel a többieket; az utolsó forduló után vége', () => {
+    let s = started(2);
+    s = reduceTable(s, { type: 'leave', playerId: 'p1' });
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(1) });
+    expect(s.round).toBe(2);
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(2, { ended: true }) });
+    expect(s.phase).toBe('finished');
+  });
+
+  it('érvénytelen vagy túlzó jelentést a host korlátoz vagy eldob', () => {
+    let s = started(1);
+    const before = s;
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: { finishedRound: 'x' } as never });
+    expect(s).toBe(before);
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(0, { wellbeing: 999, position: 99 }) });
+    const r = s.players[0].report!;
+    expect(r.wellbeing).toBe(100);
+    expect(r.position).toBeLessThan(24);
+  });
+
+  it('idegen azonosítóval nem lehet jelenteni', () => {
+    const s = started(1);
+    expect(reduceTable(s, { type: 'report', playerId: 'nincs-ilyen', report: rep(1) })).toBe(s);
+  });
+});

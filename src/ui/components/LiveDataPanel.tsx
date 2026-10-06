@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { useMemo, useState } from 'react';
 import { LIVE_DATA } from '@/data/live';
 import { LIVE_VAR_DEFS } from '@/data/live/vars';
@@ -48,7 +49,7 @@ export function LiveDataPanel({ onClose }: { onClose: () => void }) {
   const entries = Object.entries(LIVE_DATA.ertekek);
   const changed = entries.filter(([, e]) => e.elozo && e.elozo.value !== e.value).length;
   const unverified = entries.filter(([, e]) => !e.verified).length;
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={onClose}>
       <div role="dialog" aria-label="Heti adatok" onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#172036] border border-white/10 p-4 safe-bottom text-left">
@@ -120,7 +121,8 @@ export function LiveDataPanel({ onClose }: { onClose: () => void }) {
           </section>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

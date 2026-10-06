@@ -2,16 +2,18 @@
 // A játékos-azonosító a böngészőben marad, így újracsatlakozáskor ugyanaz a játékos jön vissza.
 import { PROTOCOL_VERSION, type TableAction, type TableState } from '@/engine/table/state';
 import type { ClientMessage, HostMessage } from './protocol';
-import { joinHost, type Transport } from './transport';
+import { joinHost, isLocalNet, type Transport } from './transport';
 
 const ID_KEY = 'sorsfordito-jatekos-id';
 
 export function getOrCreatePlayerId(): string {
   try {
-    const existing = localStorage.getItem(ID_KEY);
+    // Helyi tesztcsatornánál minden lap külön játékos
+    const store = isLocalNet() ? sessionStorage : localStorage;
+    const existing = store.getItem(ID_KEY);
     if (existing) return existing;
     const id = `j-${crypto.randomUUID()}`;
-    localStorage.setItem(ID_KEY, id);
+    store.setItem(ID_KEY, id);
     return id;
   } catch {
     return `j-${Math.random().toString(36).slice(2, 12)}`;

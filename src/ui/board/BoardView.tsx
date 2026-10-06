@@ -44,13 +44,15 @@ interface FullProps {
   onRevealClick?: () => void;
   pawnColor?: string;
   pawnLabel?: string;
+  /** A többi játékos bábuja (asztali játék) */
+  others?: Array<{ position: number; color: string; label: string }>;
 }
 
 /** Fejléc + dobó/tovább gombok helye a képernyőn, amikor a tábla nyitva van */
 const RESERVED_H = 250;
 
 /** A teljes városi tábla - dobáskor kinyílik, a bábu mezőről mezőre lép */
-export function BoardFull({ position, highlight, from, reveal, fitViewport, onArrived, onRevealClick, pawnColor = '#F2A33A', pawnLabel = 'Te' }: FullProps) {
+export function BoardFull({ position, highlight, from, reveal, fitViewport, onArrived, onRevealClick, pawnColor = '#F2A33A', pawnLabel = 'Te', others = [] }: FullProps) {
   const ref = useRef<HTMLDivElement>(null);
   const L = layout();
   const [box, setBox] = useState({ w: BASE_W, h: 0 });
@@ -135,6 +137,16 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
                     {stepNo + 1}
                   </motion.span>
                 )}
+              </div>
+            );
+          })}
+          {others.map((o, i) => {
+            const t = L.tiles[o.position % BOARD_SIZE];
+            return (
+              <div key={`${o.label}-${i}`} title={o.label} aria-label={`${o.label} bábuja`}
+                className="absolute rounded-full flex items-center justify-center text-[9px] font-extrabold z-[5]"
+                style={{ width: 18, height: 18, left: t.x + 2 + (i % 3) * 12, top: t.y + TILE - 14, background: o.color, color: '#0E1525', border: '2px solid #FBF7EE' }}>
+                {o.label.slice(0, 1).toUpperCase()}
               </div>
             );
           })}
