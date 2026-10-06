@@ -27,8 +27,8 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
     category: 'Lakhatás',
     title: 'Lakás-előtakarékosság',
     situation:
-      'Már 2+ éve dolgozol, {{balance}} Ft van a számládon. Albérletben laksz, ' +
-      'és egyre jobban érzed: a lakbér kidobott pénz. Lakásvásárlásra gondolsz — de hogyan?',
+      'Már 2+ éve dolgozol, {{balance}} Ft van a számládon. Akár albérletben, akár még otthon laksz, ' +
+      'egyre jobban érzed: saját lakás kellene. Lakásvásárlásra gondolsz — de hogyan?',
     dynamicVariables: {
       balance: 'player.balance',
     },

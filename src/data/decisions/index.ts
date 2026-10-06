@@ -651,9 +651,11 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   // --- Pozitívak ---
   {
     id: 'fate-gen-19', round: 0, title: 'Munkáltatói cafeteria',
-    description: 'A céged megemelte a cafeteria keretet. SZÉP-kártyára +35 000 Ft érkezett.',
+    description:
+      'A céged bővítette a cafeteriát: a SZÉP-kártyádra mostantól havonta jut egy kis keret. ' +
+      'Ez nem készpénz - csak meghatározott célra (például étkezésre) költhető, ezért az étkezési kiadásod csökken, nem az egyenleged nő.',
     type: 'positive' as const,
-    effects: [{ target: 'balance', amount: 35_000 }],
+    effects: [{ target: 'food', amount: -10_000 }],
     requires: { hasSalary: true },
   },
   {
@@ -1300,6 +1302,8 @@ export type FateEventEntry = {
     hasSalary?: boolean;
     /** Játékosnak van magas közlekedési kiadása (autó-proxy: transport >= 25000) */
     hasHighTransport?: boolean;
+    /** Albérletben lakik (lakhatási kiadás >= 100 000 Ft/hó; otthon lakva csak hozzájárulás van) */
+    rentsHome?: boolean;
   };
   /** Tudáspróba: a játékos a megszerzett tudásból kap kérdést, helyes válasz = jutalom */
   knowledgeCheck?: {

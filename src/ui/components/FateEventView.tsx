@@ -77,6 +77,7 @@ export function FateEventView() {
     const sheet = player.financialSheet;
     if (req.hasSalary && sheet.income.salary <= 0) return undefined;
     if (req.hasHighTransport && sheet.expenses.transport < 25_000) return undefined;
+    if (req.rentsHome && sheet.expenses.housing < 100_000) return undefined;
     return rawFateEvent;
   })();
 

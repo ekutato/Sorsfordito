@@ -28,10 +28,21 @@ import type {
 } from '@/types/financial';
 import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
+import { amortizeDebts, applyInflation } from '@/engine/financial-calculator';
+import { LIVE_ECONOMIC_DATA } from '@/data/live';
 import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
 import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
 
 // --- Seged fuggvenyek ---
+
+/** A befektetés havi hatása a lapon: vásárláskor (+1) hozzáadjuk, eladáskor (-1) visszavonjuk */
+function applyInvestmentIncome(sheet: FinancialSheet, inv: Investment, sign: 1 | -1): FinancialSheet {
+  const m = inv.monthlyIncome ?? 0;
+  if (!m) return sheet;
+  if (inv.incomeTarget === 'salary') return { ...sheet, income: { ...sheet.income, salary: sheet.income.salary + sign * m } };
+  if (inv.incomeTarget === 'utilities') return { ...sheet, expenses: { ...sheet.expenses, utilities: Math.max(0, sheet.expenses.utilities - sign * m) } };
+  return { ...sheet, income: { ...sheet.income, passive: sheet.income.passive + sign * m } };
+}
 
 function generateId(): string {
   return `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -332,11 +343,11 @@ export const useGameStore = create<GameStore>()(
           if (!state.game) return state;
           const players = state.game.players.map((p) => {
             if (p.playerId !== playerId) return p;
-            const newSheet = {
+            const newSheet = applyInvestmentIncome({
               ...p.financialSheet,
               balance: p.financialSheet.balance - investment.purchasePrice,
               investments: [...p.financialSheet.investments, investment],
-            };
+            }, investment, 1);
             newSheet.computed = computeFinancials(newSheet);
             return { ...p, financialSheet: newSheet };
           });
@@ -352,13 +363,13 @@ export const useGameStore = create<GameStore>()(
               (i) => i.optionId === investmentOptionId
             );
             if (!inv) return p;
-            const newSheet = {
+            const newSheet = applyInvestmentIncome({
               ...p.financialSheet,
               balance: p.financialSheet.balance + inv.currentValue,
               investments: p.financialSheet.investments.filter(
                 (i) => i.optionId !== investmentOptionId
               ),
-            };
+            }, inv, -1);
             newSheet.computed = computeFinancials(newSheet);
             return { ...p, financialSheet: newSheet };
           });
@@ -532,13 +543,52 @@ export const useGameStore = create<GameStore>()(
       processRoundExpenses: () => {
         const state = get();
         if (!state.game) return;
-        const player = state.game.players[state.game.activePlayerIndex];
-        const totalExpenses = player.financialSheet.computed.totalExpenses;
+        let player = state.game.players[state.game.activePlayerIndex];
         const tsConfig = TIME_SCALE_CONFIGS[state.game.config.timeScale];
         const monthsInRound = tsConfig.monthsPerRound;
+        // Infláció (Maraton/Ultra): évente egyszer, a teljes éves ütemmel (a törlesztő fix, nem drágul)
+        const roundsPerYear = Math.round(12 / monthsInRound);
+        const round = state.game.currentRound;
+        if (tsConfig.applyInflation && round > 1 && (round - 1) % roundsPerYear === 0) {
+          const rate = LIVE_ECONOMIC_DATA.ksh.annualInflation;
+          const inflated = applyInflation(player.financialSheet.expenses, rate, 12);
+          set((st) => {
+            if (!st.game) return st;
+            const players = st.game.players.map((p) => {
+              if (p.playerId !== player.playerId) return p;
+              const sheet: FinancialSheet = { ...p.financialSheet, expenses: inflated };
+              sheet.computed = computeFinancials(sheet);
+              return { ...p, financialSheet: sheet };
+            });
+            return { game: { ...st.game, players } };
+          });
+          state.logEvent({ type: 'expense', description: `Eltelt egy év: a kiadásaid az éves inflációval (${rate.toLocaleString('hu-HU')}%) drágultak`, financialImpact: 0 });
+          player = get().game!.players[get().game!.activePlayerIndex];
+        }
+        const totalExpenses = player.financialSheet.computed.totalExpenses;
 
         const totalCost = totalExpenses * monthsInRound;
         state.modifyBalance(player.playerId, -totalCost, `Kiadások (${monthsInRound} hónap)`);
+        // A törlesztőrészletből a kamat feletti rész a tartozást csökkenti; a lejárt hitel kikerül
+        const am = amortizeDebts(player.financialSheet.debts, monthsInRound, state.game.currentRound);
+        set((st) => {
+          if (!st.game) return st;
+          const players = st.game.players.map((p) => {
+            if (p.playerId !== player.playerId) return p;
+            const sheet: FinancialSheet = {
+              ...p.financialSheet,
+              balance: p.financialSheet.balance + am.refund,
+              debts: am.debts,
+              expenses: { ...p.financialSheet.expenses, loanPayments: Math.max(0, p.financialSheet.expenses.loanPayments - am.loanPaymentsDrop) },
+            };
+            sheet.computed = computeFinancials(sheet);
+            return { ...p, financialSheet: sheet };
+          });
+          return { game: { ...st.game, players } };
+        });
+        for (const d of am.paidOff) {
+          state.logEvent({ type: 'expense', description: `Visszafizetve: ${d.name} - a havi törlesztő (${d.monthlyPayment.toLocaleString('hu-HU')} Ft) megszűnik`, financialImpact: am.refund });
+        }
         state.logEvent({
           type: 'expense',
           description: monthsInRound > 1

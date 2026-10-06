@@ -4,6 +4,12 @@
 // ============================================================================
 
 import type { DecisionCard } from '@/types/game';
+import { LIVE_ECONOMIC_DATA } from '@/data/live';
+
+// A lakhatási döntés a heti élő adatból számol: budapesti átlagos albérleti díj
+const RENT_BP = LIVE_ECONOMIC_DATA.realEstate.budapestRentAvg;
+/** A kiinduló hozzájárulás otthon (a preset szerint), ezt váltja ki a költözés */
+const HOME_CONTRIBUTION = 40_000;
 
 /**
  * Dani dontesfaja - Sprint mod (12 kor = 12 honap)
@@ -40,41 +46,37 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'dani-d01-a',
         label: 'Kiköltözöl egyedül Budapestre',
         description:
-          'Albérlet: –{{rent_bp}} Ft/hó. Kaució: –{{rent_bp}} × 2 (egyszeri). ' +
-          'Rezsi: –35 000 Ft/hó. Cserébe: nincs ingázás, önálló élet, networking.',
+          'Albérlet: {{rent_bp}} Ft/hó (a budapesti átlag). Kaució: két havi bérleti díj, egyszeri. ' +
+          'Rezsi: kb. 35 000 Ft/hó. Az országbérlet Budapesten is érvényes, marad. ' +
+          'Cserébe: nincs napi 3 óra ingázás, önálló élet, networking. Számold végig: elég-e rá a fizetésed?',
         financialEffects: [
-          { target: 'balance', amount: -500_000, description: 'Kaució + költözés', isDynamic: true, dynamicDataKey: 'realEstate.budapestRentAvg' },
-          { target: 'housing', amount: 180_000, description: 'Albérlet havi díja' },
+          { target: 'balance', amount: -(2 * RENT_BP + 40_000), description: 'Kaució (két havi bérleti díj) + költözés' },
+          { target: 'housing', amount: RENT_BP - HOME_CONTRIBUTION, description: 'Albérlet havi díja (az otthoni hozzájárulás helyett)' },
           { target: 'utilities', amount: 35_000, description: 'Rezsi' },
-          { target: 'transport', amount: -10_000, description: 'Kevesebb közlekedés (nem ingázik)' },
         ],
         nextDecisionId: 'dani-d03',
-        didYouKnow: 'Az albérletszerződésnél mindig kérj számlát a kaucióról! A jogszabály szerint a kaució max 3 havi bérleti díj lehet.',
+        didYouKnow: 'Az albérletszerződésnél mindig kérj írásos átvételi elismervényt a kaucióról! A kaució mértékét a szerződés rögzíti; jellemzően 1-3 havi bérleti díj.',
       },
       {
         id: 'dani-d01-b',
         label: 'Otthon maradsz, ingázol',
         description:
-          'Hozzájárulás otthon: –40 000 Ft/hó. MÁV országbérlet: –18 900 Ft/hó. ' +
+          'Marad a hozzájárulás otthon (40 000 Ft/hó) és az országbérlet (18 900 Ft/hó). ' +
           'Jóval olcsóbb, mint az önálló albérlet, de napi 3 óra az utazás.',
-        financialEffects: [
-          { target: 'housing', amount: 40_000, description: 'Háztartásba hozzájárulás' },
-          { target: 'transport', amount: 18_900, description: 'MÁV országbérlet (Kecskemét–Bp, BKK-val együtt)' },
-        ],
+        financialEffects: [],
         nextDecisionId: 'dani-d04',
-        didYouKnow: 'Az országbérlet (18 900 Ft/hó) az egész országban érvényes — vonat, busz, HÉV, és Budapesten a BKK járatain is! Nem kell külön Budapest-bérlet.',
+        didYouKnow: 'Az országbérlet (18 900 Ft/hó) az egész országban érvényes - vonat, busz, HÉV, és Budapesten a BKK járatain is! Nem kell külön Budapest-bérlet.',
       },
       {
         id: 'dani-d01-c',
         label: 'Lakótársat keresel Budapesten',
         description:
-          'Megosztott albérlet: –110 000 Ft/hó. Megosztott rezsi: –20 000 Ft/hó. ' +
-          'Kaució (feles): –220 000 Ft. Kompromisszum: kevesebb privát tér.',
+          'Megosztott albérlet: a budapesti átlag ({{rent_bp}} Ft) fele havonta. Megosztott rezsi: kb. 20 000 Ft/hó. ' +
+          'Kaució (feles): egy havi bérleti díj. Kompromisszum: kevesebb privát tér.',
         financialEffects: [
-          { target: 'balance', amount: -250_000, description: 'Feles kaució + költözés' },
-          { target: 'housing', amount: 110_000, description: 'Feles albérlet' },
+          { target: 'balance', amount: -(RENT_BP + 30_000), description: 'Feles kaució + költözés' },
+          { target: 'housing', amount: Math.round(RENT_BP / 2) - HOME_CONTRIBUTION, description: 'Feles albérlet (az otthoni hozzájárulás helyett)' },
           { target: 'utilities', amount: 20_000, description: 'Megosztott rezsi' },
-          { target: 'transport', amount: -10_000, description: 'Kevesebb közlekedés' },
         ],
         nextDecisionId: 'dani-d03',
         didYouKnow: 'Lakótársnál mindig legyen írásos megállapodás a közös költségekről! Külön albérleti szerződés mindkettőtöknek.',
@@ -376,9 +378,12 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
  */
 export const DANI_SCRIPTED_FATE_EVENTS = [
   {
-    id: 'fate-dani-01', round: 1, title: 'SZÉP-kártya bónusz',
-    description: 'A munkaadód 20 000 Ft-ot utalt a SZÉP-kártyádra. Kellemes meglepetés!',
-    type: 'positive' as const, effects: [{ target: 'balance', amount: 20_000 }],
+    id: 'fate-dani-01', round: 1, title: 'Az első bérpapírod',
+    description:
+      'Megjött az első fizetésed és a bérjegyzéked. Mivel még nem vagy 25 éves, a bruttó átlagkeresetig ' +
+      'nem vonnak le tőled SZJA-t: ezt a munkáltató magától alkalmazza, nem kell kérni. ' +
+      'Tudd előre: a 25. születésnapod hónapja után ez megszűnik, és a nettód csökken - érdemes ehhez igazítani a kiadásaidat.',
+    type: 'positive' as const, effects: [],
   },
   {
     id: 'fate-dani-02', round: 2, title: 'Gyengül a forint',
@@ -436,6 +441,8 @@ export const DANI_SCRIPTED_FATE_EVENTS = [
   },
   {
     id: 'fate-dani-08', round: 8, title: 'Lakbéremelés',
+    // Csak ha albérletben lakik (az 1. döntésnél kiköltözött)
+    requires: { rentsHome: true },
     description: 'Az albérleted drágul: +15 000 Ft/hó. A szerződés lejárt, új feltételek.',
     type: 'negative' as const, effects: [{ target: 'housing', amount: 15_000 }],
   },

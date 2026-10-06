@@ -246,3 +246,36 @@ export function formatEffectAmount(target: string, amount: number): string {
   }
   return formatHUF(amount);
 }
+
+/**
+ * Hiteltörlesztés egy körre (havi bontásban, annuitásos logikával): a törlesztőrészlet a kiadások között
+ * már levonásra került, itt csak a tartozás csökken (részlet - havi kamat). Ha a hitel közben elfogy,
+ * a túlfizetés visszajár, a hitel törlődik, és a havi törlesztő kikerül a kiadásokból.
+ */
+export function amortizeDebts(
+  debts: Debt[],
+  monthsInPeriod: number,
+  round: number,
+): { debts: Debt[]; refund: HUF; paidOff: Debt[]; interestPaid: HUF; loanPaymentsDrop: HUF } {
+  let refund = 0, interestPaid = 0, loanPaymentsDrop = 0;
+  const paidOff: Debt[] = [];
+  const next: Debt[] = [];
+  for (const d of debts) {
+    const active = d.monthlyPayment > 0 && d.remainingAmount > 0 && (d.repaymentStartsAtRound === undefined || round >= d.repaymentStartsAtRound);
+    if (!active) { next.push(d); continue; }
+    let rem = d.remainingAmount;
+    let months = d.remainingMonths;
+    for (let m = 0; m < monthsInPeriod; m++) {
+      if (rem <= 0) { refund += d.monthlyPayment; continue; } // ki nem esedékes részlet visszajár
+      const interest = d.isInterestFree ? 0 : Math.round(rem * d.interestRate / 100 / 12);
+      interestPaid += interest;
+      const principal = d.monthlyPayment - interest;
+      if (principal >= rem) { refund += principal - rem; rem = 0; }
+      else rem -= principal; // ha a részlet a kamatot sem fedezi, a tartozás nő (principal < 0)
+      months = Math.max(0, months - 1);
+    }
+    if (rem <= 0) { paidOff.push(d); loanPaymentsDrop += d.monthlyPayment; }
+    else next.push({ ...d, remainingAmount: rem, remainingMonths: months });
+  }
+  return { debts: next, refund, paidOff, interestPaid, loanPaymentsDrop };
+}

@@ -63,31 +63,31 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
     id: 'career_start',
     name: 'Pályakezdő',
     age: 24,
-    tagline: 'Első fizetés, albérlet, pályakezdés',
+    tagline: 'Első fizetés, otthonról indul, nagy lakhatási döntés előtt',
     description:
       'Junior fejlesztőként dolgozol, a bevételed pozitív, de szűkös. ' +
       'A játék fő kérdése: hogyan csinálsz ebből valamit?',
     avatar: '💼',
     location: {
-      homeCity: 'Budapest',
-      homeDetail: 'Albérletben lakik (egyedül)',
-      homeCounty: 'Budapest',
-      homeDistrict: 'VIII. kerület',
+      homeCity: 'Kecskemét',
+      homeDetail: 'a szüleinél lakik',
+      homeCounty: 'Bács-Kiskun',
       originCity: 'Kecskemét',         // Szülők háza — az 1. döntés: maradás vs. visszaköltözés
       originCounty: 'Bács-Kiskun',
       workCity: 'Budapest',
       workDistrict: 'IX. kerület',
       workDetail: 'Junior fejlesztő, tech startup',
-      commuteMinutes: 25,              // Bp-n belül: VIII. → IX. kerület
-      commuteMethod: 'BKK (villamos + metró)',
+      commuteMinutes: 90,              // Kecskemét → Budapest vonattal, irányonként (napi kb. 3 óra)
+      commuteMethod: 'vonat + BKK (országbérlet)',
     },
     startingFinancials: {
       balance: 85_000,
       salary: 320_000,          // Junior pozicio netto
-      housing: 180_000,         // Albérlet
-      utilities: 35_000,        // Rezsi
-      food: 50_000,             // Élelmiszer
-      transport: 20_000,        // Közlekedés
+      // Otthonról indul: a lakhatás az 1. döntésből (dani-d01) jön, így nem számolódik kétszer
+      housing: 40_000,          // Hozzájárulás a szülői háztartáshoz
+      utilities: 0,             // A rezsi a szülői háztartásban
+      food: 30_000,             // Ebéd munkanapokon Budapesten (a többi otthon)
+      transport: 18_900,        // MÁV országbérlet, 30 napos (2026; az éves 226 800 Ft = 12 × 18 900)
       other: 30_000,            // Telefon, szórakozás, ruha
       debts: [],  // DH2 nem alapértelmezett — a játékos a dani-d03 döntésnél választja
     },

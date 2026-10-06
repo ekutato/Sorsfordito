@@ -24,7 +24,7 @@
 | ID | Név | Leírás |
 |----|-----|--------|
 | `fresh_start` | Zsófi, 18 | Érettségi utáni útelágazás, 0 Ft jövedelem, 120K megtakarítás |
-| `career_start` | Dani, 24 | Pályakezdő junior fejlesztő, 320K nettó (DH2 opcionális, döntés alapú) |
+| `career_start` | Dani, 24 | Pályakezdő junior fejlesztő, 320K nettó, a szüleinél indul Kecskeméten (a lakhatás a `dani-d01` döntésből jön, a budapesti albérlet a heti `rent_bp` adatból); DH2 opcionális |
 | `inheritance` | Petra, 30 | Váratlan örökség (5M Ft + telek), 420K nettó, 1.8M személyi kölcsön |
 
 ### Játékmódok
@@ -167,6 +167,7 @@ M6:                                          ████████
 - Játékmesteri beállítások (`src/store/settings-store.ts`, `SettingsPanel`): egyéni kezdő egyenleg (karakterenkénti `maxStartBalance`), "Valós helyzet modellezése" (bevétel/kiadás szerkesztése), csapdaóra, kocka forrása. Indításkor a `GameConfig.rules`-ba másolódnak; a `clampStartBalance` a motorban is véd.
 - Tesztmód: a verziófeliratra 5 koppintás; korlátlan egyenleg (20 M Ft), kézi kockaérték, mezőre ugrás, körátugrás, "Tesztjáték" jelölés
 - Kocka: `secureDieRoll` (crypto + elutasításos mintavétel); "Honnan jön a véletlen?" lap dobásnaplóval és eloszlással; "Saját kockával dobok" lehetőség
+- Pénzmatek: a hitel törlesztőjéből a kamat feletti rész csökkenti a tartozást (`amortizeDebts`, lejáratkor a törlesztő megszűnik); a befektetés vásárláskor rögzített havi hatása (`src/engine/investment-income.ts`: PMÁP a heti hozamból, betét 28% kamatadó után; képzés/távmunka → fizetés, napelem → rezsi) eladáskor visszavonódik; Maraton/Ultra: évente egyszer az éves infláció; a bevétel/kiadás előnézet a kör hónapjaival szoroz. Teszt: `money-math.test.ts`.
 - Hangok (`src/audio/sfx.ts`, Web Audio szintézis, hangfájl nincs) és rezgés: alapból némítva, kapcsoló a Játékmesteri beállítások "Kijelzés" részében és a menüben. Állapotfigyelő hangok (pénz, mérföldkő, forduló, reakció, vége): `src/audio/SoundBridge.tsx`; kocka/lépés/kártya/csapdaóra a komponensekben `play()`-jel.
 - Tábla: 6 tematikus negyed × 4 mező (`DISTRICTS` a `src/data/board.ts`-ben), mezőnként rövid felirat és jelmagyarázat
 

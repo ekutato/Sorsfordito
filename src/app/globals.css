@@ -156,6 +156,12 @@ body::before {
   50% { box-shadow: 0 0 0 10px rgba(242, 163, 58, 0); }
 }
 .pulse-cta { animation: pulse-cta 1.8s ease-in-out infinite; }
+/* Megvehető kártya: halkabb, keretes pulzálás (a kártyák egymás után, eltolva) */
+@keyframes pulse-card {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(242, 163, 58, 0.35); border-color: rgba(242, 163, 58, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(242, 163, 58, 0); border-color: rgba(242, 163, 58, 0.7); }
+}
+.pulse-card { animation: pulse-card 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .pulse-cta { animation: none; }
+  .pulse-cta, .pulse-card { animation: none; }
 }

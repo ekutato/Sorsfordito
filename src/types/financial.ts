@@ -216,6 +216,11 @@ export interface Investment {
 
   /** Eddig termelt osszesitett jovedelem */
   totalIncomeGenerated: HUF;
+
+  /** Havi hatás vásárláskor rögzítve (eladáskor ugyanennyit vonunk vissza) */
+  monthlyIncome?: HUF;
+  /** Hová hat: passzív jövedelem, fizetés vagy rezsi (csökkentés) */
+  incomeTarget?: 'passive' | 'salary' | 'utilities';
 }
 
 // --- Adossagok ---

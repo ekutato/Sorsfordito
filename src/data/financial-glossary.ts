@@ -448,10 +448,31 @@ export const FINANCIAL_GLOSSARY_RAW: GlossaryEntry[] = [
       'Ellenőrizd: van-e MNB- vagy más EU-s felügyeleti engedélye',
       'Ellenőrizd: kiterjed-e a betétre az OBA vagy egy másik ország betétbiztosítása - a nem banki szolgáltatónál nincs betétbiztosítás',
       'Nézd meg a díjakat, a devizaváltási felárat és a hétvégi felárat is',
+      'Az engedélyt az MNB Intézménykeresőjében ellenőrizheted: a szolgáltató cégnevére keress, ne a márkanevére',
     ],
     risk: 'alacsony',
-    sourceUrl: 'https://www.mnb.hu/fogyasztovedelem',
-    sourceName: 'MNB Fogyasztóvédelem',
+    sourceUrl: 'https://intezmenykereso.mnb.hu/',
+    sourceName: 'MNB Intézménykereső',
+  },
+  {
+    term: 'Freelance platform',
+    fullName: 'Freelance (szabadúszó) platform',
+    description:
+      'Online piactér, ahol megbízók és szabadúszók találnak egymásra: programozás, grafika, fordítás, szövegírás. ' +
+      'A platform közvetít, a munkát te végzed, a díjból jellemzően jutalékot von le.',
+    pros: [
+      'Munka mellett is lehet kis megbízásokkal kezdeni',
+      'Nemzetközi megbízók, devizás bevétel',
+      'Referenciát és értékeléseket gyűjthetsz',
+    ],
+    cons: [
+      'Nézd meg a jutalékot és a kifizetési díjakat - ezek a bevételből mennek el',
+      'A bevétel adóköteles: a formája (például egyéni vállalkozás) a helyzetedtől függ, a NAV oldalán nézz utána',
+      'Kezdetben kevés a megbízás, a profil felépítése idő',
+    ],
+    risk: 'közepes',
+    sourceUrl: 'https://nav.gov.hu',
+    sourceName: 'NAV',
   },
 
   // --- Egyéb fogalmak ---

@@ -27,6 +27,7 @@ import { DiceInfo } from '@/ui/board/DiceInfo';
 import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel, SoundQuickToggle } from '@/ui/components/SettingsPanel';
+import { monthlyInvestmentIncome, investmentTarget } from '@/engine/investment-income';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
 import { useTableStore } from '@/store/table-store';
@@ -289,9 +290,6 @@ function IncomeExpensePhase() {
   const incomeItems = [
     { label: 'Munkabér (nettó)', amount: sheet.income.salary },
     { label: 'Passzív jövedelem', amount: sheet.income.passive },
-    ...(sheet.income.oneTime > 0
-      ? [{ label: 'Egyszeri bevétel', amount: sheet.income.oneTime }]
-      : []),
   ].filter((item) => item.amount > 0);
 
   const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0);
@@ -309,7 +307,10 @@ function IncomeExpensePhase() {
   const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
 
   const items = isIncome ? incomeItems : expenseItems;
-  const total = isIncome ? totalIncome : totalExpenses;
+  // A kör ennyi hónapot fed le (Maraton: 3, Ultra: 6) - a levonás és az előnézet ugyanezzel számol
+  const monthsInRound = TIME_SCALE_CONFIGS[game.config.timeScale].monthsPerRound;
+  const monthly = isIncome ? totalIncome : totalExpenses;
+  const total = monthly * monthsInRound;
 
   return (
     <div className={`game-card ${isIncome ? 'border-money-positive/30 border' : 'border-money-negative/30 border'}`}>
@@ -435,7 +436,7 @@ function IncomeExpensePhase() {
 
           {/* Összesítő sor */}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-white/20">
-            <span className="text-sm font-semibold text-white">Összesen</span>
+            <span className="text-sm font-semibold text-white">{monthsInRound > 1 ? `Összesen (${monthsInRound} hónap × ${formatHUF(monthly)})` : 'Összesen'}</span>
             <span className={`font-mono text-base font-bold ${
               isIncome ? 'text-money-positive' : 'text-money-negative'
             }`}>
@@ -529,6 +530,8 @@ function InvestPhase() {
       purchasedAtRound: game.currentRound,
       currentValue: option.entryPrice,
       totalIncomeGenerated: 0,
+      monthlyIncome: monthlyInvestmentIncome(option),
+      incomeTarget: investmentTarget(option),
     };
 
     addInvestment(player.playerId, investment);
@@ -683,10 +686,11 @@ function InvestPhase() {
               Nincs elérhető új befektetés
             </p>
           ) : (
-            availableInvestments.map((inv) => {
+            availableInvestments.map((inv, i) => {
               const canAfford = balance >= inv.entryPrice;
               const needsKnowledge = inv.requiredKnowledge && !ownedKnowledgeIds.includes(inv.requiredKnowledge);
               const isSelected = selectedId === inv.id;
+              const buyable = canAfford && !needsKnowledge && investBoughtThisRound < MAX_INVEST_PER_ROUND && !isSelected;
 
               return (
                 <div key={inv.id}>
@@ -696,7 +700,8 @@ function InvestPhase() {
                       isSelected
                         ? 'bg-brand-600/20 border border-brand-500/50'
                         : 'bg-[var(--color-bg-elevated)] hover:bg-white/5 border border-transparent'
-                    } ${!canAfford || needsKnowledge ? 'opacity-60' : ''}`}
+                    } ${!canAfford || needsKnowledge ? 'opacity-60' : ''} ${buyable ? 'pulse-card' : ''}`}
+                    style={buyable ? { animationDelay: `${i * 0.4}s` } : undefined}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -722,9 +727,14 @@ function InvestPhase() {
                       </span>
                     </div>
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                      {inv.monthlyPassiveIncome > 0
-                        ? `+${formatHUF(inv.monthlyPassiveIncome)}/hó hozam`
-                        : 'Árfolyam alapú hozam'}
+                      {(() => {
+                        const m = monthlyInvestmentIncome(inv);
+                        if (m <= 0) return 'Árfolyam alapú hozam (havi jövedelmet nem ad)';
+                        const t = investmentTarget(inv);
+                        return t === 'salary' ? `+${formatHUF(m)}/hó a fizetésedhez`
+                          : t === 'utilities' ? `-${formatHUF(m)}/hó rezsi`
+                          : `+${formatHUF(m)}/hó passzív jövedelem${inv.id === 'inv-bank-deposit' ? ' (28% kamatadó után)' : ''}`;
+                      })()}
                       {' · '}
                       Biztonság: {inv.scores.safety}/100
                       {inv.scores.volatility > 20 && (
@@ -814,9 +824,10 @@ function InvestPhase() {
               Minden tudás kártya megvan!
             </p>
           ) : (
-            availableKnowledge.map((card) => {
+            availableKnowledge.map((card, i) => {
               const canAfford = card.price === 0 || balance >= card.price;
               const isSelected = selectedId === card.id;
+              const buyable = canAfford && knowledgeBoughtThisRound < MAX_KNOWLEDGE_PER_ROUND && !isSelected;
 
               return (
                 <div key={card.id}>
@@ -826,7 +837,8 @@ function InvestPhase() {
                       isSelected
                         ? 'bg-brand-600/20 border border-brand-500/50'
                         : 'bg-[var(--color-bg-elevated)] hover:bg-white/5 border border-transparent'
-                    } ${!canAfford ? 'opacity-60' : ''}`}
+                    } ${!canAfford ? 'opacity-60' : ''} ${buyable ? 'pulse-card' : ''}`}
+                    style={buyable ? { animationDelay: `${i * 0.4}s` } : undefined}
                   >
                     <div className="flex justify-between items-start">
                       <span className="font-semibold text-sm"><GlossaryText text={card.name} /></span>
