@@ -10,7 +10,7 @@ const REACTIONS = ['👍 Szép!', '⏰ Gyerünk, várunk rád!', '🤔 Gondolkod
 
 /** Asztalsáv a játék tetején: ki hol tart, kész-e a fordulóval, reakciók */
 export function TableBar() {
-  const { table, playerId, status, error, react, reactions } = useTableStore();
+  const { table, playerId, react, reactions } = useTableStore();
   const [open, setOpen] = useState(false);
   if (!table) return null;
   const doneCount = table.players.filter((p) => p.done && p.connected).length;
@@ -38,7 +38,7 @@ export function TableBar() {
           <button key={r} onClick={() => react(r)} className="shrink-0 h-8 px-2.5 rounded-lg text-xs font-semibold bg-white/10">{r}</button>
         ))}
       </div>
-      {status !== 'connected' && error && <p className="text-xs text-rose-300">{error}</p>}
+      <ConnectionBanner />
       <div className="fixed left-0 right-0 bottom-24 z-40 flex flex-col items-center gap-2 pointer-events-none px-4">
         <AnimatePresence>
           {reactions.map((r) => (
@@ -50,6 +50,37 @@ export function TableBar() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+/** Kapcsolat állapota: újracsatlakozás folyamatban / sikerült; kiesett játékosok */
+export function ConnectionBanner() {
+  const { status, attempt, error, justReconnected, reconnectNow, table, role } = useTableStore();
+  const dropped = table?.players.filter((p) => !p.connected) ?? [];
+  return (
+    <>
+      {(status === 'reconnecting' || status === 'connecting') && (
+        <div role="status" className="rounded-lg px-3 py-2 space-y-2" style={{ background: '#FEF3C7', color: '#1C1A16' }}>
+          <p className="text-sm font-semibold">
+            {status === 'connecting' ? 'Kapcsolódás…' : `Kapcsolat megszakadt - újracsatlakozás…${attempt > 1 ? ` (${attempt}. próbálkozás)` : ''}`}
+          </p>
+          {error && !/Újracsatlakozás…$/.test(error) && <p className="text-xs">{error}</p>}
+          {status === 'reconnecting' && (
+            <button onClick={reconnectNow} className="w-full h-10 rounded-lg text-sm font-bold" style={{ background: '#0E1525', color: '#F2A33A' }}>
+              Újracsatlakozás most
+            </button>
+          )}
+        </div>
+      )}
+      {justReconnected && status === 'connected' && (
+        <div role="status" className="rounded-lg px-3 py-1.5 text-sm font-semibold bg-emerald-500/20 text-emerald-200">Újra kapcsolódva ✓</div>
+      )}
+      {role === 'host' && dropped.length > 0 && status === 'connected' && (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Kiesett: {dropped.map((p) => p.name).join(', ')} - a forduló nélküle is továbbmehet; ha visszajön, a helyéről folytatja.
+        </p>
+      )}
+    </>
   );
 }
 

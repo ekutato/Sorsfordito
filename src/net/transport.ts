@@ -31,6 +31,10 @@ export interface HostTransport {
   /** Üzenet egy kapcsolatnak */
   sendTo(connId: string, msg: unknown): void;
   broadcast(msg: unknown): void;
+  /** Egy (elhallgatott) kapcsolat bontása */
+  drop(connId: string): void;
+  /** Él-e még a szoba (a jelzőszerverhez kötött peer) */
+  isAlive(): boolean;
   close(): void;
 }
 
@@ -59,21 +63,29 @@ export function isLocalNet(): boolean {
 
 type LocalMsg = { kind: 'open' | 'data' | 'close'; from: string; to: string; data?: unknown };
 
+/** Bezárt csatornára küldés csendben elnyelve (a kapcsolat már bomlik) */
+function post(ch: BroadcastChannel, m: LocalMsg) {
+  try { ch.postMessage(m); } catch { /* csatorna zárva */ }
+}
+
 function openLocalHost(roomCode: string, h: HostHandlers): HostTransport {
   const ch = new BroadcastChannel(`sorsfordito-${roomCode}`);
   const conns = new Set<string>();
   ch.onmessage = (e: MessageEvent<LocalMsg>) => {
     const m = e.data;
     if (m.to !== 'host') return;
-    if (m.kind === 'open') { conns.add(m.from); ch.postMessage({ kind: 'open', from: 'host', to: m.from } satisfies LocalMsg); h.onConnect(m.from); }
+    if (m.kind === 'open') { conns.add(m.from); post(ch, { kind: 'open', from: 'host', to: m.from }); h.onConnect(m.from); }
     else if (m.kind === 'data' && conns.has(m.from)) h.onMessage(m.from, m.data);
     else if (m.kind === 'close') { conns.delete(m.from); h.onDisconnect(m.from); }
   };
   setTimeout(() => h.onOpen(), 0);
+  let alive = true;
   return {
-    sendTo: (id, msg) => ch.postMessage({ kind: 'data', from: 'host', to: id, data: msg } satisfies LocalMsg),
-    broadcast: (msg) => conns.forEach((id) => ch.postMessage({ kind: 'data', from: 'host', to: id, data: msg } satisfies LocalMsg)),
-    close: () => { conns.forEach((id) => ch.postMessage({ kind: 'close', from: 'host', to: id } satisfies LocalMsg)); ch.close(); },
+    sendTo: (id, msg) => post(ch, { kind: 'data', from: 'host', to: id, data: msg }),
+    broadcast: (msg) => conns.forEach((id) => post(ch, { kind: 'data', from: 'host', to: id, data: msg })),
+    drop: (id) => { conns.delete(id); post(ch, { kind: 'close', from: 'host', to: id }); },
+    isAlive: () => alive,
+    close: () => { alive = false; conns.forEach((id) => post(ch, { kind: 'close', from: 'host', to: id })); ch.close(); },
   };
 }
 
@@ -90,11 +102,11 @@ function joinLocalHost(roomCode: string, h: ClientHandlers): Transport {
   };
   // A host lehet, hogy még nem figyel: néhányszor újrapróbáljuk
   let tries = 0;
-  const knock = () => { if (open || tries++ > 20) return; ch.postMessage({ kind: 'open', from: me, to: 'host' } satisfies LocalMsg); setTimeout(knock, 300); };
+  const knock = () => { if (open || tries++ > 20) return; post(ch, { kind: 'open', from: me, to: 'host' }); setTimeout(knock, 300); };
   knock();
   return {
-    send: (msg) => ch.postMessage({ kind: 'data', from: me, to: 'host', data: msg } satisfies LocalMsg),
-    close: () => { ch.postMessage({ kind: 'close', from: me, to: 'host' } satisfies LocalMsg); ch.close(); },
+    send: (msg) => post(ch, { kind: 'data', from: me, to: 'host', data: msg }),
+    close: () => { post(ch, { kind: 'close', from: me, to: 'host' }); ch.close(); },
   };
 }
 
@@ -104,6 +116,9 @@ export async function openHost(roomCode: string, h: HostHandlers): Promise<HostT
   const conns = new Map<string, DataConnection>();
   peer.on('open', () => h.onOpen());
   peer.on('error', (e) => h.onError(e as Error));
+  // A jelzőszerverről leszakadva (hálózatváltás, háttérbe kerülés) visszakapcsolódunk;
+  // a már élő adatcsatornák ettől függetlenül működnek tovább
+  peer.on('disconnected', () => { if (!peer.destroyed) { try { peer.reconnect(); } catch { /* újra próbáljuk később */ } } });
   peer.on('connection', (conn) => {
     conn.on('open', () => { conns.set(conn.connectionId, conn); h.onConnect(conn.connectionId); });
     conn.on('data', (d) => h.onMessage(conn.connectionId, d));
@@ -111,7 +126,9 @@ export async function openHost(roomCode: string, h: HostHandlers): Promise<HostT
   });
   return {
     sendTo: (id, msg) => conns.get(id)?.send(msg),
-    broadcast: (msg) => conns.forEach((c) => c.send(msg)),
+    broadcast: (msg) => conns.forEach((c) => { try { c.send(msg); } catch { /* bomló kapcsolat */ } }),
+    drop: (id) => { conns.get(id)?.close(); conns.delete(id); },
+    isAlive: () => !peer.destroyed,
     close: () => peer.destroy(),
   };
 }
@@ -136,7 +153,7 @@ export async function joinHost(roomCode: string, h: ClientHandlers): Promise<Tra
   });
   peer.on('error', (e) => h.onError(e as Error));
   return {
-    send: (msg) => conn?.send(msg),
+    send: (msg) => { try { conn?.send(msg); } catch { /* bomló kapcsolat - a szívverés észreveszi */ } },
     close: () => peer.destroy(),
   };
 }

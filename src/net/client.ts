@@ -23,12 +23,14 @@ export function getOrCreatePlayerId(): string {
 export interface ClientRoom {
   dispatch: (a: TableAction) => void;
   chat: (text: string) => void;
+  /** Életjel-kérés; a host bármely üzenete életjelnek számít */
+  ping: () => void;
   close: () => void;
 }
 
 export async function joinRoom(
   roomCode: string, name: string, remote: boolean,
-  on: { state: (s: TableState) => void; chat: (from: string, text: string) => void; error: (msg: string) => void; closed: () => void },
+  on: { state: (s: TableState) => void; chat: (from: string, text: string) => void; error: (msg: string) => void; closed: () => void; alive?: () => void },
 ): Promise<ClientRoom> {
   const playerId = getOrCreatePlayerId();
   let t: Transport | undefined;
@@ -38,6 +40,7 @@ export async function joinRoom(
     onMessage: (raw) => {
       const m = raw as HostMessage;
       if (!m || typeof m !== 'object') return;
+      on.alive?.();
       if (m.t === 'state') on.state(m.state);
       else if (m.t === 'chat') on.chat(m.from, m.text);
       else if (m.t === 'error') on.error(m.message);
@@ -48,6 +51,7 @@ export async function joinRoom(
   return {
     dispatch: (action) => send({ v: PROTOCOL_VERSION, t: 'action', action }),
     chat: (text) => send({ v: PROTOCOL_VERSION, t: 'chat', text }),
+    ping: () => send({ v: PROTOCOL_VERSION, t: 'ping' }),
     close: () => t?.close(),
   };
 }

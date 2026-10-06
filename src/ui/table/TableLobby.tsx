@@ -7,6 +7,7 @@ import { PRESETS_BY_DIFFICULTY } from '@/data/character-presets';
 import { TIME_SCALE_CONFIGS, type TimeScale } from '@/types/game';
 import { MAX_PLAYERS } from '@/engine/table/state';
 import { formatHUF } from '@/engine/financial-calculator';
+import { ConnectionBanner } from './TableBar';
 
 const SCALES: TimeScale[] = ['sprint', 'marathon', 'ultra'];
 
@@ -58,7 +59,14 @@ export function TableLobby() {
   const [copied, setCopied] = useState(false);
   useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 2000); return () => clearTimeout(t); } }, [copied]);
   if (!table || !roomCode) {
-    return <div className="flex-1 flex items-center justify-center p-6 text-lg">Szoba nyitása…{error && <p className="text-rose-300 mt-2">{error}</p>}</div>;
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
+        <p className="text-lg">{role === 'host' ? 'Szoba nyitása…' : 'Csatlakozás a szobához…'}</p>
+        <div className="w-full max-w-sm"><ConnectionBanner /></div>
+        {error && <p className="text-sm text-[var(--color-text-muted)]">{error}</p>}
+        <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Mégse</button>
+      </div>
+    );
   }
   const me = table.players.find((p) => p.id === playerId);
   const isHost = role === 'host';
@@ -134,7 +142,7 @@ export function TableLobby() {
         <p className="text-base text-center text-[var(--color-text-muted)]">Várunk, hogy a szobát nyitó játékos elindítsa a játékot…</p>
       )}
 
-      {error && <p role="alert" className="text-base text-rose-300">{error}</p>}
+      <ConnectionBanner />
       <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
     </div>
   );

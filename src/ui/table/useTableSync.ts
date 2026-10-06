@@ -14,6 +14,8 @@ export function useTableReporter() {
   const game = useGameStore((s) => s.game);
   const report = useTableStore((s) => s.report);
   const status = useTableStore((s) => s.status);
+  // Minden (újra)kapcsolódás után újra jelentünk, akkor is, ha a játék nem változott
+  const connSeq = useTableStore((s) => s.connSeq);
   const last = useRef('');
   useEffect(() => {
     if (!game?.config.table || status !== 'connected') return;
@@ -31,11 +33,11 @@ export function useTableReporter() {
       safety: idx.safetyCircle,
       ended,
     };
-    const key = JSON.stringify(r);
+    const key = `${connSeq}:${JSON.stringify(r)}`;
     if (key === last.current) return;
     last.current = key;
     report(r);
-  }, [game, report, status]);
+  }, [game, report, status, connSeq]);
 }
 
 /** Ha az asztal elindult, és ehhez a szobához még nincs saját játék, elindítja a saját játékot */

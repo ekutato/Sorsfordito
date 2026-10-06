@@ -139,6 +139,7 @@ M6:                                          ████████
 - `src/store/table-store.ts` — szoba nyitása/csatlakozás/újracsatlakozás (munkamenet a localStorage-ban), reakciók
 - `src/ui/table/` — `TableEntry`, `TableLobby` (kód, meghívólink, karakterválasztás, időtáv), `TableBar` (ki hol tart, reakciók, `Leaderboard`), `useTableSync` (saját játék indítása és jelentése)
 - Körzárás: a kör végén "Kész vagyok a fordulóval" → a következő forduló, ha minden csatlakozott játékos kész. A host szabályai (`GameConfig.rules`) mindenkire érvényesek.
+- Automatikus újracsatlakozás (`src/net/heartbeat.ts`, `table-store.ts`): a kliens 10 mp-enként pingel, 25 mp csend után újracsatlakozik (1-2-4-8-15 mp visszalépéssel); előtérbe kerüléskor (`visibilitychange`/`online`/`pageshow`) azonnal ellenőriz. A host 30 mp csend után kiesettnek jelöli a játékost (nem tartja fel a kört), és a szobát ugyanazzal a kóddal újranyitja, ha a peer megszűnt; a mentett asztalállapot visszajön. Újracsatlakozás után a jelentés azonnal újra kimegy (`connSeq`).
 - CSP (nexai-hu `netlify.toml` és `sorsfordito/.htaccess`): `connect-src` engedi a `0.peerjs.com`-ot. TURN (távoli, szigorú hálózatok) még nincs.
 
 ### UI Komponensek
