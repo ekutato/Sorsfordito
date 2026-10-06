@@ -1054,7 +1054,7 @@ function isBoardDone(game: GameState): boolean {
   const b = game.board ?? emptyBoard();
   if (b.rolledRound !== game.currentRound) return false;
   const field = BOARD[b.position].type;
-  const card = cardForField(field, b.visits[field] ?? 0);
+  const card = cardForField(field, b.visits[field] ?? 0, game.gameId);
   return !card || b.resolvedRound === game.currentRound;
 }
 
@@ -1076,7 +1076,7 @@ function BoardLayer() {
   const rolledNow = b.rolledRound === game.currentRound;
   const field = BOARD[b.position];
   const visit = b.visits[field.type] ?? 0;
-  const rawCard = rolledNow ? cardForField(field.type, visit) : undefined;
+  const rawCard = rolledNow ? cardForField(field.type, visit, game.gameId) : undefined;
   const card = rawCard ? fillDeep(rawCard) : undefined;
   const cardOpen = !!card && b.resolvedRound !== game.currentRound;
 

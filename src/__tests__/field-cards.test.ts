@@ -87,3 +87,13 @@ describe('formatHUF', () => {
     expect(formatHUF(950)).toBe('950 Ft');
   });
 });
+
+describe('mezőkártyák keverése', () => {
+  it('különböző játékokban az első csapda nem mindig ugyanaz, egy játékon belül nincs ismétlés', () => {
+    const firsts = new Set(Array.from({ length: 30 }, (_, i) => cardForField('trap', 0, `game-${i}`)!.id));
+    expect(firsts.size).toBeGreaterThan(1);
+    const one = TRAP_CARDS.map((_, i) => cardForField('trap', i, 'game-x')!.id);
+    expect(new Set(one).size).toBe(TRAP_CARDS.length);
+    expect(cardForField('trap', 0, 'game-x')!.id).toBe(cardForField('trap', 0, 'game-x')!.id);
+  });
+});

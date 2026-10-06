@@ -7,6 +7,7 @@
 
 import type { FieldType } from './board';
 import { LIVE_DATA } from './live';
+import { createRng, seedFromString, shuffle } from '@/engine/rng';
 import type { WellbeingKey } from '@/types/wellbeing';
 
 export interface FieldEffect {
@@ -229,15 +230,24 @@ export function marketNewsCard(index: number): FieldCard | undefined {
 }
 
 /** A mezőhöz tartozó kártya; a soron következő lapot a mező látogatásainak száma adja (ismétlés nélkül körbejár) */
-export function cardForField(field: FieldType, visit: number): FieldCard | undefined {
-  const pick = (cards: FieldCard[]) => (cards.length ? cards[visit % cards.length] : undefined);
+/**
+ * A mező kártyája. A paklik játékonként (seed: a játék azonosítója) más sorrendben jönnek,
+ * így két játékos azonos mezőn sem ugyanazt a lapot húzza; egy játékon belül nincs ismétlés,
+ * amíg a pakli el nem fogy. Seed nélkül a pakli eredeti sorrendje (tesztekhez).
+ */
+export function cardForField(field: FieldType, visit: number, seed?: string): FieldCard | undefined {
+  const pick = (cards: FieldCard[]) => {
+    if (!cards.length) return undefined;
+    const deck = seed ? shuffle(cards, createRng(seedFromString(`${seed}-${field}`))) : cards;
+    return deck[visit % deck.length];
+  };
   switch (field) {
     case 'trap': return pick(TRAP_CARDS);
     case 'temptation': return pick(TEMPTATION_CARDS);
     case 'recharge': return pick(RECHARGE_CARDS);
     case 'encounter': return pick(ENCOUNTER_CARDS);
     case 'office': return pick(OFFICE_CARDS);
-    case 'market_news': return marketNewsCard(visit);
+    case 'market_news': return marketNewsCard(seed ? visit + (seedFromString(seed) % 97) : visit);
     default: return undefined;
   }
 }
