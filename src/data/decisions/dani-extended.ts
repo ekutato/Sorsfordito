@@ -79,6 +79,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
 
   {
     id: 'dani-ext-02',
+    requires: { rentsHome: true },
     category: 'Életmód',
     title: 'Párkapcsolat és pénzügyek',
     situation:

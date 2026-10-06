@@ -265,6 +265,8 @@ export interface DecisionCard {
   characterPresets: CharacterPresetId[];
 
   /** Melyik kor(ok)ben jelenik meg */
+  /** Feltétel: csak albérletben lakónak jelenik meg (otthon lakva a lakhatás csak hozzájárulás) */
+  requires?: { rentsHome?: boolean };
   availableAtRounds: number[];
 
   /** Elofeltetelek (korabbi dontesek) */

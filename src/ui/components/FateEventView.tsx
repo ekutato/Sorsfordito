@@ -14,6 +14,7 @@ import {
   getFateEventForRound,
   blendFateEvents,
   convertPoolToFateEntries,
+  RENT_THRESHOLD,
 } from '@/data/decisions';
 import type { FateEventEntry } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
@@ -78,7 +79,7 @@ export function FateEventView() {
     const sheet = player.financialSheet;
     if (req.hasSalary && sheet.income.salary <= 0) return undefined;
     if (req.hasHighTransport && sheet.expenses.transport < 25_000) return undefined;
-    if (req.rentsHome && sheet.expenses.housing < 100_000) return undefined;
+    if (req.rentsHome && sheet.expenses.housing < RENT_THRESHOLD) return undefined;
     return rawFateEvent;
   })();
 

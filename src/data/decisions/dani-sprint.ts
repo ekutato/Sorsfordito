@@ -10,6 +10,11 @@ import { LIVE_ECONOMIC_DATA } from '@/data/live';
 const RENT_BP = LIVE_ECONOMIC_DATA.realEstate.budapestRentAvg;
 /** A kiinduló hozzájárulás otthon (a preset szerint), ezt váltja ki a költözés */
 const HOME_CONTRIBUTION = 40_000;
+/**
+ * Önálló háztartásban az étkezés: egy főre jutó élelmiszer- és alkoholmentesital-kiadás,
+ * KSH háztartási költségvetési adatfelvétel, 2024: 325 200 Ft/fő/év = 27 100 Ft/hó (2024-es adat).
+ */
+const FOOD_OWN_HOUSEHOLD = 27_100;
 
 /**
  * Dani dontesfaja - Sprint mod (12 kor = 12 honap)
@@ -47,12 +52,13 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         label: 'Kiköltözöl egyedül Budapestre',
         description:
           'Albérlet: {{rent_bp}} Ft/hó (a budapesti átlag). Kaució: két havi bérleti díj, egyszeri. ' +
-          'Rezsi: kb. 35 000 Ft/hó. Az országbérlet Budapesten is érvényes, marad. ' +
+          'Rezsi: kb. 35 000 Ft/hó. Étkezés: eddig otthon kaptad, mostantól kb. 27 100 Ft/hó (KSH, 2024-es egy főre jutó átlag). Az országbérlet Budapesten is érvényes, marad. ' +
           'Cserébe: nincs napi 3 óra ingázás, önálló élet, networking. Számold végig: elég-e rá a fizetésed?',
         financialEffects: [
           { target: 'balance', amount: -(2 * RENT_BP + 40_000), description: 'Kaució (két havi bérleti díj) + költözés' },
           { target: 'housing', amount: RENT_BP - HOME_CONTRIBUTION, description: 'Albérlet havi díja (az otthoni hozzájárulás helyett)' },
           { target: 'utilities', amount: 35_000, description: 'Rezsi' },
+          { target: 'food', amount: FOOD_OWN_HOUSEHOLD, description: 'Élelmiszer saját háztartásban (KSH, 2024-es átlag)' },
         ],
         nextDecisionId: 'dani-d03',
         didYouKnow: 'Az albérletszerződésnél mindig kérj írásos átvételi elismervényt a kaucióról! A kaució mértékét a szerződés rögzíti; jellemzően 1-3 havi bérleti díj.',
@@ -71,12 +77,13 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'dani-d01-c',
         label: 'Lakótársat keresel Budapesten',
         description:
-          'Megosztott albérlet: a budapesti átlag ({{rent_bp}} Ft) fele havonta. Megosztott rezsi: kb. 20 000 Ft/hó. ' +
+          'Megosztott albérlet: a budapesti átlag ({{rent_bp}} Ft) fele havonta. Megosztott rezsi: kb. 20 000 Ft/hó. Étkezés: kb. 27 100 Ft/hó (KSH, 2024). ' +
           'Kaució (feles): egy havi bérleti díj. Kompromisszum: kevesebb privát tér.',
         financialEffects: [
           { target: 'balance', amount: -(RENT_BP + 30_000), description: 'Feles kaució + költözés' },
           { target: 'housing', amount: Math.round(RENT_BP / 2) - HOME_CONTRIBUTION, description: 'Feles albérlet (az otthoni hozzájárulás helyett)' },
           { target: 'utilities', amount: 20_000, description: 'Megosztott rezsi' },
+          { target: 'food', amount: FOOD_OWN_HOUSEHOLD, description: 'Élelmiszer saját háztartásban (KSH, 2024-es átlag)' },
         ],
         nextDecisionId: 'dani-d03',
         didYouKnow: 'Lakótársnál mindig legyen írásos megállapodás a közös költségekről! Külön albérleti szerződés mindkettőtöknek.',

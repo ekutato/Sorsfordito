@@ -162,7 +162,7 @@ M6:                                          ████████
 - `formatHUF(amount)` — Magyar Ft formázás (pl. "1 250 000 Ft")
 - `GlossaryText` — Szövegben lévő pénzügyi kifejezések automatikus tooltip-je
 - `{{variable}}` szintaxis — Dinamikus változók döntési szövegekben (pl. `{{salary}}`, `{{pmap_yield}}`)
-- Per-round purchase limits: max 1 befektetés + max 1 tudáskártya / kör, "heti piac": körönként 3 húzott befektetési és 2 tudásajánlat (a játéknaplóból számolva)
+- Per-round purchase limits: max 1 befektetés + max 2 tudáskártya / kör, "heti piac": körönként 3 húzott befektetési és 3 tudásajánlat (a játéknaplóból számolva)
 - Csapdakártyán 20 mp-es "sürgetés" óra + "Megállok és utánanézek" gomb (megállítja, megmutatja a vészjeleket); lejáratkor: egészség -1, pénzveszteség nincs
 - A soron következő gombon `pulse-cta` (prefers-reduced-motion esetén kikapcsol)
 - Játékmesteri beállítások (`src/store/settings-store.ts`, `SettingsPanel`): egyéni kezdő egyenleg (karakterenkénti `maxStartBalance`), "Valós helyzet modellezése" (bevétel/kiadás szerkesztése), csapdaóra, kocka forrása. Indításkor a `GameConfig.rules`-ba másolódnak; a `clampStartBalance` a motorban is véd.

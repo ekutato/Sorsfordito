@@ -6,6 +6,8 @@ import { LIVE_DATA } from '@/data/live';
 import { useGameStore } from '@/store/game-store';
 import { netAfterTurning25, netFromGross, grossFromNet, round25 } from '@/data/tax-2026';
 import { DEFAULT_RULES } from '@/types/game';
+import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
+import { CHARACTER_PRESETS } from '@/data/character-presets';
 import type { Debt } from '@/types/financial';
 
 const petraLoan: Debt = {
@@ -77,7 +79,7 @@ describe('kör: bevétel - kiadás = egyenlegváltozás', () => {
     st.startNewGame({ timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'career_start', 'Teszt');
     const sheet0 = useGameStore.getState().game!.players[0].financialSheet;
     const free = sheet0.income.salary + sheet0.income.passive - sheet0.computed.totalExpenses;
-    expect(sheet0.computed.totalExpenses).toBe(40_000 + 30_000 + 18_900 + 30_000);
+    expect(sheet0.computed.totalExpenses).toBe(40_000 + 0 + 18_900 + 30_000);
     for (let r = 0; r < 3; r++) { useGameStore.getState().processRoundIncome(); useGameStore.getState().processRoundExpenses(); }
     expect(useGameStore.getState().game!.players[0].financialSheet.balance).toBe(sheet0.balance + 3 * free);
   });
@@ -122,5 +124,28 @@ describe('25. születésnap: megszűnik a fiatalok SZJA-mentessége', () => {
       useGameStore.getState().processRoundIncome();
       expect(sal()).toBe(r < 7 ? 320_000 : 261_104);
     }
+  });
+});
+
+describe('Pályakezdő lakhatási döntés: nincs dupla költség', () => {
+  it('kiköltözés: a lakhatás = budapesti átlag, az otthoni hozzájárulás kiesik; étkezés + rezsi jön', () => {
+    const d01 = getDecisionsFor('career_start', 'sprint').find((d) => d.id === 'dani-d01')!;
+    const base = CHARACTER_PRESETS.career_start.startingFinancials;
+    const rent = LIVE_DATA.ertekek['realEstate.budapestRentAvg'].value;
+    const sum = (id: string, t: string) => d01.options.find((o) => o.id === id)!.financialEffects.filter((e) => e.target === t).reduce((a, e) => a + e.amount, 0);
+    expect(base.housing + sum('dani-d01-a', 'housing')).toBe(rent);
+    expect(base.housing + sum('dani-d01-c', 'housing')).toBe(Math.round(rent / 2));
+    expect(base.food + sum('dani-d01-a', 'food')).toBe(27_100);
+    expect(sum('dani-d01-b', 'housing') + sum('dani-d01-b', 'food')).toBe(0);
+  });
+
+  it('albérletes döntés otthon lakónak nem jön; a kiadás nem mehet 0 alá', () => {
+    const fake = [{ id: 'x', availableAtRounds: [3], requires: { rentsHome: true } }, { id: 'y', availableAtRounds: [3] }] as never;
+    expect(getDecisionForRound(fake, 3, [], 40_000)!.id).toBe('y');
+    expect(getDecisionForRound(fake, 3, [], 260_000)!.id).toBe('x');
+    useGameStore.getState().startNewGame({ timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'career_start', 'Teszt');
+    const pid = useGameStore.getState().game!.players[0].playerId;
+    useGameStore.getState().modifyExpenses(pid, 'housing', -100_000);
+    expect(useGameStore.getState().game!.players[0].financialSheet.expenses.housing).toBe(0);
   });
 });

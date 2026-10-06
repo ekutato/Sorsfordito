@@ -53,7 +53,7 @@ export function DecisionView() {
     }
   }
 
-  const decision = getDecisionForRound(decisions, game.currentRound, completedDecisionIds);
+  const decision = getDecisionForRound(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing);
 
   if (!decision) {
     // Ha nincs dontes ehhez a korhoz, tovabblep

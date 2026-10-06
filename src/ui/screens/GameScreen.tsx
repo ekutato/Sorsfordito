@@ -36,7 +36,7 @@ import { displayColor } from '@/engine/table/state';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
-const MARKET_KNOWLEDGE_OFFERS = 2;
+const MARKET_KNOWLEDGE_OFFERS = 3;
 
 export function GameScreen() {
   const game = useGameStore((s) => s.game);
@@ -483,8 +483,8 @@ function InvestPhase() {
   const [tab, setTab] = useState<'invest' | 'knowledge'>('invest');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [justBought, setJustBought] = useState<string | null>(null);
-  // Körönkénti limit: 1 befektetés + 1 tudáskártya (a játéknaplóból számolva, így elnavigálással sem kijátszható)
-  const MAX_KNOWLEDGE_PER_ROUND = 1;
+  // Körönkénti limit: 1 befektetés + 2 tudáskártya (a játéknaplóból számolva, így elnavigálással sem kijátszható)
+  const MAX_KNOWLEDGE_PER_ROUND = 2;
   const MAX_INVEST_PER_ROUND = 1;
 
   // MiFID kvíz állapot
@@ -671,7 +671,7 @@ function InvestPhase() {
       </div>
 
       <p className="text-xs text-[var(--color-text-muted)] mb-3">
-        Ebben a körben ezeket a lapokat húztad. A paklikban még {Math.max(0, deckInvest.length - availableInvestments.length)} befektetés és {Math.max(0, deckKnowledge.length - availableKnowledge.length)} tudáskártya vár. Körönként 1 befektetést és 1 tudást szerezhetsz.
+        Ebben a körben ezeket a lapokat húztad. A paklikban még {Math.max(0, deckInvest.length - availableInvestments.length)} befektetés és {Math.max(0, deckKnowledge.length - availableKnowledge.length)} tudáskártya vár. Körönként 1 befektetést és 2 tudást szerezhetsz.
       </p>
 
       {/* Investment options list */}

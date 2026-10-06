@@ -88,7 +88,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       // Otthonról indul: a lakhatás az 1. döntésből (dani-d01) jön, így nem számolódik kétszer
       housing: 40_000,          // Hozzájárulás a szülői háztartáshoz
       utilities: 0,             // A rezsi a szülői háztartásban
-      food: 30_000,             // Ebéd munkanapokon Budapesten (a többi otthon)
+      food: 0,                  // Otthon lakva az étkezést jellemzően a háztartás (a hozzájárulás) fedezi
       transport: 18_900,        // MÁV országbérlet, 30 napos (2026; az éves 226 800 Ft = 12 × 18 900)
       other: 30_000,            // Telefon, szórakozás, ruha
       debts: [],  // DH2 nem alapértelmezett — a játékos a dani-d03 döntésnél választja

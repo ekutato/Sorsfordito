@@ -196,6 +196,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
   },
   {
     id: 'gen-life-milestone',
+    requires: { rentsHome: true },
     category: 'Életmód',
     title: 'Életszínvonal emelése?',
     situation:
@@ -424,6 +425,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
   },
   {
     id: 'gen-housing-upgrade',
+    requires: { rentsHome: true },
     category: 'Lakhatás',
     title: 'Lakhatási döntés',
     situation:
@@ -1265,13 +1267,18 @@ export function getDecisionsFor(
  * Az aktuális körhöz tartozó döntés kartya megkeresése.
  * A completedIds-ben lévő kártyákat kihagyja (már meghozott döntések).
  */
+/** Albérletben lakik-e (otthon lakva csak hozzájárulás van, az albérlet legalább ennyi) */
+export const RENT_THRESHOLD = 100_000;
+
 export function getDecisionForRound(
   decisions: DecisionCard[],
   round: number,
-  completedIds: string[] = []
+  completedIds: string[] = [],
+  housing?: number,
 ): DecisionCard | undefined {
   return decisions.find(
     (d) => d.availableAtRounds.includes(round) && !completedIds.includes(d.id)
+      && !(d.requires?.rentsHome && housing !== undefined && housing < RENT_THRESHOLD)
   );
 }
 

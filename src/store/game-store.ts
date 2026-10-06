@@ -320,7 +320,8 @@ export const useGameStore = create<GameStore>()(
           if (!state.game) return state;
           const players = state.game.players.map((p) => {
             if (p.playerId !== playerId) return p;
-            const newExpenses = { ...p.financialSheet.expenses, [field]: p.financialSheet.expenses[field] + amount };
+            // Kiadás nem lehet negatív (pl. otthon lakó játékosnál egy "olcsóbb albérlet" hatás)
+            const newExpenses = { ...p.financialSheet.expenses, [field]: Math.max(0, p.financialSheet.expenses[field] + amount) };
             const newSheet = { ...p.financialSheet, expenses: newExpenses };
             newSheet.computed = computeFinancials(newSheet);
             return { ...p, financialSheet: newSheet };
