@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
 import { fillDeep } from '@/data/live/vars';
 import { WellbeingReflection } from './WellbeingReflection';
+import { ScrollTarget } from './ScrollTarget';
 import { play } from '@/audio/sfx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
@@ -575,13 +576,15 @@ export function FateEventView() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleQuizResult}
-                  className="w-full bg-purple-600 hover:bg-purple-500 text-white
-                             font-semibold py-3 rounded-xl transition-colors"
-                >
-                  Eredmény →
-                </button>
+                <ScrollTarget>
+                  <button
+                    onClick={handleQuizResult}
+                    className="pulse-cta w-full bg-purple-600 hover:bg-purple-500 text-white
+                               font-semibold py-3 rounded-xl transition-colors"
+                  >
+                    Eredmény →
+                  </button>
+                </ScrollTarget>
               </motion.div>
             )}
 

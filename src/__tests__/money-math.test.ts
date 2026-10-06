@@ -4,6 +4,7 @@ import { monthlyInvestmentIncome, investmentTarget } from '@/engine/investment-i
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { LIVE_DATA } from '@/data/live';
 import { useGameStore } from '@/store/game-store';
+import { netAfterTurning25, netFromGross, grossFromNet, round25 } from '@/data/tax-2026';
 import { DEFAULT_RULES } from '@/types/game';
 import type { Debt } from '@/types/financial';
 
@@ -91,5 +92,35 @@ describe('kör: bevétel - kiadás = egyenlegváltozás', () => {
     expect(after.debts[0].remainingAmount).toBe(1_776_750);
     // nettó vagyon: a kiadás csökkenti, a tőketörlesztés (23 250) visszahozza
     expect(after.computed.netWorth).toBe(before.computed.netWorth - before.computed.totalExpenses + 23_250);
+  });
+});
+
+describe('25. születésnap: megszűnik a fiatalok SZJA-mentessége', () => {
+  it('a bér nettója a 2026-os kulcsokkal', () => {
+    // 320 000 nettó 25 év alatt = 392 638 bruttó; 25 felett 392 638 × (1 - 0,185 - 0,15) = 261 104
+    expect(netAfterTurning25(320_000)).toBe(261_104);
+    expect(Math.round(netFromGross(392_638, true))).toBe(320_000);
+    // a határ fölött 25 alatt is van SZJA a határ feletti részre
+    expect(Math.round(netFromGross(800_000, true))).toBe(Math.round(800_000 * 0.815 - (800_000 - 715_765) * 0.15));
+    expect(Math.round(grossFromNet(netFromGross(800_000, true), true))).toBe(800_000);
+  });
+
+  it('melyik körtől: Sprint 7., Maraton 3., Ultra 2.; Zsófi csak Ultrában', () => {
+    expect(round25(24, 5, 1, 12)).toBe(7);
+    expect(round25(24, 5, 3, 20)).toBe(3);
+    expect(round25(24, 5, 6, 20)).toBe(2);
+    expect(round25(18, 11, 3, 20)).toBeUndefined();
+    expect(round25(18, 11, 6, 20)).toBe(15);
+    expect(round25(30, 5, 1, 12)).toBeUndefined();
+  });
+
+  it('Pályakezdő Sprint: a 7. körben egyszer csökken a nettó', () => {
+    useGameStore.getState().startNewGame({ timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'career_start', 'Teszt');
+    const sal = () => useGameStore.getState().game!.players[0].financialSheet.income.salary;
+    for (let r = 1; r <= 8; r++) {
+      useGameStore.setState((s) => ({ game: { ...s.game!, currentRound: r } }));
+      useGameStore.getState().processRoundIncome();
+      expect(sal()).toBe(r < 7 ? 320_000 : 261_104);
+    }
   });
 });

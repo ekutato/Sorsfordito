@@ -48,6 +48,9 @@ export interface FinancialSheet {
   /** Jólléti jelölők (-5..+5); régi mentésekben hiányozhat */
   wellbeing?: Wellbeing;
 
+  /** Betöltötte a 25. évét a játék alatt: a fiatalok SZJA-kedvezménye megszűnt (egyszer fut le) */
+  youthTaxEnded?: boolean;
+
   /** Szamitott ertekek (minden kor vegen ujraszamolva) */
   computed: ComputedFinancials;
 

@@ -27,6 +27,7 @@ import { DiceInfo } from '@/ui/board/DiceInfo';
 import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel, SoundQuickToggle } from '@/ui/components/SettingsPanel';
+import { ScrollTarget } from '@/ui/components/ScrollTarget';
 import { monthlyInvestmentIncome, investmentTarget } from '@/engine/investment-income';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
@@ -918,14 +919,16 @@ function InvestPhase() {
 
                           {/* Következő kérdés gomb */}
                           {quizState.showExplanation && (
-                            <button
-                              onClick={handleQuizNext}
-                              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl transition-colors"
-                            >
-                              {quizState.currentQ + 1 < (selectedKnowledge.quiz?.length ?? 0)
-                                ? 'Következő kérdés →'
-                                : 'Eredmény megtekintése'}
-                            </button>
+                            <ScrollTarget key={`q-${quizState.currentQ}`}>
+                              <button
+                                onClick={handleQuizNext}
+                                className="pulse-cta w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl transition-colors"
+                              >
+                                {quizState.currentQ + 1 < (selectedKnowledge.quiz?.length ?? 0)
+                                  ? 'Következő kérdés →'
+                                  : 'Eredmény megtekintése'}
+                              </button>
+                            </ScrollTarget>
                           )}
                         </div>
                       )}
@@ -943,10 +946,11 @@ function InvestPhase() {
                           ) : (
                             <p className="text-orange-200 text-xs">📚 Nem baj! A lényeg, hogy tanultál — a valódi tudás a magyarázatokban van.</p>
                           )}
+                          <ScrollTarget>
                           <button
                             onClick={() => completeBuyKnowledge(selectedKnowledge.id)}
                             disabled={!canAfford || knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND}
-                            className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500
+                            className="pulse-cta w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500
                                        text-white font-semibold py-2.5 rounded-xl transition-colors"
                           >
                             {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND
@@ -955,6 +959,7 @@ function InvestPhase() {
                               ? '✅ Megtanultam! (ingyenes)'
                               : `✅ Megszerzem a tudást: ${formatHUF(selectedKnowledge.price)}`}
                           </button>
+                          </ScrollTarget>
                         </div>
                       )}
 

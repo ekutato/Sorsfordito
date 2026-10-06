@@ -29,6 +29,7 @@ import type {
 import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
 import { amortizeDebts, applyInflation } from '@/engine/financial-calculator';
+import { round25, netAfterTurning25 } from '@/data/tax-2026';
 import { LIVE_ECONOMIC_DATA } from '@/data/live';
 import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
 import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
@@ -527,6 +528,23 @@ export const useGameStore = create<GameStore>()(
               financialImpact: 0,
             });
           }
+        }
+
+        // 25. születésnap: a következő hónaptól a bérből SZJA-t is vonnak (ugyanaz a bruttó, kisebb nettó)
+        const preset = CHARACTER_PRESETS[player.lifeSituation as CharacterPresetId];
+        if (preset?.nextBirthdayInMonths && currentSalary > 0 && !player.financialSheet.youthTaxEnded
+          && round25(preset.age, preset.nextBirthdayInMonths, monthsInRound, tsConfig.totalRounds) === round) {
+          const after = netAfterTurning25(currentSalary);
+          const delta = after - currentSalary;
+          state.modifyIncome(player.playerId, 'salary', delta);
+          currentSalary = after;
+          set((st) => st.game ? { game: { ...st.game, players: st.game.players.map((p) => p.playerId === player.playerId
+            ? { ...p, financialSheet: { ...p.financialSheet, youthTaxEnded: true } } : p) } } : st);
+          state.logEvent({
+            type: 'income',
+            description: `🎂 Betöltötted a 25. évet: megszűnt a fiatalok SZJA-mentessége, a bérjegyzékeden már 15% SZJA is szerepel. Nettó: ${(currentSalary - delta).toLocaleString('hu-HU')} → ${after.toLocaleString('hu-HU')} Ft/hó (${delta.toLocaleString('hu-HU')} Ft)`,
+            financialImpact: delta * monthsInRound,
+          });
         }
 
         const totalIncome = (currentSalary + passive) * monthsInRound;

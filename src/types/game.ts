@@ -190,6 +190,8 @@ export interface CharacterPreset {
   id: CharacterPresetId;
   name: string;
   age: number;
+  /** Hány hónap múlva van a következő születésnapja a játék kezdetétől (1-12); a 25.-nél megszűnik a fiatalok SZJA-kedvezménye */
+  nextBirthdayInMonths?: number;
   tagline: string;
   description: string;
   avatar: string; // emoji or image path

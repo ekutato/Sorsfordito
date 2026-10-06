@@ -382,7 +382,8 @@ export const DANI_SCRIPTED_FATE_EVENTS = [
     description:
       'Megjött az első fizetésed és a bérjegyzéked. Mivel még nem vagy 25 éves, a bruttó átlagkeresetig ' +
       'nem vonnak le tőled SZJA-t: ezt a munkáltató magától alkalmazza, nem kell kérni. ' +
-      'Tudd előre: a 25. születésnapod hónapja után ez megszűnik, és a nettód csökken - érdemes ehhez igazítani a kiadásaidat.',
+      'Tudd előre: fél év múlva leszel 25. A születésnapod hónapja után a mentesség megszűnik, a bérjegyzékeden megjelenik a 15% SZJA, ' +
+      'és ugyanakkora bruttóból mintegy 18%-kal kevesebb nettó marad. Érdemes már most ehhez igazítani a kiadásaidat.',
     type: 'positive' as const, effects: [],
   },
   {
@@ -418,9 +419,12 @@ export const DANI_SCRIPTED_FATE_EVENTS = [
     type: 'negative' as const, effects: [{ target: 'balance', amount: -180_000 }],
   },
   {
-    id: 'fate-dani-05', round: 5, title: 'Adó-visszatérítés',
-    description: 'NAV visszautalt 45 000 Ft-ot. A 25 év alatti SZJA-mentesség miatt jár vissza!',
-    type: 'positive' as const, effects: [{ target: 'balance', amount: 45_000 }],
+    id: 'fate-dani-05', round: 5, title: 'SZJA-bevallási tervezet',
+    description:
+      'A NAV elkészítette a bevallási tervezetedet az Ügyfélkapun. Átnézed: a munkáltatód a 25 év alattiak ' +
+      'kedvezményét végig alkalmazta, ezért nincs visszajáró adó és befizetnivaló sem. Tanulság: a tervezetet akkor is nézd át, ha minden rendben van - ' +
+      'egy kimaradt kedvezmény vagy jóváírás (például önkéntes pénztári befizetés után) csak így derül ki.',
+    type: 'positive' as const, effects: [],
   },
   // DH2 törlesztés: a dani-d03 döntés kezeli (ha a játékos felvette)
   {

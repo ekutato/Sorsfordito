@@ -26,6 +26,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
     id: 'fresh_start',
     name: 'Érettségi után',       // Ez a preset neve, NEM a jatekos neve
     age: 18,
+    nextBirthdayInMonths: 11,  // Ultra módban (10 év) a 25. születésnap is belefér
     tagline: 'Tiszta lappal indulsz',
     description:
       'Nulla adósság, nulla jövedelem. ' +
@@ -63,6 +64,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
     id: 'career_start',
     name: 'Pályakezdő',
     age: 24,
+    nextBirthdayInMonths: 5,   // a 25. születésnap a Sprint közepén van (a 7. körtől SZJA)
     tagline: 'Első fizetés, otthonról indul, nagy lakhatási döntés előtt',
     description:
       'Junior fejlesztőként dolgozol, a bevételed pozitív, de szűkös. ' +
