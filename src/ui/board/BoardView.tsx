@@ -117,7 +117,7 @@ export function BoardStrip({ position, onExpand }: StripProps) {
             <div key={f.index} className="relative flex-1 min-w-0 h-10 rounded-lg flex items-center justify-center"
               style={{ background: '#FBF7EE', boxShadow: here ? '0 0 0 2px #F2A33A' : '0 1px 0 #C9B78F' }}
               title={FIELD_LABELS[f.type]}>
-              <span className="rounded px-1 text-[11px] font-extrabold" style={{ background: st.color, color: st.ink }}>{st.glyph}</span>
+              <span className="rounded px-1 text-xs font-extrabold" style={{ background: st.color, color: st.ink }}>{st.glyph}</span>
               {here && <span className="absolute -top-2 -right-1 w-4 h-4 rounded-full border-2" style={{ background: '#F2A33A', borderColor: '#FBF7EE' }} />}
             </div>
           );

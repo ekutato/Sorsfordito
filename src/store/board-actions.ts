@@ -2,7 +2,7 @@
 // A dobás a böngésző kriptográfiai véletlenforrásából jön (torzításmentes, elutasításos mintavétel).
 import { useGameStore } from './game-store';
 import { moveOnBoard, BOARD, FIELD_LABELS } from '@/data/board';
-import type { FieldOption } from '@/data/field-cards';
+import { canAfford, type FieldCard, type FieldOption } from '@/data/field-cards';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { TIME_SCALE_CONFIGS, type SoloBoardState } from '@/types/game';
 import type { Expenses } from '@/types/financial';
@@ -50,6 +50,8 @@ export function rollBoard(): number | undefined {
     lastRoll: roll,
     rolledRound: game.currentRound,
     lastOutcome: undefined,
+    lastResult: undefined,
+    awaitingOutcomeAck: false,
     awaitingContinue: true,
     reverts: board.reverts.filter((r) => r.atRound > game.currentRound),
   };
@@ -62,12 +64,14 @@ export function rollBoard(): number | undefined {
   return roll;
 }
 
-/** A mezőkártya választásának alkalmazása */
-export function resolveFieldCard(fieldType: string, option?: FieldOption) {
+/** A mezőkártya választásának alkalmazása. Fedezet nélküli opciót nem alkalmaz (false). */
+export function resolveFieldCard(fieldType: string, option?: FieldOption, card?: FieldCard): boolean {
   const { game } = useGameStore.getState();
-  if (!game) return;
+  if (!game) return false;
   const board = game.board ?? emptyBoard();
-  if (board.resolvedRound === game.currentRound) return;
+  if (board.resolvedRound === game.currentRound) return false;
+  const balance = game.players[game.activePlayerIndex]?.financialSheet.balance ?? 0;
+  if (option && !canAfford(option, balance)) return false;
 
   const reverts = [...board.reverts];
   if (option) {
@@ -87,10 +91,22 @@ export function resolveFieldCard(fieldType: string, option?: FieldOption) {
     ...latest,
     resolvedRound: game.currentRound,
     lastOutcome: option?.outcome,
+    lastResult: option && card
+      ? { field: fieldType, title: card.title, choice: option.label, effects: option.effects, realStep: card.realStep, sourceUrl: card.sourceUrl }
+      : undefined,
+    awaitingOutcomeAck: !!(option && card),
     visits: { ...latest.visits, [fieldType]: (latest.visits[fieldType] ?? 0) + 1 },
     reverts,
   };
   useGameStore.setState((st) => (st.game ? { game: { ...st.game, board: next } } : st));
+  return true;
+}
+
+/** Az eredménylap lezárása, a kör megszokott menete folytatódik */
+export function acknowledgeOutcome() {
+  useGameStore.setState((st) =>
+    st.game?.board ? { game: { ...st.game, board: { ...st.game.board, awaitingOutcomeAck: false } } } : st,
+  );
 }
 
 /** A dobás utáni nagy táblanézet lezárása */

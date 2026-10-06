@@ -24,7 +24,7 @@ const toneOf = (v: number) => (v > 0 ? 'text-money-positive' : v < 0 ? 'text-mon
 export function WellbeingMini({ sheet, ruleset = RULESETS[DEFAULT_RULESET_ID] }: Props) {
   const { w, index, safetyPct } = wellbeingSummary(sheet, ruleset);
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 pt-2 border-t border-white/5 text-[10px] text-[var(--color-text-muted)]">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 pt-2 border-t border-white/5 text-xs text-[var(--color-text-muted)]">
       {WELLBEING_KEYS.map((k) => (
         <span key={k}>
           {ruleset.labels.wellbeing[k]}{' '}
@@ -48,7 +48,7 @@ export function WellbeingStrip({ sheet, ruleset = RULESETS[DEFAULT_RULESET_ID] }
   return (
     <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">
+        <span className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
           {ruleset.labels.wellbeingIndex}
         </span>
         <span className="font-mono text-xs font-semibold">{index}/100</span>
@@ -59,7 +59,7 @@ export function WellbeingStrip({ sheet, ruleset = RULESETS[DEFAULT_RULESET_ID] }
           const pct = (Math.abs(v) / WELLBEING_MAX) * 50;
           return (
             <div key={k} className="bg-white/5 rounded-lg p-2" aria-label={`${ruleset.labels.wellbeing[k]}: ${v}`}>
-              <div className="flex justify-between text-[10px]">
+              <div className="flex justify-between text-xs">
                 <span className="text-[var(--color-text-muted)]">{ruleset.labels.wellbeing[k]}</span>
                 <span className={`font-mono font-semibold ${toneOf(v)}`}>{signed(v)}</span>
               </div>
@@ -75,7 +75,7 @@ export function WellbeingStrip({ sheet, ruleset = RULESETS[DEFAULT_RULESET_ID] }
         })}
       </div>
       <div>
-        <div className="flex justify-between text-[10px] text-[var(--color-text-muted)]">
+        <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
           <span>{ruleset.labels.safetyCircle} ({ruleset.safetyCircleMonths} havi kiadás)</span>
           <span className="font-mono">{safetyPct}%</span>
         </div>

@@ -101,6 +101,23 @@
   }
 }
 
+/* Felső biztonsági sáv: a Capacitor (insetsHandling: 'css') a --safe-area-inset-top
+   változót adja, a böngésző az env()-et; a nagyobbat használjuk. */
+:root {
+  --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+}
+
+/* A státuszsor mögé görgetett tartalom ne látsszon át */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--sat);
+  background: var(--color-bg);
+  z-index: 40;
+  pointer-events: none;
+}
+
 @layer utilities {
   /* Safe area insets mobilra */
   .safe-bottom {
@@ -108,7 +125,12 @@
   }
 
   .safe-top {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--sat);
+  }
+
+  /* Ragadós fejléc a státuszsor alatt (Android 15+ edge-to-edge, iOS notch) */
+  .sticky-safe {
+    top: var(--sat);
   }
 
   /* Szoveg truncate tobb sorhoz */

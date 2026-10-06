@@ -492,6 +492,17 @@ export interface SoloBoardState {
   visits: Record<string, number>;
   /** A mezőkártya választásának eredménye (a kártyán megjelenítve) */
   lastOutcome?: string;
+  /** A választás részletei a nagy eredménylaphoz */
+  lastResult?: {
+    field: string;
+    title: string;
+    choice: string;
+    effects: Array<{ target: string; amount: number }>;
+    realStep: string;
+    sourceUrl?: string;
+  };
+  /** Az eredménylap nyitva, amíg a játékos a "Tovább" gombra nem nyom */
+  awaitingOutcomeAck?: boolean;
   /** Időleges kiadás-hatások visszaállítása (pl. részletfizetés vége) */
   reverts: Array<{ atRound: number; target: string; amount: number }>;
 }

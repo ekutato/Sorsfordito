@@ -22,6 +22,17 @@ export interface FieldOption {
   outcome: string;
 }
 
+/** Az opció azonnali pénzigénye (a negatív egyenleghatások összege, Ft) */
+export function optionCost(option: FieldOption): number {
+  return option.effects.reduce((sum, e) => (e.target === 'balance' && e.amount < 0 ? sum - e.amount : sum), 0);
+}
+
+/** Van-e rá fedezet: amit nem tudsz kifizetni, azt nem választhatod (és el sem vihetik) */
+export function canAfford(option: FieldOption, balance: number): boolean {
+  const cost = optionCost(option);
+  return cost === 0 || cost <= balance;
+}
+
 export interface FieldCard {
   id: string;
   field: FieldType;
@@ -162,9 +173,9 @@ export const ENCOUNTER_CARDS: FieldCard[] = [
     id: 'tal-baratod-uzlete',
     field: 'encounter',
     title: 'Találkozás: közös vállalkozás',
-    body: 'Egy régi barátod kávézót nyitna, és társat keres 200 000 Ft-tal. Szerződés még nincs, csak lelkesedés.',
+    body: 'Egy régi barátod kávézót nyitna, és társat keres 2 000 000 Ft-tal. Szerződés még nincs, csak lelkesedés.',
     options: [
-      { label: 'Beszállok, de előbb írásban rögzítjük a feltételeket', effects: [{ target: 'balance', amount: -200_000 }, { target: 'wellbeing.egyensuly', amount: 1 }],
+      { label: 'Beszállok, de előbb írásban rögzítjük a feltételeket', effects: [{ target: 'balance', amount: -2_000_000 }, { target: 'wellbeing.egyensuly', amount: 1 }],
         outcome: 'Társak lettetek, tiszta szabályokkal. Hogy megtérül-e, később kiderül.' },
       { label: 'Segítek tanáccsal, pénzzel nem', effects: [{ target: 'wellbeing.egyensuly', amount: 1 }],
         outcome: 'A barátság megmaradt, a pénzed is.' },

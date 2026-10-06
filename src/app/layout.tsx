@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { UpdateBanner } from '@/ui/components/AppVersion';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#0F172A',
 };
 
@@ -34,6 +36,7 @@ export default function RootLayout({
         <main className="mx-auto max-w-md min-h-screen flex flex-col">
           {children}
         </main>
+        <UpdateBanner />
       </body>
     </html>
   );

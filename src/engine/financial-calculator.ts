@@ -211,11 +211,10 @@ export function calculateFinancialIQ(params: {
  * Formatazza a Ft osszegeket magyar formatumra
  */
 export function formatHUF(amount: HUF): string {
-  if (Math.abs(amount) >= 1_000_000) {
-    const millions = amount / 1_000_000;
-    return `${millions.toFixed(1)}M Ft`;
-  }
-  return `${amount.toLocaleString('hu-HU')} Ft`;
+  // Teljes, szóközzel tagolt összeg (pl. "2 000 000 Ft"); a tagoló nem törhető szóköz
+  const sign = amount < 0 ? '-' : '';
+  const digits = Math.round(Math.abs(amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+  return `${sign}${digits}\u00A0Ft`;
 }
 
 /**

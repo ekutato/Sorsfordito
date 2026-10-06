@@ -17,9 +17,10 @@ import type { Investment } from '@/types/financial';
 import type { GameState } from '@/types/game';
 import { BOARD, FIELD_LABELS } from '@/data/board';
 import { cardForField, FIELD_HINTS } from '@/data/field-cards';
-import { rollBoard, resolveFieldCard, emptyBoard, continueBoard } from '@/store/board-actions';
+import { rollBoard, resolveFieldCard, emptyBoard, continueBoard, acknowledgeOutcome } from '@/store/board-actions';
 import { BoardFull, BoardStrip, DiceButton } from '@/ui/board/BoardView';
-import { FieldCardView } from '@/ui/board/FieldCardView';
+import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
+import { VersionTag } from '@/ui/components/AppVersion';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
@@ -39,7 +40,7 @@ export function GameScreen() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top bar: kor es progressz */}
-      <div className="sticky top-0 z-10 bg-[var(--color-bg)]/95 backdrop-blur-sm px-4 pt-3 pb-2">
+      <div className="sticky sticky-safe z-20 backdrop-blur-sm px-4 pt-3 pb-2" style={{ background: 'var(--color-bg)' }}>
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm text-[var(--color-text-muted)]">
             <span className="font-semibold text-white">{player.name}</span>
@@ -1015,7 +1016,7 @@ function formatGameDate(dateStr: string): string {
 // --- Táblás mód ---
 
 function isBoardDone(game: GameState): boolean {
-  if (game.board?.awaitingContinue) return false;
+  if (game.board?.awaitingContinue || game.board?.awaitingOutcomeAck) return false;
   const b = game.board ?? emptyBoard();
   if (b.rolledRound !== game.currentRound) return false;
   const field = BOARD[b.position].type;
@@ -1065,8 +1066,19 @@ function BoardLayer() {
     return (
       <section className="space-y-3">
         {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
-        <p className="text-xs text-[var(--color-text-muted)]">Dobtál: <b>{b.lastRoll}</b></p>
-        <FieldCardView card={card} hasKnowledge={hasKnowledge} onChoose={(o) => { resolveFieldCard(field.type, o); setExpanded(false); }} />
+        <p className="text-sm text-[var(--color-text-muted)]">Dobtál: <b>{b.lastRoll}</b></p>
+        <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance}
+          onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
+      </section>
+    );
+  }
+
+  // 2/B) Eredménylap a kártya helyén, nagy betűvel - a kör a "Tovább" után folytatódik
+  if (b.awaitingOutcomeAck && b.lastResult && b.lastOutcome) {
+    return (
+      <section className="space-y-3">
+        {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        <FieldOutcomeView result={b.lastResult} outcome={b.lastOutcome} onContinue={() => { acknowledgeOutcome(); setExpanded(false); }} />
       </section>
     );
   }
@@ -1080,7 +1092,7 @@ function BoardLayer() {
         : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
       {b.lastOutcome
         ? <div role="status" className="rounded-xl px-4 py-3 text-base leading-snug font-medium border border-amber-400/40 bg-amber-400/10">{b.lastOutcome}</div>
-        : FIELD_HINTS[field.type] && <div className="rounded-xl px-3 py-2 text-xs bg-white/5">Dobtál: <b>{b.lastRoll}</b> · {FIELD_HINTS[field.type]}</div>}
+        : FIELD_HINTS[field.type] && <div className="rounded-xl px-3 py-2 text-sm bg-white/5">Dobtál: <b>{b.lastRoll}</b> · {FIELD_HINTS[field.type]}</div>}
     </section>
   );
 }
@@ -1112,6 +1124,7 @@ function GameMenu() {
               </div>
             </div>
           )}
+          <div className="px-3 pt-2 pb-1 border-t border-white/10 mt-1"><VersionTag /></div>
         </div>
       )}
     </div>
