@@ -515,6 +515,8 @@ export interface SoloBoardState {
   position: number;
   /** Az utolsó dobás */
   lastRoll?: number;
+  /** Honnan lépett a bábu az utolsó dobásnál (a lépésanimációhoz) */
+  from?: number;
   /** Melyik körben dobott utoljára (körönként egy dobás) */
   rolledRound?: number;
   /** Dobás után a nagy tábla nyitva marad, amíg a játékos a "Tovább" gombra nem nyom */

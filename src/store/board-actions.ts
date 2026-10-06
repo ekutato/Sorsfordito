@@ -75,6 +75,7 @@ export function rollBoard(manual?: { value: number; source: Exclude<DiceRollSour
   const next: SoloBoardState = {
     ...board,
     position: moved.position,
+    from: board.position,
     lastRoll: roll,
     rolledRound: game.currentRound,
     lastOutcome: undefined,
@@ -158,7 +159,7 @@ export function testJumpTo(field: FieldType) {
     if (BOARD[idx].type === field) { pos = idx; break; }
   }
   const next: SoloBoardState = {
-    ...board, position: pos, rolledRound: game.currentRound, awaitingContinue: true,
+    ...board, position: pos, from: board.position, lastRoll: undefined, rolledRound: game.currentRound, awaitingContinue: true,
     resolvedRound: undefined, lastOutcome: undefined, lastResult: undefined, awaitingOutcomeAck: false,
   };
   useGameStore.setState((st) => (st.game ? { game: { ...st.game, board: next } } : st));

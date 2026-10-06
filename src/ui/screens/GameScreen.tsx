@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { FinancialDashboard } from '@/ui/components/FinancialDashboard';
@@ -23,7 +23,8 @@ import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { gameRules } from '@/store/settings-store';
 import { DiceInfo } from '@/ui/board/DiceInfo';
-import type { GameRules, DiceRollSource } from '@/types/game';
+import { DieFace, LandingDie } from '@/ui/board/Die';
+import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel } from '@/ui/components/SettingsPanel';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
@@ -69,8 +70,11 @@ export function GameScreen() {
 
       {/* Fo tartalom - fazis szerint */}
       <div className="flex-1 px-4 py-4 space-y-4">
+        {/* Táblás mód: dobás → mezőkártya → a kör megszokott menete */}
+        <BoardLayer />
+
         {/* Induló kontextus: lokáció + gazdasági helyzet (1. kör, bevétel fázis) */}
-        {game.currentRound === 1 && game.phase === 'round_income' && (() => {
+        {game.currentRound === 1 && game.phase === 'round_income' && boardDone && (() => {
           const preset = LIFE_SITUATION_PRESETS[player.lifeSituation as LifeSituationId];
           const loc = preset?.location;
           return (
@@ -132,8 +136,6 @@ export function GameScreen() {
           );
         })()}
 
-        {/* Táblás mód: dobás → mezőkártya → a kör megszokott menete */}
-        <BoardLayer />
 
         {/* Penzugyi dashboard (mindig latszik) */}
         <FinancialDashboard
@@ -1049,29 +1051,12 @@ function BoardLayer() {
   const card = rolledNow ? cardForField(field.type, visit) : undefined;
   const cardOpen = !!card && b.resolvedRound !== game.currentRound;
 
-  // 1) Dobás előtt és közvetlenül utána: a tábla kinyílik, a bábu lép, a célmező kiemelt
+  // 1) Dobás előtt és közvetlenül utána: a tábla kinyílik (egy képernyőn), a bábu mezőről
+  //    mezőre lép, a célmezőből kiemelkedik a kártya
   if (!rolledNow || b.awaitingContinue) {
     return (
-      <section className="space-y-3" aria-label="Tábla">
-        <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined} pawnLabel={player.name} />
-        <BoardLegend />
-        <div className="sticky bottom-3 z-10 space-y-2">
-          {!rolledNow ? (
-            <DiceControls rules={rules} rolls={b.rolls ?? []} />
-          ) : (
-            <>
-              <div className="rounded-xl px-3 py-2 text-sm border border-white/10 space-y-0.5" style={{ background: "#0E1525" }}>
-                <p className="text-base">{b.lastRoll ? <>Dobtál: <b>{b.lastRoll}</b> → </> : null}<b>{FIELD_LABELS[field.type]}</b> mező · {districtOf(field.index).label}</p>
-                <p className="text-[var(--color-text-muted)]">{FIELD_EXPLAIN[field.type]}</p>
-              </div>
-              <button onClick={continueBoard} className="pulse-cta w-full h-14 rounded-2xl font-extrabold text-lg"
-                style={{ background: '#F2A33A', color: '#0E1525' }}>
-                Tovább
-              </button>
-            </>
-          )}
-        </div>
-      </section>
+      <BoardOpen key={`${game.currentRound}-${b.rolledRound ?? 'x'}-${b.position}`}
+        rolledNow={rolledNow} b={b} field={field} hasCard={!!card} playerName={player.name} rules={rules} />
     );
   }
 
@@ -1081,7 +1066,7 @@ function BoardLayer() {
     return (
       <section className="space-y-3">
         {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
-        <p className="text-sm text-[var(--color-text-muted)]">Dobtál: <b>{b.lastRoll}</b></p>
+        {b.lastRoll ? <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]"><DieFace value={b.lastRoll} size={28} /> Dobtál: <b>{b.lastRoll}</b> · {FIELD_LABELS[field.type]}, {districtOf(field.index).label}</p> : null}
         <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
           onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
       </section>
@@ -1112,6 +1097,43 @@ function BoardLayer() {
   );
 }
 
+
+function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules }: {
+  rolledNow: boolean; b: SoloBoardState; field: (typeof BOARD)[number]; hasCard: boolean; playerName: string; rules: GameRules;
+}) {
+  const [arrived, setArrived] = useState(!rolledNow);
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => { ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, [rolledNow]);
+  return (
+    <section ref={ref} className="space-y-3 scroll-mt-24" aria-label="Tábla">
+      <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined}
+        from={rolledNow ? b.from : undefined} reveal={rolledNow ? { field: field.type, hasCard } : undefined}
+        fitViewport onArrived={() => setArrived(true)} pawnLabel={playerName} />
+      <div className="sticky bottom-3 z-10 space-y-2">
+        {!rolledNow ? (
+          <DiceControls rules={rules} rolls={b.rolls ?? []} />
+        ) : arrived ? (
+          <>
+            <div className="rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10" style={{ background: '#0E1525' }}>
+              {b.lastRoll ? <DieFace value={b.lastRoll} size={44} /> : null}
+              <p className="text-base">{b.lastRoll ? <>Dobtál: <b>{b.lastRoll}</b> → </> : null}<b>{FIELD_LABELS[field.type]}</b> · {districtOf(field.index).label}</p>
+            </div>
+            <button onClick={continueBoard} className="pulse-cta w-full h-14 rounded-2xl font-extrabold text-lg"
+              style={{ background: '#F2A33A', color: '#0E1525' }}>
+              {hasCard ? 'Felfordítom a kártyát' : 'Tovább'}
+            </button>
+          </>
+        ) : (
+          <div className="h-[76px] rounded-2xl flex items-center justify-center gap-4 text-lg font-bold" style={{ background: '#0E1525' }}>
+            {b.lastRoll ? <LandingDie value={b.lastRoll} /> : null}
+            <span>{b.lastRoll ? `${b.lastRoll} mezőt lépsz…` : 'Lépsz…'}</span>
+          </div>
+        )}
+      </div>
+      {!rolledNow && <BoardLegend />}
+    </section>
+  );
+}
 
 /** Dobás: az app véletlenje vagy saját kocka; tesztmódban kézi érték; átlátható forrás */
 function DiceControls({ rules, rolls }: { rules: GameRules; rolls: Array<{ value: number; source: DiceRollSource }> }) {

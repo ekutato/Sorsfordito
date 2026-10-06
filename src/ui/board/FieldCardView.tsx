@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 import { canAfford, optionCost, type FieldCard, type FieldOption } from '@/data/field-cards';
 import { FIELD_LABELS } from '@/data/board';
@@ -56,7 +57,9 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
   // A helyes válasz ne mindig ugyanott álljon (kártyánként állandó, de vegyes sorrend)
   const options = card.field === 'market_news' ? card.options : shuffle(card.options, createRng(seedFromString(card.id)));
   return (
-    <article ref={ref} className="rounded-2xl overflow-hidden scroll-mt-24" style={{ background: '#FBF7EE', color: '#1C1A16' }}>
+    <motion.article ref={ref} key={card.id} className="rounded-2xl overflow-hidden scroll-mt-24" style={{ background: '#FBF7EE', color: '#1C1A16', transformPerspective: 900 }}
+      initial={{ rotateY: -90, opacity: 0, scale: 0.9 }} animate={{ rotateY: 0, opacity: 1, scale: 1 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}>
       {card.field === 'trap' ? (
         <div className="h-3" style={{ background: 'repeating-linear-gradient(135deg,#1A1A1A 0 12px,#F2A33A 12px 24px)' }} />
       ) : (
@@ -133,7 +136,7 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
           {card.sourceUrl && <> · <a href={card.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">forrás</a></>}
         </p>
       </div>
-    </article>
+    </motion.article>
   );
 }
 

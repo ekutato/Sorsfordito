@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BOARD, BOARD_SIZE, DISTRICTS, FIELD_EXPLAIN, FIELD_LABELS, FIELD_SHORT, districtOf, type FieldType } from '@/data/board';
 import { FIELD_STYLE, BOARD_PAPER } from './fieldStyle';
+import { DieFace } from './Die';
 
 // A tábla alapgeometriája 358 px széles; a konténer szélességére skálázzuk.
 // Soronként egy negyed (4 mező), kígyózó útvonal; a negyed neve és témája a sor elején.
@@ -31,33 +32,73 @@ interface FullProps {
   position: number;
   /** Kiemelt célmező (dobás után) */
   highlight?: number;
+  /** Honnan lépett a bábu: ekkor mezőről mezőre lép, nyomvonallal */
+  from?: number;
+  /** A célmezőből kiemelkedő kártya (dobás után) */
+  reveal?: { field: FieldType; hasCard: boolean };
+  /** A tábla férjen ki a képernyőn (fejléc + dobógomb mellett) */
+  fitViewport?: boolean;
+  /** A bábu megérkezett a célmezőre */
+  onArrived?: () => void;
   pawnColor?: string;
   pawnLabel?: string;
 }
 
-/** A teljes városi tábla - dobáskor nagyobb (kinyílik) */
-export function BoardFull({ position, highlight, pawnColor = '#F2A33A', pawnLabel = 'Te' }: FullProps) {
+/** Fejléc + dobó/tovább gombok helye a képernyőn, amikor a tábla nyitva van */
+const RESERVED_H = 250;
+
+/** A teljes városi tábla - dobáskor kinyílik, a bábu mezőről mezőre lép */
+export function BoardFull({ position, highlight, from, reveal, fitViewport, onArrived, pawnColor = '#F2A33A', pawnLabel = 'Te' }: FullProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const L = layout();
+  const [box, setBox] = useState({ w: BASE_W, h: 0 });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setScale(Math.min(1.3, e.contentRect.width / BASE_W)));
+    const update = () => setBox({ w: el.clientWidth, h: window.innerHeight });
+    update();
+    const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    window.addEventListener('resize', update);
+    return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, []);
-  const L = layout();
-  const pawn = L.tiles[position % BOARD_SIZE];
+  const byWidth = Math.min(1.3, box.w / BASE_W);
+  const byHeight = fitViewport && box.h ? Math.max(0.62, (box.h - RESERVED_H) / L.height) : Infinity;
+  const scale = Math.min(byWidth, byHeight);
+  const offsetX = Math.max(0, (box.w - BASE_W * scale) / 2);
+
+  // Útvonal: a kiinduló mezőtől a célig, lépésenként
+  const steps = from !== undefined ? (position - from + BOARD_SIZE) % BOARD_SIZE : 0;
+  const path = Array.from({ length: steps }, (_, i) => (from! + i + 1) % BOARD_SIZE);
+  const perStep = steps ? Math.min(0.32, 2.2 / steps) : 0;
+  const pawnAt = (i: number) => ({ left: L.tiles[i].x + TILE - 16, top: L.tiles[i].y - 8 });
+  const [arrived, setArrived] = useState(steps === 0);
   const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => {
+    if (steps === 0) { setArrived(true); onArrived?.(); return; }
+    setArrived(false);
+    const t = setTimeout(() => { setArrived(true); onArrived?.(); }, (steps * perStep + 0.15) * 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from, position]);
+
+  const target = L.tiles[position % BOARD_SIZE];
+  const pawnKeys = steps ? [pawnAt(from!), ...path.map(pawnAt)] : [pawnAt(position)];
+  const revealSt = reveal ? FIELD_STYLE[reveal.field] : undefined;
+  const cardW = 230, cardH = 168;
+  // A kártya ne takarja a megtett utat: felső félnél a célsor alá, alsó félnél fölé kerül
+  const cardTop = target.y < L.height / 2
+    ? Math.min(L.height - cardH - 8, target.y + TILE + 22)
+    : Math.max(8, target.y - cardH - 22);
 
   return (
     <div ref={ref} className="w-full">
       <div style={{ height: L.height * scale }} className="relative">
         <div
-          className="absolute left-0 top-0 origin-top-left rounded-2xl overflow-hidden"
-          style={{ width: BASE_W, height: L.height, transform: `scale(${scale})`, background: BOARD_PAPER }}
+          className="absolute top-0 origin-top-left rounded-2xl overflow-hidden"
+          style={{ left: offsetX, width: BASE_W, height: L.height, transform: `scale(${scale})`, background: BOARD_PAPER }}
           role="img"
-          aria-label={`Tábla, a bábud a(z) ${position + 1}. mezőn áll: ${FIELD_LABELS[BOARD[position].type]}`}
+          aria-label={`Tábla, a bábud a(z) ${position + 1}. mezőn áll: ${FIELD_LABELS[BOARD[position].type]}${steps ? `, ${steps} mezőt lépett` : ''}`}
         >
           {L.rows.map((d) => (
             <div key={d.id} className="absolute rounded-lg px-2 flex flex-col justify-center"
@@ -71,28 +112,62 @@ export function BoardFull({ position, highlight, pawnColor = '#F2A33A', pawnLabe
           ))}
           {L.tiles.map((t) => {
             const st = FIELD_STYLE[t.field.type];
-            const hl = highlight === t.field.index;
+            const hl = highlight === t.field.index && arrived;
+            const isStart = steps > 0 && t.field.index === from;
+            const stepNo = path.indexOf(t.field.index);
             return (
               <div key={t.field.index} onClick={() => setPicked(picked === t.field.index ? null : t.field.index)}
                 className="absolute rounded-[10px] flex flex-col items-center justify-center gap-0.5 cursor-pointer"
                 style={{ left: t.x, top: t.y, width: TILE, height: TILE, background: '#FBF7EE',
-                  boxShadow: hl ? '0 0 0 3px #F2A33A, 0 2px 0 #C9B78F' : picked === t.field.index ? '0 0 0 2px #4A3F2C' : '0 2px 0 #C9B78F' }}
+                  outline: isStart ? '2px dashed #6B5D43' : undefined, outlineOffset: 2,
+                  boxShadow: hl ? '0 0 0 3px #F2A33A, 0 0 14px 4px rgba(242,163,58,.7)' : picked === t.field.index ? '0 0 0 2px #4A3F2C' : '0 2px 0 #C9B78F' }}
                 title={`${FIELD_LABELS[t.field.type]} - ${FIELD_EXPLAIN[t.field.type]}`}>
                 <span className="rounded-md flex items-center justify-center font-extrabold text-[13px]"
                   style={{ width: 30, height: 22, background: st.color, color: st.ink }}>{st.glyph}</span>
-                <span className="text-xs font-bold leading-none" style={{ color: "#4A3F2C" }}>{FIELD_SHORT[t.field.type]}</span>
+                <span className="text-xs font-bold leading-none" style={{ color: '#4A3F2C' }}>{FIELD_SHORT[t.field.type]}</span>
+                {isStart && <span className="absolute -bottom-2 left-1 text-[10px] font-bold px-1 rounded" style={{ background: '#6B5D43', color: '#FBF7EE' }}>innen</span>}
+                {stepNo >= 0 && (
+                  <motion.span className="absolute -bottom-2 -left-1 w-5 h-5 rounded-full text-[11px] font-extrabold flex items-center justify-center"
+                    style={{ background: '#F2A33A', color: '#0E1525', border: '2px solid #FBF7EE' }}
+                    initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: (stepNo + 1) * perStep }}>
+                    {stepNo + 1}
+                  </motion.span>
+                )}
               </div>
             );
           })}
           <motion.div
-            className="absolute rounded-full flex items-center justify-center text-[10px] font-extrabold"
+            key={`${from ?? 'x'}-${position}`}
+            className="absolute rounded-full flex items-center justify-center text-[10px] font-extrabold z-10"
             style={{ width: 24, height: 24, background: pawnColor, color: '#0E1525', border: '2px solid #FBF7EE', boxShadow: '0 2px 4px rgba(0,0,0,.35)' }}
-            initial={false}
-            animate={{ left: pawn.x + TILE - 16, top: pawn.y - 8 }}
-            transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+            initial={pawnKeys[0]}
+            animate={steps ? { left: pawnKeys.map((k) => k.left), top: pawnKeys.map((k) => k.top) } : pawnKeys[0]}
+            transition={steps ? { duration: steps * perStep, ease: 'linear' } : { duration: 0 }}
           >
             {pawnLabel.slice(0, 1).toUpperCase()}
           </motion.div>
+
+          {/* A célmezőből kiemelkedő kártya */}
+          {reveal && revealSt && arrived && (
+            <motion.div
+              className="absolute z-20 rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: '#FBF7EE', boxShadow: '0 12px 30px rgba(0,0,0,.45)', border: `3px solid ${revealSt.color}` }}
+              initial={{ left: target.x, top: target.y, width: TILE, height: TILE, opacity: 0.4 }}
+              animate={{ left: (BASE_W - cardW) / 2, top: cardTop, width: cardW, height: cardH, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 160, damping: 18, delay: 0.25 }}
+            >
+              <div className="h-10 flex items-center justify-between px-3 font-extrabold text-sm uppercase tracking-wide shrink-0"
+                style={{ background: revealSt.color, color: revealSt.ink }}>
+                <span>{FIELD_LABELS[reveal.field]}</span><span>{revealSt.glyph}</span>
+              </div>
+              <div className="flex-1 p-3 flex flex-col justify-center" style={{ color: '#1C1A16' }}>
+                <p className="text-base font-extrabold leading-tight">
+                  {reveal.hasCard ? `${FIELD_LABELS[reveal.field]} kártyát húztál` : `${FIELD_LABELS[reveal.field]} mezőre léptél`}
+                </p>
+                <p className="text-[13px] leading-snug mt-1" style={{ color: '#4A3F2C' }}>{FIELD_EXPLAIN[reveal.field]}</p>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
       {picked !== null && (
@@ -186,7 +261,7 @@ export function BoardLegend() {
   );
 }
 
-/** Kockadobás gomb rövid "gurulás" animációval */
+/** Kockadobás gomb: a kocka pörög, gurul, közben váltakoznak a lapjai */
 export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefined; disabled?: boolean }) {
   const [face, setFace] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
@@ -196,21 +271,23 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
     let n = 0;
     const id = setInterval(() => {
       setFace(1 + Math.floor(Math.random() * 6)); // csak animáció; az érvényes dobás a rollBoard()-ból jön
-      if (++n >= 8) {
+      if (++n >= 12) {
         clearInterval(id);
         const v = onRoll();
         setFace(v ?? null);
         setRolling(false);
       }
-    }, 70);
+    }, 75);
   };
   return (
     <button onClick={roll} disabled={disabled || rolling}
-      className={`w-full h-14 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 disabled:opacity-60 ${rolling ? '' : 'pulse-cta'}`}
+      className={`w-full h-16 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-4 disabled:opacity-90 ${rolling ? '' : 'pulse-cta'}`}
       style={{ background: '#F2A33A', color: '#0E1525' }}>
-      <span className="w-9 h-9 rounded-lg flex items-center justify-center text-xl" style={{ background: '#FBF7EE' }}>
-        {face ?? '?'}
-      </span>
+      <motion.span className="inline-flex"
+        animate={rolling ? { rotate: [0, 120, 260, 400, 560, 720], y: [0, -10, 0, -6, 0, 0], scale: [1, 1.15, 1, 1.1, 1, 1] } : { rotate: 0, y: 0, scale: 1 }}
+        transition={rolling ? { duration: 0.9, ease: 'easeOut' } : { duration: 0.2 }}>
+        <DieFace value={face} size={44} label={false} />
+      </motion.span>
       {rolling ? 'Gurul…' : 'Dobok'}
     </button>
   );
