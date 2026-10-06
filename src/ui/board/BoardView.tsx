@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BOARD, BOARD_SIZE, DISTRICTS, FIELD_EXPLAIN, FIELD_LABELS, FIELD_SHORT, districtOf, type FieldType } from '@/data/board';
 import { FIELD_STYLE, BOARD_PAPER } from './fieldStyle';
-import { DieFace, DieIcon } from './Die';
+import { DieFace, CyclingDieIcon } from './Die';
 
 // A tábla alapgeometriája 358 px széles; a konténer szélességére skálázzuk.
 // Soronként egy negyed (4 mező), kígyózó útvonal; a negyed neve és témája a sor elején.
@@ -313,7 +313,7 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
           <DieFace value={face} size={44} label={false} />
         </motion.span>
       ) : (
-        <DieIcon size={28} />
+        <CyclingDieIcon size={28} />
       )}
       {rolling ? 'Gurul…' : 'Dobok'}
     </button>

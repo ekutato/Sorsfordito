@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 // A pöttyök helye a 3×3-as rácson (0..8), a valódi dobókocka mintájára
@@ -40,13 +41,26 @@ export function LandingDie({ value, size = 56 }: { value: number; size?: number 
   );
 }
 
-/** Kis kockaikon a "Dobok" gombra (nyugalmi állapot): sötét keret, két pötty */
-export function DieIcon({ size = 26, color = '#0E1525' }: { size?: number; color?: string }) {
+/** Kis kockaikon a "Dobok" gombra: sötét keret, a megadott számú pöttyel (1-6) */
+export function DieIcon({ size = 26, color = '#0E1525', value = 2 }: { size?: number; color?: string; value?: number }) {
+  const pips = PIPS[value] ?? PIPS[2];
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke={color} strokeWidth="2.4" />
-      <circle cx="8.5" cy="8.5" r="1.9" fill={color} />
-      <circle cx="15.5" cy="15.5" r="1.9" fill={color} />
+      {pips.map((p) => (
+        <circle key={p} cx={7.75 + (p % 3) * 4.25} cy={7.75 + Math.floor(p / 3) * 4.25} r="1.7" fill={color} />
+      ))}
     </svg>
   );
+}
+
+/** Nyugalmi kockaikon, amely lassan végigjárja az 1-6 lapot (csökkentett mozgásnál álló) */
+export function CyclingDieIcon({ size = 28, intervalMs = 900 }: { size?: number; intervalMs?: number }) {
+  const [v, setV] = useState(1);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(5); return; }
+    const t = setInterval(() => setV((x) => (x % 6) + 1), intervalMs);
+    return () => clearInterval(t);
+  }, [intervalMs]);
+  return <DieIcon size={size} value={v} />;
 }
