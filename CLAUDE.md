@@ -69,7 +69,8 @@ M6:                                          ████████
 
 1. **Adatellenőrzés:** "Fontos, hogy minden adatot a felhasználás előtt ellenőrizz online. Ha nem jutsz friss adathoz, kérj meg engem minden esetben, hogy mi legyen."
 2. **Nyelv:** A játék szövegei MAGYAR nyelvűek, a kód kommentek (inline) lehetnek angol/magyar mix, de a TypeScript típusnevek angolok.
-3. **Freemium:** Ingyenes = 1 karakter (Dani) + Sprint. Prémium = mind 3 preset + Maraton/Ultra + "Mi lett volna ha" + saját adat.
+3. **Átadás:** minden feltöltés után egyetlen üzenetben: mi változott, a verzió (commit), az előnézet linkje ÉS a teszt-APK állapota + közvetlen letöltési linkje (https://github.com/ekutato/Sorsfordito/releases/download/teszt-apk/sorsfordito-teszt.apk). Az APK-ra ne kelljen külön rákérdezni: ha még épül, ezt írd, és amikor elkészül, szólj magadtól.
+4. **Freemium:** Ingyenes = 1 karakter (Dani) + Sprint. Prémium = mind 3 preset + Maraton/Ultra + "Mi lett volna ha" + saját adat.
 
 ---
 
