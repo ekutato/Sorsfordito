@@ -8,13 +8,16 @@ import { TIME_SCALE_CONFIGS, type TimeScale } from '@/types/game';
 import { MAX_PLAYERS } from '@/engine/table/state';
 import { formatHUF } from '@/engine/financial-calculator';
 import { ConnectionBanner } from './TableBar';
+import { loadPlayerName, savePlayerName } from '@/store/player-name';
 
 const SCALES: TimeScale[] = ['sprint', 'marathon', 'ultra'];
 
 /** Belépés: szoba nyitása vagy csatlakozás kóddal / meghívólinkkel */
 export function TableEntry({ initialCode, onBack }: { initialCode?: string; onBack: () => void }) {
   const { createRoom, joinRoom, status, error } = useTableStore();
-  const [name, setName] = useState('');
+  const [name, setNameState] = useState('');
+  useEffect(() => { setNameState((n) => n || loadPlayerName()); }, []);
+  const setName = (n: string) => { setNameState(n); savePlayerName(n); };
   const [code, setCode] = useState(initialCode ?? '');
   const busy = status === 'connecting';
   const nameOk = name.trim().length >= 2;
@@ -27,7 +30,7 @@ export function TableEntry({ initialCode, onBack }: { initialCode?: string; onBa
       </div>
       <label className="block">
         <span className="text-sm font-semibold">A neved</span>
-        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="pl. Anna"
+        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="pl. Detti"
           className="mt-1 w-full bg-[var(--color-bg-card)] border border-white/10 rounded-xl px-4 py-3 text-lg" />
       </label>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">

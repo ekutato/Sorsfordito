@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { useFreemiumStore } from '@/store/freemium-store';
@@ -12,6 +12,7 @@ import { SettingsButton } from '@/ui/components/SettingsPanel';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { LiveDataButton } from '@/ui/components/LiveDataPanel';
 import { useTableStore } from '@/store/table-store';
+import { loadPlayerName, savePlayerName } from '@/store/player-name';
 import { TEST_MODE_MAX_BALANCE } from '@/types/game';
 import type { LifeSituationId, TimeScale } from '@/types/game';
 
@@ -19,7 +20,10 @@ type SetupStep = 'name' | 'situation' | 'timeScale' | 'ready';
 
 export function StartScreen() {
   const [step, setStep] = useState<SetupStep>('name');
-  const [playerName, setPlayerName] = useState('');
+  const [playerName, setPlayerNameState] = useState('');
+  // A mentett név a kliensen töltődik (statikus export: nincs hidratálási eltérés)
+  useEffect(() => { setPlayerNameState((n) => n || loadPlayerName()); }, []);
+  const setPlayerName = (n: string) => { setPlayerNameState(n); savePlayerName(n); };
   const [selectedSituation, setSelectedSituation] = useState<LifeSituationId | null>(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState<TimeScale>('sprint');
   const [customBalance, setCustomBalance] = useState<number | null>(null);
