@@ -39,3 +39,14 @@ export function LandingDie({ value, size = 56 }: { value: number; size?: number 
     </motion.span>
   );
 }
+
+/** Kis kockaikon a "Dobok" gombra (nyugalmi állapot): sötét keret, két pötty */
+export function DieIcon({ size = 26, color = '#0E1525' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke={color} strokeWidth="2.4" />
+      <circle cx="8.5" cy="8.5" r="1.9" fill={color} />
+      <circle cx="15.5" cy="15.5" r="1.9" fill={color} />
+    </svg>
+  );
+}

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BOARD, BOARD_SIZE, DISTRICTS, FIELD_EXPLAIN, FIELD_LABELS, FIELD_SHORT, districtOf, type FieldType } from '@/data/board';
 import { FIELD_STYLE, BOARD_PAPER } from './fieldStyle';
-import { DieFace } from './Die';
+import { DieFace, DieIcon } from './Die';
 
 // A tábla alapgeometriája 358 px széles; a konténer szélességére skálázzuk.
 // Soronként egy negyed (4 mező), kígyózó útvonal; a negyed neve és témája a sor elején.
@@ -306,11 +306,15 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
     <button onClick={roll} disabled={disabled || rolling}
       className={`w-full h-16 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-4 disabled:opacity-90 ${rolling ? '' : 'pulse-cta'}`}
       style={{ background: '#F2A33A', color: '#0E1525' }}>
-      <motion.span className="inline-flex"
-        animate={rolling ? { rotate: [0, 120, 260, 400, 560, 720], y: [0, -10, 0, -6, 0, 0], scale: [1, 1.15, 1, 1.1, 1, 1] } : { rotate: 0, y: 0, scale: 1 }}
-        transition={rolling ? { duration: 0.9, ease: 'easeOut' } : { duration: 0.2 }}>
-        <DieFace value={face} size={44} label={false} />
-      </motion.span>
+      {rolling ? (
+        <motion.span className="inline-flex"
+          animate={{ rotate: [0, 120, 260, 400, 560, 720], y: [0, -10, 0, -6, 0, 0], scale: [1, 1.15, 1, 1.1, 1, 1] }}
+          transition={{ duration: 0.9, ease: 'easeOut' }}>
+          <DieFace value={face} size={44} label={false} />
+        </motion.span>
+      ) : (
+        <DieIcon size={28} />
+      )}
       {rolling ? 'Gurul…' : 'Dobok'}
     </button>
   );
