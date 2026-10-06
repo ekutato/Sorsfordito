@@ -49,6 +49,7 @@ interface TableStore {
   resume: () => Promise<void>;
   reconnectNow: () => void;
   setProfile: (profileId: string) => void;
+  setColor: (color: string) => void;
   configure: (config: Partial<TableConfig>) => void;
   start: () => void;
   report: (r: PlayerReport) => void;
@@ -253,6 +254,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
     },
 
     setProfile: (profileId) => dispatch({ type: 'setProfile', playerId: get().playerId ?? '', profileId }),
+    setColor: (color) => dispatch({ type: 'setColor', playerId: get().playerId ?? '', color }),
     configure: (config) => dispatch({ type: 'configure', by: get().playerId ?? '', config }),
     start: () => dispatch({ type: 'start', by: get().playerId ?? '' }),
     report: (report) => dispatch({ type: 'report', playerId: get().playerId ?? '', report }),

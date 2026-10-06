@@ -30,6 +30,7 @@ import { SettingsPanel } from '@/ui/components/SettingsPanel';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
 import { useTableStore } from '@/store/table-store';
+import { displayColor } from '@/engine/table/state';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
@@ -1049,7 +1050,7 @@ function isBoardDone(game: GameState): boolean {
 function useOtherPawns() {
   const table = useTableStore((s) => s.table);
   const me = useTableStore((s) => s.playerId);
-  return (table?.players ?? []).filter((p) => p.id !== me && p.report).map((p) => ({ position: p.position, color: p.color, label: p.name }));
+  return (table?.players ?? []).filter((p) => p.id !== me && p.report).map((p) => ({ position: p.position, color: displayColor(p), label: p.name }));
 }
 
 function BoardLayer() {

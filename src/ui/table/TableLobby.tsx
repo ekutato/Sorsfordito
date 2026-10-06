@@ -5,7 +5,7 @@ import { useTableStore, inviteLink } from '@/store/table-store';
 import { useSettingsStore } from '@/store/settings-store';
 import { PRESETS_BY_DIFFICULTY } from '@/data/character-presets';
 import { TIME_SCALE_CONFIGS, type TimeScale } from '@/types/game';
-import { MAX_PLAYERS } from '@/engine/table/state';
+import { MAX_PLAYERS, PLAYER_COLORS, displayColor, type TableState } from '@/engine/table/state';
 import { formatHUF } from '@/engine/financial-calculator';
 import { ConnectionBanner } from './TableBar';
 import { loadPlayerName, savePlayerName } from '@/store/player-name';
@@ -71,9 +71,36 @@ export function CharacterPicker({ selected, onPick }: { selected?: string; onPic
   );
 }
 
+const COLOR_NAMES: Record<string, string> = {
+  '#F2A33A': 'narancs', '#5BA8F0': 'kék', '#3FC795': 'zöld', '#E9967A': 'lazac', '#C7A4F2': 'levendula',
+  '#E8B730': 'sárga', '#6EC6CA': 'türkiz', '#F08DB0': 'rózsaszín', '#A3B86C': 'olívazöld', '#B9C2D6': 'ezüst',
+};
+
+/** Színválasztó: a mások által már választott szín nem választható */
+export function ColorPicker({ table, playerId, onPick }: { table: TableState; playerId: string | null; onPick: (c: string) => void }) {
+  const mine = table.players.find((p) => p.id === playerId)?.color;
+  return (
+    <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Színed">
+      {PLAYER_COLORS.map((c) => {
+        const taken = table.players.find((p) => p.id !== playerId && p.color === c);
+        const sel = mine === c;
+        return (
+          <button key={c} role="radio" aria-checked={sel} disabled={!!taken} onClick={() => onPick(c)}
+            aria-label={`${COLOR_NAMES[c] ?? c}${taken ? ` - foglalt (${taken.name})` : ''}`}
+            title={taken ? `${taken.name} választotta` : COLOR_NAMES[c]}
+            className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-extrabold ${taken ? 'opacity-25' : ''}`}
+            style={{ background: c, color: '#0E1525', outline: sel ? '3px solid #FBF7EE' : 'none', outlineOffset: 3 }}>
+            {sel ? '✓' : taken ? '×' : ''}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Játék közben érkezett játékos: karakterválasztás, aztán indul a saját játéka */
 export function LateJoin() {
-  const { table, setProfile, leave } = useTableStore();
+  const { table, setProfile, setColor, playerId, leave } = useTableStore();
   if (!table) return null;
   return (
     <div className="flex-1 flex flex-col px-5 py-6 space-y-5">
@@ -83,7 +110,14 @@ export function LateJoin() {
           Asztal {table.roomCode} · a többiek a {table.round}. fordulónál tartanak. Válassz karaktert: a saját tempódban, az 1. körtől játszol, és a ranglistán veled együtt mérjük az eredményt.
         </p>
       </div>
-      <CharacterPicker onPick={setProfile} />
+      <section className="space-y-2">
+        <h2 className="text-lg font-bold">A színed</h2>
+        <ColorPicker table={table} playerId={playerId} onPick={setColor} />
+      </section>
+      <section className="space-y-2">
+        <h2 className="text-lg font-bold">A karaktered</h2>
+        <CharacterPicker onPick={setProfile} />
+      </section>
       <ConnectionBanner details />
       <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
     </div>
@@ -106,7 +140,7 @@ export function NotAdmitted() {
 
 /** Váróterem: kód, meghívás, játékosok, karakterválasztás, indítás */
 export function TableLobby() {
-  const { table, role, playerId, roomCode, setProfile, configure, start, leave, error } = useTableStore();
+  const { table, role, playerId, roomCode, setProfile, setColor, configure, start, leave, error } = useTableStore();
   const [copied, setCopied] = useState(false);
   useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 2000); return () => clearTimeout(t); } }, [copied]);
   if (!table || !roomCode) {
@@ -122,7 +156,7 @@ export function TableLobby() {
   const me = table.players.find((p) => p.id === playerId);
   const isHost = role === 'host';
   const link = inviteLink(roomCode);
-  const allReady = table.players.length >= 1 && table.players.every((p) => p.profileId);
+  const allReady = table.players.length >= 1 && table.players.every((p) => p.profileId && p.color);
   const scale = table.config.timeScale ?? 'sprint';
   const share = async () => {
     try {
@@ -148,14 +182,19 @@ export function TableLobby() {
             const prof = PRESETS_BY_DIFFICULTY.find((x) => x.id === p.profileId);
             return (
               <li key={p.id} className="flex items-center gap-3 rounded-xl px-3 py-2 bg-white/5">
-                <span className="w-4 h-4 rounded-full shrink-0" style={{ background: p.color }} />
+                <span className="w-4 h-4 rounded-full shrink-0" style={{ background: displayColor(p), border: p.color ? 'none' : '2px dashed #9CA3AF' }} />
                 <span className="flex-1 text-base font-semibold">{p.name}{p.id === table.hostId ? ' (asztal)' : ''}{p.id === playerId ? ' - te' : ''}</span>
-                <span className="text-sm text-[var(--color-text-muted)]">{prof ? `${prof.avatar} ${prof.name}` : 'választ…'}</span>
+                <span className="text-sm text-[var(--color-text-muted)]">{prof ? `${prof.avatar} ${prof.name}` : 'választ…'}{!p.color ? ' · színt választ' : ''}</span>
                 {!p.connected && <span className="text-xs text-rose-300">kiesett</span>}
               </li>
             );
           })}
         </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-bold">A színed</h2>
+        <ColorPicker table={table} playerId={playerId} onPick={setColor} />
       </section>
 
       <section className="space-y-2">
@@ -183,7 +222,7 @@ export function TableLobby() {
           <button onClick={() => { if (!table.config.timeScale) configure({ timeScale: scale, totalRounds: TIME_SCALE_CONFIGS[scale].totalRounds, monthsPerRound: TIME_SCALE_CONFIGS[scale].monthsPerRound }); start(); }}
             disabled={!allReady}
             className={`w-full h-14 rounded-2xl text-lg font-extrabold disabled:opacity-40 ${allReady ? 'pulse-cta' : ''}`} style={{ background: '#F2A33A', color: '#0E1525' }}>
-            {!allReady ? 'Mindenki válasszon karaktert' : table.players.length === 1 ? 'Indítás egyedül' : `Indítás (${table.players.length} játékos)`}
+            {!allReady ? 'Mindenki válasszon színt és karaktert' : table.players.length === 1 ? 'Indítás egyedül' : `Indítás (${table.players.length} játékos)`}
           </button>
         </section>
       ) : (

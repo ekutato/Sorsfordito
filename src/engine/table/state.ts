@@ -55,6 +55,7 @@ export interface PlayerReport {
 export interface TablePlayer {
   id: string;
   name: string;
+  /** A játékos által választott szín ('' = még nem választott) */
   color: string;
   connected: boolean;
   remote: boolean;
@@ -92,6 +93,7 @@ export type TableAction =
   | { type: 'leave'; playerId: string }
   | { type: 'reconnect'; playerId: string }
   | { type: 'setProfile'; playerId: string; profileId: string; goal?: string }
+  | { type: 'setColor'; playerId: string; color: string }
   | { type: 'configure'; by: string; config: Partial<TableConfig> }
   | { type: 'start'; by: string; sharedFateId?: string }
   | { type: 'roll'; playerId: string; /** Csak fizikai kockánál: a dobott érték (1-6) */ value?: number }
@@ -130,6 +132,20 @@ function nextRoll(state: TableState): { roll: number; rngCalls: number } {
 }
 
 const isHost = (s: TableState, id: string) => s.hostId === id;
+
+/** Szín nélküli játékos (pl. kiesett a lobbyból) az első szabad színt kapja, hogy a táblán megkülönböztethető legyen */
+function withFallbackColors(players: TablePlayer[]): TablePlayer[] {
+  const used = new Set(players.map((p) => p.color).filter(Boolean));
+  return players.map((p) => {
+    if (p.color) return p;
+    const c = PLAYER_COLORS.find((x) => !used.has(x)) ?? PLAYER_COLORS[0];
+    used.add(c);
+    return { ...p, color: c };
+  });
+}
+
+/** Szín a megjelenítéshez: választás előtt semleges szürke */
+export const displayColor = (p: Pick<TablePlayer, 'color'>) => p.color || '#6B7280';
 const mapPlayer = (s: TableState, id: string, f: (p: TablePlayer) => TablePlayer): TablePlayer[] =>
   s.players.map((p) => (p.id === id ? f(p) : p));
 
@@ -151,7 +167,7 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       const late = s.phase === 'playing' || s.phase === 'paused';
       const name = a.name.trim().slice(0, 24) || `Játékos ${s.players.length + 1}`;
       const player: TablePlayer = {
-        id: a.playerId, name, color: PLAYER_COLORS[s.players.length % PLAYER_COLORS.length],
+        id: a.playerId, name, color: '',
         connected: true, remote: a.remote, position: 0, done: false,
         ...(late ? { lateJoinRound: s.round } : {}),
       };
@@ -166,14 +182,24 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       const p = s.players.find((x) => x.id === a.playerId);
       // A lobbyban bárki válthat; játék közben csak a késői játékos választhat egyszer
       if (s.phase !== 'lobby' && !(p?.lateJoinRound !== undefined && !p.profileId)) return s;
-      return { ...s, players: mapPlayer(s, a.playerId, (x) => ({ ...x, profileId: a.profileId, goal: a.goal?.slice(0, 140) })) };
+      const players = mapPlayer(s, a.playerId, (x) => ({ ...x, profileId: a.profileId, goal: a.goal?.slice(0, 140) }));
+      // A késői játékos a karakterválasztással indul: ha színt nem választott, az első szabadot kapja
+      return { ...s, players: s.phase === 'lobby' ? players : withFallbackColors(players) };
+    }
+    case 'setColor': {
+      const p = s.players.find((x) => x.id === a.playerId);
+      if (!p || !PLAYER_COLORS.includes(a.color)) return s;
+      // A lobbyban bárki válthat; játék közben csak a késői játékos, amíg nincs karaktere
+      if (s.phase !== 'lobby' && !(p.lateJoinRound !== undefined && !p.profileId)) return s;
+      if (s.players.some((x) => x.id !== p.id && x.color === a.color)) return s;
+      return { ...s, players: mapPlayer(s, p.id, (x) => ({ ...x, color: a.color })) };
     }
     case 'configure':
       if (!isHost(s, a.by) || s.phase !== 'lobby') return s;
       return { ...s, config: { ...s.config, ...a.config } };
     case 'start':
       if (!isHost(s, a.by) || s.phase !== 'lobby' || s.players.length < 1) return s;
-      return startRound({ ...s, phase: 'playing' }, a.sharedFateId);
+      return startRound({ ...s, phase: 'playing', players: withFallbackColors(s.players) }, a.sharedFateId);
     case 'roll': {
       if (s.phase !== 'playing') return s;
       const p = s.players.find((x) => x.id === a.playerId);

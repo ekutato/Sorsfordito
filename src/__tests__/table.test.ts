@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, type TableState } from '@/engine/table/state';
+import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, PLAYER_COLORS, type TableState } from '@/engine/table/state';
 import { moveOnBoard, BOARD_SIZE, BOARD, DISTRICTS, FIELD_LABELS, districtOf } from '@/data/board';
 
 function lobbyWith(n: number): TableState {
@@ -208,5 +208,38 @@ describe('késői csatlakozás', () => {
     expect(reduceTable(s, { type: 'join', playerId: 'x11', name: 'Tizenegy', remote: true }).players).toHaveLength(10);
     const fin = { ...s, phase: 'finished' as const };
     expect(reduceTable(fin, { type: 'join', playerId: 'y', name: 'Y', remote: true })).toBe(fin);
+  });
+});
+
+describe('színválasztás', () => {
+  it('belépéskor nincs szín, a játékos választ; foglalt és ismeretlen szín nem választható', () => {
+    let s = lobbyWith(2);
+    expect(s.players.every((p) => p.color === '')).toBe(true);
+    s = reduceTable(s, { type: 'setColor', playerId: 'host', color: PLAYER_COLORS[2] });
+    expect(s.players[0].color).toBe(PLAYER_COLORS[2]);
+    const taken = reduceTable(s, { type: 'setColor', playerId: 'p1', color: PLAYER_COLORS[2] });
+    expect(taken.players[1].color).toBe('');
+    const bogus = reduceTable(s, { type: 'setColor', playerId: 'p1', color: 'red' });
+    expect(bogus.players[1].color).toBe('');
+    s = reduceTable(s, { type: 'setColor', playerId: 'host', color: PLAYER_COLORS[0] });
+    expect(reduceTable(s, { type: 'setColor', playerId: 'p1', color: PLAYER_COLORS[2] }).players[1].color).toBe(PLAYER_COLORS[2]);
+  });
+
+  it('indítás után a lobbyjátékos nem vált színt; a szín nélküli az első szabadot kapja', () => {
+    let s = lobbyWith(2);
+    s = reduceTable(s, { type: 'setColor', playerId: 'host', color: PLAYER_COLORS[0] });
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    expect(s.players[1].color).toBe(PLAYER_COLORS[1]);
+    expect(reduceTable(s, { type: 'setColor', playerId: 'host', color: PLAYER_COLORS[5] }).players[0].color).toBe(PLAYER_COLORS[0]);
+  });
+
+  it('a késői játékos a karakterválasztás előtt színt választhat', () => {
+    let s = reduceTable(lobbyWith(1), { type: 'setColor', playerId: 'host', color: PLAYER_COLORS[0] });
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    s = reduceTable(s, { type: 'join', playerId: 'late1', name: 'Késő', remote: true });
+    s = reduceTable(s, { type: 'setColor', playerId: 'late1', color: PLAYER_COLORS[0] });
+    expect(s.players[1].color).toBe('');
+    s = reduceTable(s, { type: 'setColor', playerId: 'late1', color: PLAYER_COLORS[4] });
+    expect(s.players[1].color).toBe(PLAYER_COLORS[4]);
   });
 });
