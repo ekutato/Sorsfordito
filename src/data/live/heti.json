@@ -1,6 +1,6 @@
 {
   "het": "2026-W41",
-  "frissitve": "2026-10-05",
+  "frissitve": "2026-10-06",
   "megjegyzes": "Heti élő adatcsomag. A heti rutin frissíti; minden érték forrással. verified=false: nem sikerült friss forrásból megerősíteni, az előző érték maradt - a játékvezető döntése szükséges.",
   "ertekek": {
     "mnb.baseRate": {
@@ -12,20 +12,28 @@
       "url": "https://www.mnb.hu/letoltes/hu-sajtotajekoztato-a-monetaris-tanacs-2026-szeptember-22-i-dontese-utan.pdf"
     },
     "mnb.eurHufRate": {
-      "value": 367.87,
+      "value": 365.38,
       "unit": "Ft",
-      "asOf": "2026-10-02",
+      "asOf": "2026-10-06",
       "verified": true,
-      "source": "MNB hivatalos devizaárfolyam",
-      "url": "https://www.mnb.hu/arfolyamok"
+      "source": "MNB hivatalos devizaárfolyam, 2026.10.06.",
+      "url": "https://www.mnb.hu/arfolyamok",
+      "elozo": {
+        "value": 367.87,
+        "asOf": "2026-10-02"
+      }
     },
     "mnb.usdHufRate": {
-      "value": 326.94,
+      "value": 324.98,
       "unit": "Ft",
-      "asOf": "2026-10-02",
+      "asOf": "2026-10-06",
       "verified": true,
-      "source": "MNB hivatalos devizaárfolyam",
-      "url": "https://www.mnb.hu/arfolyamok"
+      "source": "MNB hivatalos devizaárfolyam, 2026.10.06.",
+      "url": "https://www.mnb.hu/arfolyamok",
+      "elozo": {
+        "value": 326.94,
+        "asOf": "2026-10-02"
+      }
     },
     "mnb.chfHufRate": {
       "value": 394.71,
@@ -210,6 +218,82 @@
       "verified": true,
       "source": "Pénzcentrum, 2026.10.02.: a BUX egy év alatt nagyjából 50%-kal emelkedett",
       "url": "https://www.penzcentrum.hu/megtakaritas/20261002/elkepeszto-szarnyalas-a-magyar-tozsden-elarultak-a-profik-melyik-reszvenyekkel-lehet-meg-most-is-rengeteg-penzt-keresni-1206441"
+    },
+    "metals.goldUsdOz": {
+      "value": 4174.0,
+      "unit": "USD/uncia",
+      "asOf": "2026-10-06",
+      "verified": true,
+      "source": "Azonnali spot árfolyam (gold-api.com, Swissquote), 2026.10.06.",
+      "url": "https://api.gold-api.com/price/XAU"
+    },
+    "metals.silverUsdOz": {
+      "value": 61.5,
+      "unit": "USD/uncia",
+      "asOf": "2026-10-06",
+      "verified": true,
+      "source": "Azonnali spot árfolyam (Swissquote), 2026.10.06.",
+      "url": "https://forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument/XAG/USD"
+    },
+    "bank.depositRate": {
+      "value": 3.95,
+      "unit": "%/év",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "MNB kamatstatisztika, 2026. augusztus: háztartások lekötött forintbetétei, új szerződések",
+      "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf",
+      "elozo": {
+        "value": 4.13,
+        "asOf": "2026-07"
+      }
+    },
+    "bank.personalLoanThm": {
+      "value": 13.82,
+      "unit": "% THM",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "MNB kamatstatisztika, 2026. augusztus: személyi kölcsönök átlagos THM-je",
+      "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf",
+      "elozo": {
+        "value": 14.23,
+        "asOf": "2026-07"
+      }
+    },
+    "bank.carLoanThm": {
+      "value": 13.14,
+      "unit": "% THM",
+      "asOf": "2026-08",
+      "verified": false,
+      "source": "MNB kamatstatisztika, 2026. augusztus: ÁRUHITELEK átlagos THM-je (autóhitelre külön adat nincs - játékvezetői döntés kell)",
+      "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf"
+    },
+    "diakhitel.dh1Rate": {
+      "value": 8.18,
+      "unit": "%/év",
+      "asOf": "2026-07-01",
+      "verified": true,
+      "source": "Diákhitel Központ: Diákhitel1 kamata 2026. II. félévben",
+      "url": "https://diakhitel.hu/diakhitel1/",
+      "elozo": {
+        "value": 8.69,
+        "asOf": "2026-01-01"
+      }
+    },
+    "crypto.btcHuf": {
+      "value": 27961777,
+      "unit": "Ft",
+      "asOf": "2026-10-06",
+      "verified": true,
+      "source": "CoinGecko, 2026.10.06.",
+      "url": "https://www.coingecko.com/hu/pénzérmék/bitcoin"
+    },
+    "crypto.ethHuf": {
+      "value": 879597,
+      "unit": "Ft",
+      "asOf": "2026-10-06",
+      "verified": true,
+      "source": "CoinGecko, 2026.10.06.",
+      "url": "https://www.coingecko.com/hu/pénzérmék/ethereum"
     }
   },
   "trendek": {

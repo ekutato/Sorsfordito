@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
+import { fillDeep } from '@/data/live/vars';
 import { WellbeingReflection } from './WellbeingReflection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
@@ -62,7 +63,11 @@ export function FateEventView() {
     }
     return scripted;
   }, [lifeSituation, game.config.timeScale, game.gameId]); // eslint-disable-line react-hooks/exhaustive-deps
-  const rawFateEvent = getFateEventForRound(fateEvents, game.currentRound);
+  // A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket
+  const rawFateEvent = useMemo(() => {
+    const e = getFateEventForRound(fateEvents, game.currentRound);
+    return e ? fillDeep(e) : undefined;
+  }, [fateEvents, game.currentRound]);
 
   // Feltétel-ellenőrzés: ha az eseménynek van `requires` mezője, ellenőrizzük
   const fateEvent = (() => {
@@ -98,7 +103,7 @@ export function FateEventView() {
 
   // --- Sztorivonal feloldás megjelenítés ---
   if (resolvingStoryline) {
-    const resolution = getStorylineResolution(resolvingStoryline);
+    const resolution = fillDeep(getStorylineResolution(resolvingStoryline));
 
     const handleStorylineResolve = () => {
       const pid = player.playerId;

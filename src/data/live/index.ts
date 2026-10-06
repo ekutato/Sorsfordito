@@ -18,6 +18,8 @@ export interface LiveValue {
   verified: boolean;
   source: string;
   url: string;
+  /** Az előző heti érték (a változás jelzéséhez a "Heti adatok" képernyőn és az e-mailben) */
+  elozo?: { value: number; asOf: string };
 }
 
 export interface LiveDataPack {

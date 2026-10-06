@@ -26,6 +26,7 @@ import { DiceInfo } from '@/ui/board/DiceInfo';
 import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel } from '@/ui/components/SettingsPanel';
+import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
@@ -1179,9 +1180,11 @@ function GameMenu() {
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [liveData, setLiveData] = useState(false);
   return (
     <div className="relative">
       {settings && <SettingsPanel onClose={() => setSettings(false)} />}
+      {liveData && <LiveDataPanel onClose={() => setLiveData(false)} />}
       <button aria-label="Menü" aria-expanded={open} onClick={() => { setOpen((o) => !o); setConfirm(false); }}
         className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -1190,6 +1193,9 @@ function GameMenu() {
         <div className="absolute right-0 top-12 z-30 w-60 rounded-xl border border-white/10 bg-[#172036] p-2 shadow-xl">
           {!confirm ? (
             <>
+              <button onClick={() => { setLiveData(true); setOpen(false); }} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
+                Heti adatok - {weekLabel()}
+              </button>
               <button onClick={() => { setSettings(true); setOpen(false); }} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
                 Játékmesteri beállítások
               </button>

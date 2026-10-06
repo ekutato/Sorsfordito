@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
+import { liveVar } from '@/data/live/vars';
 import { WellbeingReflection } from './WellbeingReflection';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
@@ -127,7 +128,8 @@ export function DecisionView() {
       const sheet = player.financialSheet;
       const guess = getNestedValue(sheet, varName) ?? getNestedValue(sheet.computed, varName);
       if (guess != null && typeof guess === 'number') return guess.toLocaleString('hu-HU');
-      return match; // ismeretlen → meghagyjuk
+      // 4. Heti élő adatok (közös változólista: src/data/live/vars.ts)
+      return liveVar(varName) ?? 'n. a.';
     });
   };
 
@@ -222,7 +224,7 @@ export function DecisionView() {
           </span>
         </div>
         <h3 className="font-display text-lg font-semibold mb-3">
-          {decision.title}
+          {replaceVars(decision.title)}
         </h3>
         <p className="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">
           <GlossaryText text={situationText} />
@@ -246,7 +248,7 @@ export function DecisionView() {
                     {String.fromCharCode(65 + index)})
                   </span>
                   <div className="flex-1">
-                    <span className="font-semibold block mb-1">{option.label}</span>
+                    <span className="font-semibold block mb-1">{replaceVars(option.label)}</span>
                     <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
                       <GlossaryText text={replaceVars(option.description)} />
                     </p>
@@ -301,7 +303,7 @@ export function DecisionView() {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">✅</span>
               <span className="font-semibold">
-                {chosenOption.label}
+                {replaceVars(chosenOption.label)}
               </span>
             </div>
 
@@ -350,7 +352,7 @@ export function DecisionView() {
                   💡 Tudtad?
                 </h4>
                 <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
-                  <GlossaryText text={chosenOption.didYouKnow} />
+                  <GlossaryText text={replaceVars(chosenOption.didYouKnow)} />
                 </p>
               </motion.div>
             )}

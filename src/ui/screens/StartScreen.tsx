@@ -10,6 +10,7 @@ import { formatHUF } from '@/engine/financial-calculator';
 import { useSettingsStore } from '@/store/settings-store';
 import { SettingsButton } from '@/ui/components/SettingsPanel';
 import { VersionTag } from '@/ui/components/AppVersion';
+import { LiveDataButton } from '@/ui/components/LiveDataPanel';
 import { TEST_MODE_MAX_BALANCE } from '@/types/game';
 import type { LifeSituationId, TimeScale } from '@/types/game';
 
@@ -95,6 +96,7 @@ export function StartScreen() {
         <p className="text-[var(--color-text-muted)] text-sm">
           Valós adatok. Valós döntések. Valós tanulságok.
         </p>
+        <LiveDataButton className="mt-3 text-sm underline text-brand-300" />
       </motion.div>
 
       <div className="absolute right-4 top-4 safe-top"><SettingsButton /></div>
