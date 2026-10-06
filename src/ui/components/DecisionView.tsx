@@ -63,7 +63,7 @@ export function DecisionView() {
         </p>
         <button
           onClick={() => setPhase('round_invest')}
-          className="w-full bg-brand-600 hover:bg-brand-500 text-white
+          className="pulse-cta w-full bg-brand-600 hover:bg-brand-500 text-white
                      font-semibold py-3 rounded-xl transition-colors"
         >
           Tovább →
@@ -354,7 +354,7 @@ export function DecisionView() {
 
             <button
               onClick={() => setPhase('round_invest')}
-              className="w-full bg-brand-600 hover:bg-brand-500 text-white
+              className="pulse-cta w-full bg-brand-600 hover:bg-brand-500 text-white
                          font-semibold py-3 rounded-xl transition-colors mt-4"
             >
               Tovább →

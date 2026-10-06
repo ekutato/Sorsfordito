@@ -151,7 +151,7 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
   };
   return (
     <button onClick={roll} disabled={disabled || rolling}
-      className="w-full h-14 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 disabled:opacity-60"
+      className={`w-full h-14 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 disabled:opacity-60 ${rolling ? '' : 'pulse-cta'}`}
       style={{ background: '#F2A33A', color: '#0E1525' }}>
       <span className="w-9 h-9 rounded-lg flex items-center justify-center text-xl" style={{ background: '#FBF7EE' }}>
         {face ?? '?'}

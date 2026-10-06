@@ -119,7 +119,7 @@ export function RoundSummaryView() {
       {/* Tovabb gomb */}
       <button
         onClick={handleNext}
-        className={`w-full font-bold py-3.5 rounded-xl transition-colors ${
+        className={`pulse-cta w-full font-bold py-3.5 rounded-xl transition-colors ${
           isLastRound
             ? 'bg-card-epilogue hover:bg-card-epilogue/80 text-white'
             : 'bg-brand-600 hover:bg-brand-500 text-white'

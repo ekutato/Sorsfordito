@@ -204,7 +204,7 @@ export function FateEventView() {
 
           <button
             onClick={handleStorylineResolve}
-            className={`w-full ${resolution.isPositive ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600/80 hover:bg-red-500/80'} text-white
+            className={`pulse-cta w-full ${resolution.isPositive ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600/80 hover:bg-red-500/80'} text-white
                        font-semibold py-3 rounded-xl transition-colors`}
           >
             {fateEvent ? 'Tovább a sorsfordítóhoz →' : 'Kör lezárása →'}

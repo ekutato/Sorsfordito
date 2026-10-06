@@ -20,6 +20,10 @@ import { cardForField, FIELD_HINTS } from '@/data/field-cards';
 import { rollBoard, resolveFieldCard, emptyBoard, continueBoard } from '@/store/board-actions';
 import { BoardFull, BoardStrip, DiceButton } from '@/ui/board/BoardView';
 import { FieldCardView } from '@/ui/board/FieldCardView';
+import { createRng, seedFromString, shuffle } from '@/engine/rng';
+
+const MARKET_INVEST_OFFERS = 3;
+const MARKET_KNOWLEDGE_OFFERS = 2;
 
 export function GameScreen() {
   const game = useGameStore((s) => s.game);
@@ -42,8 +46,11 @@ export function GameScreen() {
             {' · '}
             {game.currentRound}/{tsConfig.totalRounds}. kör
           </div>
-          <div className="text-sm font-mono">
-            📅 {formatGameDate(game.currentGameDate)}
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-mono">
+              📅 {formatGameDate(game.currentGameDate)}
+            </div>
+            <GameMenu />
           </div>
         </div>
         <div className="round-progress">
@@ -426,7 +433,7 @@ function IncomeExpensePhase() {
 
           <button
             onClick={handleNext}
-            className={`w-full font-semibold py-3 rounded-xl transition-colors text-white ${
+            className={`pulse-cta w-full font-semibold py-3 rounded-xl transition-colors text-white ${
               isIncome
                 ? 'bg-green-600 hover:bg-green-500'
                 : 'bg-red-600/80 hover:bg-red-500/80'
@@ -451,11 +458,8 @@ function InvestPhase() {
   const [tab, setTab] = useState<'invest' | 'knowledge'>('invest');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [justBought, setJustBought] = useState<string | null>(null);
-  const [investBoughtThisRound, setInvestBoughtThisRound] = useState(0);
-  const [knowledgeBoughtThisRound, setKnowledgeBoughtThisRound] = useState(0);
-
-  // Per-round purchase limits
-  const MAX_KNOWLEDGE_PER_ROUND = 2;
+  // Körönkénti limit: 1 befektetés + 1 tudáskártya (a játéknaplóból számolva, így elnavigálással sem kijátszható)
+  const MAX_KNOWLEDGE_PER_ROUND = 1;
   const MAX_INVEST_PER_ROUND = 1;
 
   // MiFID kvíz állapot
@@ -476,14 +480,17 @@ function InvestPhase() {
   const ownedInvestmentIds = player.financialSheet.investments.map((i) => i.optionId);
   const ownedKnowledgeIds = player.financialSheet.acquiredKnowledge;
 
-  // Filter: show investments affordable or educational, hide already owned
-  const availableInvestments = INVESTMENT_OPTIONS.filter(
-    (inv) => !ownedInvestmentIds.includes(inv.id) && inv.tier === 'free'
-  );
+  const roundLog = (game.eventLog ?? []).filter((e) => e.round === game.currentRound && e.type === 'investment');
+  const investBoughtThisRound = roundLog.filter((e) => e.description.startsWith('Befektetés:')).length;
+  const knowledgeBoughtThisRound = roundLog.filter((e) => e.description.startsWith('Tudás kártya:')).length;
 
-  const availableKnowledge = KNOWLEDGE_CARDS.filter(
-    (k) => !ownedKnowledgeIds.includes(k.id) && k.tier === 'free'
-  );
+  // Mint egy táblajátékban: nem a teljes piac látszik, hanem körönként néhány húzott lap.
+  // A húzás körönként állandó (a játék és a kör azonosítójából), így újratöltéskor sem változik.
+  const deckInvest = INVESTMENT_OPTIONS.filter((inv) => !ownedInvestmentIds.includes(inv.id) && inv.tier === 'free');
+  const deckKnowledge = KNOWLEDGE_CARDS.filter((k) => !ownedKnowledgeIds.includes(k.id) && k.tier === 'free');
+  const drawRng = createRng(seedFromString(`${game.gameId}-r${game.currentRound}`));
+  const availableInvestments = shuffle(deckInvest, drawRng).slice(0, MARKET_INVEST_OFFERS);
+  const availableKnowledge = shuffle(deckKnowledge, drawRng).slice(0, MARKET_KNOWLEDGE_OFFERS);
 
   const handleBuyInvestment = (optionId: string) => {
     const option = INVESTMENT_OPTIONS.find((o) => o.id === optionId);
@@ -508,7 +515,6 @@ function InvestPhase() {
       financialImpact: -option.entryPrice,
     });
 
-    setInvestBoughtThisRound((c) => c + 1);
     setJustBought(option.name);
     setSelectedId(null);
     setTimeout(() => setJustBought(null), 2000);
@@ -554,7 +560,6 @@ function InvestPhase() {
       financialImpact: -card.price,
     });
 
-    setKnowledgeBoughtThisRound((c) => c + 1);
     setQuizState(null);
     setJustBought(card.name);
     setSelectedId(null);
@@ -624,7 +629,7 @@ function InvestPhase() {
               : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]'
           }`}
         >
-          💰 Befektetések ({availableInvestments.length})
+          💰 Heti piac ({availableInvestments.length})
         </button>
         <button
           onClick={() => { setTab('knowledge'); setSelectedId(null); setQuizState(null); }}
@@ -637,6 +642,10 @@ function InvestPhase() {
           📚 Tudás ({availableKnowledge.length})
         </button>
       </div>
+
+      <p className="text-xs text-[var(--color-text-muted)] mb-3">
+        Ebben a körben ezeket a lapokat húztad. A paklikban még {Math.max(0, deckInvest.length - availableInvestments.length)} befektetés és {Math.max(0, deckKnowledge.length - availableKnowledge.length)} tudáskártya vár. Körönként 1 befektetést és 1 tudást szerezhetsz.
+      </p>
 
       {/* Investment options list */}
       {tab === 'invest' && (
@@ -774,7 +783,7 @@ function InvestPhase() {
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND && (
             <div className="bg-brand-600/10 border border-brand-500/30 rounded-xl px-3 py-2 mb-1 text-xs text-brand-300">
-              📚 Ebben a körben már {MAX_KNOWLEDGE_PER_ROUND} tudást szereztél. Legközelebb folytathatod!
+              📚 Ebben a körben már szereztél tudást. A következő körben új lapokat húzol!
             </div>
           )}
           {availableKnowledge.length === 0 ? (
@@ -945,7 +954,7 @@ function InvestPhase() {
       {/* Skip button */}
       <button
         onClick={() => setPhase('round_fate')}
-        className="w-full mt-3 bg-brand-600 hover:bg-brand-500
+        className="pulse-cta w-full mt-3 bg-brand-600 hover:bg-brand-500
                    text-white font-semibold py-3 rounded-xl transition-colors text-sm"
       >
         Tovább a Sorsfordítóhoz →
@@ -1039,7 +1048,7 @@ function BoardLayer() {
               <div className="rounded-xl px-3 py-2 text-sm border border-white/10" style={{ background: "#0E1525" }}>
                 Dobtál: <b>{b.lastRoll}</b> → <b>{FIELD_LABELS[field.type]}</b> mező
               </div>
-              <button onClick={continueBoard} className="w-full h-14 rounded-2xl font-extrabold text-lg"
+              <button onClick={continueBoard} className="pulse-cta w-full h-14 rounded-2xl font-extrabold text-lg"
                 style={{ background: '#F2A33A', color: '#0E1525' }}>
                 Tovább
               </button>
@@ -1070,8 +1079,41 @@ function BoardLayer() {
             <button onClick={() => setExpanded(false)} className="w-full h-10 rounded-lg text-sm font-semibold bg-white/5">Tábla bezárása</button></div>
         : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
       {b.lastOutcome
-        ? <div className="rounded-xl px-3 py-2 text-xs bg-white/5">{b.lastOutcome}</div>
+        ? <div role="status" className="rounded-xl px-4 py-3 text-base leading-snug font-medium border border-amber-400/40 bg-amber-400/10">{b.lastOutcome}</div>
         : FIELD_HINTS[field.type] && <div className="rounded-xl px-3 py-2 text-xs bg-white/5">Dobtál: <b>{b.lastRoll}</b> · {FIELD_HINTS[field.type]}</div>}
     </section>
+  );
+}
+
+
+/** Játékmenü: új játék indítása (teszteléshez is), megerősítéssel */
+function GameMenu() {
+  const resetGame = useGameStore((s) => s.resetGame);
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <div className="relative">
+      <button aria-label="Menü" aria-expanded={open} onClick={() => { setOpen((o) => !o); setConfirm(false); }}
+        className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-12 z-30 w-60 rounded-xl border border-white/10 bg-[#172036] p-2 shadow-xl">
+          {!confirm ? (
+            <button onClick={() => setConfirm(true)} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
+              Új játék indítása
+            </button>
+          ) : (
+            <div className="p-2 space-y-2">
+              <p className="text-sm">Biztosan újrakezded? A mostani játék elvész.</p>
+              <div className="flex gap-2">
+                <button onClick={() => { resetGame(); setOpen(false); }} className="flex-1 h-10 rounded-lg bg-red-600 text-white text-sm font-bold">Igen, újra</button>
+                <button onClick={() => setConfirm(false)} className="flex-1 h-10 rounded-lg bg-white/10 text-sm">Mégse</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
