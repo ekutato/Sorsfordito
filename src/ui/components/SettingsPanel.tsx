@@ -1,5 +1,6 @@
 'use client';
 
+import { useSoundPrefs } from '@/audio/sfx';
 import { createPortal } from 'react-dom';
 import { useState, type ReactNode } from 'react';
 import { useSettingsStore, gameRules } from '@/store/settings-store';
@@ -77,6 +78,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           value={s.diceSource} onChange={(v) => patch({ diceSource: v })}
           options={[{ value: 'app', label: 'Az app dob' }, { value: 'physical', label: 'Saját kockával dobok' }]} />
 
+        <SoundToggles />
+
         {s.testMode && (
           <div className="mt-4 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 space-y-3">
             <div className="flex items-center justify-between">
@@ -103,6 +106,32 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Kijelzés: hangok és rezgés (nem játékszabály, bármikor állítható) */
+function SoundToggles() {
+  const { sound, haptics, setSound, setHaptics } = useSoundPrefs();
+  const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator;
+  return (
+    <div className="mt-4 pt-3 border-t border-white/10">
+      <span className="block text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Kijelzés</span>
+      <Toggle label="Hangok" checked={sound} onChange={setSound}
+        hint="Kocka, lépés, pénz, kártyák, csapdaóra, forduló és mérföldkő. Alapból némítva; a telefon hangerejét követi." />
+      {canVibrate && (
+        <Toggle label="Rezgés" checked={haptics} onChange={setHaptics} hint="Rövid rezgés dobáskor, pénzmozgásnál, csapdánál és mérföldkőnél." />
+      )}
+    </div>
+  );
+}
+
+/** Hang gyorskapcsoló a menübe */
+export function SoundQuickToggle() {
+  const { sound, setSound } = useSoundPrefs();
+  return (
+    <button onClick={() => setSound(!sound)} aria-pressed={sound} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
+      {sound ? '🔊 Hangok: be' : '🔇 Hangok: ki'}
+    </button>
   );
 }
 

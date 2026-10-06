@@ -139,7 +139,6 @@ M6:                                          ████████
 - `src/store/table-store.ts` — szoba nyitása/csatlakozás/újracsatlakozás (munkamenet a localStorage-ban), reakciók
 - `src/ui/table/` — `TableEntry`, `TableLobby` (kód, meghívólink, karakterválasztás, időtáv), `TableBar` (ki hol tart, reakciók, `Leaderboard`), `useTableSync` (saját játék indítása és jelentése)
 - Szín: a játékos maga választja a lobbyban (`setColor`, foglalt szín nem választható); az indítás erre is vár. A kezdőképernyő neve az asztali belépésbe is átkerül (`src/store/player-name.ts`).
-- Szín: a játékos maga választja a lobbyban (`setColor`, foglalt szín nem választható); az indítás erre is vár. A kezdőképernyő neve az asztali belépésbe is átkerül (`src/store/player-name.ts`).
 - Rangsor (`rankPlayers`): pénzügyi függetlenség %, holtversenyben biztonsági kör, majd jóllét; a vagyon csak tájékoztató. Host-kapcsoló: "Mindenki ugyanazzal a karakterrel" (`config.sameProfile`).
 - Körzárás: a kör végén "Kész vagyok a fordulóval" → a következő forduló, ha minden csatlakozott játékos kész. A host szabályai (`GameConfig.rules`) mindenkire érvényesek.
 - Késői csatlakozás: elindult játékba is be lehet szállni (`lateJoinRound`); a késői játékos karaktert választ (`LateJoin`), az 1. körtől a saját tempójában játszik, és amíg nem éri utol az asztali fordulót (`isCatchingUp`), nem tartja fel a körzárást. Teli szoba / befejezett játék: `NotAdmitted`. A "Szobát nyitok" mindig friss szobát kezd (`fresh`), a mentés csak újracsatlakozáskor jön vissza.
@@ -168,6 +167,7 @@ M6:                                          ████████
 - Játékmesteri beállítások (`src/store/settings-store.ts`, `SettingsPanel`): egyéni kezdő egyenleg (karakterenkénti `maxStartBalance`), "Valós helyzet modellezése" (bevétel/kiadás szerkesztése), csapdaóra, kocka forrása. Indításkor a `GameConfig.rules`-ba másolódnak; a `clampStartBalance` a motorban is véd.
 - Tesztmód: a verziófeliratra 5 koppintás; korlátlan egyenleg (20 M Ft), kézi kockaérték, mezőre ugrás, körátugrás, "Tesztjáték" jelölés
 - Kocka: `secureDieRoll` (crypto + elutasításos mintavétel); "Honnan jön a véletlen?" lap dobásnaplóval és eloszlással; "Saját kockával dobok" lehetőség
+- Hangok (`src/audio/sfx.ts`, Web Audio szintézis, hangfájl nincs) és rezgés: alapból némítva, kapcsoló a Játékmesteri beállítások "Kijelzés" részében és a menüben. Állapotfigyelő hangok (pénz, mérföldkő, forduló, reakció, vége): `src/audio/SoundBridge.tsx`; kocka/lépés/kártya/csapdaóra a komponensekben `play()`-jel.
 - Tábla: 6 tematikus negyed × 4 mező (`DISTRICTS` a `src/data/board.ts`-ben), mezőnként rövid felirat és jelmagyarázat
 
 ### Fájl struktúra

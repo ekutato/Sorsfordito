@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { play } from '@/audio/sfx';
 import { motion } from 'framer-motion';
 
 import { canAfford, optionCost, type FieldCard, type FieldOption } from '@/data/field-cards';
@@ -45,11 +46,13 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
   useEffect(() => {
     setLeft(trapSeconds);
     setChecked(false);
+    play(card.field === 'trap' ? 'warning' : 'card');
     ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, [card.id, trapSeconds]);
   useEffect(() => {
     if (!timed || checked) return;
     if (left <= 0) { onChoose(TIMEOUT_OPTION); return; }
+    if (left <= 5) play('tick');
     const t = setTimeout(() => setLeft((x) => x - 1), 1000);
     return () => clearTimeout(t);
   }, [timed, checked, left, onChoose]);
@@ -161,7 +164,12 @@ export function FieldOutcomeView({ result, outcome, onContinue }: OutcomeProps) 
   const st = FIELD_STYLE[result.field as keyof typeof FIELD_STYLE] ?? FIELD_STYLE.office;
   const ref = useRef<HTMLElement>(null);
   const [reflected, setReflected] = useState(!result.reflection);
-  useEffect(() => { ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, []);
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Csapdánál: pénzveszteség nélkül megúszta = siker, egyébként figyelmeztető hang
+    if (result.field === 'trap') play(result.effects.some((e) => e.target === 'balance' && e.amount < 0) ? 'warning' : 'success');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <article ref={ref} role="status" className="rounded-2xl overflow-hidden scroll-mt-24" style={{ background: '#FBF7EE', color: '#1C1A16' }}>
       <div className="h-11 flex items-center justify-between px-4 font-extrabold text-sm uppercase tracking-wide" style={{ background: st.color, color: st.ink }}>

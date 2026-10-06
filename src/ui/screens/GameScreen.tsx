@@ -26,7 +26,7 @@ import { fillDeep } from '@/data/live/vars';
 import { DiceInfo } from '@/ui/board/DiceInfo';
 import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
-import { SettingsPanel } from '@/ui/components/SettingsPanel';
+import { SettingsPanel, SoundQuickToggle } from '@/ui/components/SettingsPanel';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
 import { useTableStore } from '@/store/table-store';
@@ -1216,6 +1216,7 @@ function GameMenu() {
               <button onClick={() => { setSettings(true); setOpen(false); }} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
                 Játékmesteri beállítások
               </button>
+              <SoundQuickToggle />
               <button onClick={() => setConfirm(true)} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
                 Új játék indítása
               </button>

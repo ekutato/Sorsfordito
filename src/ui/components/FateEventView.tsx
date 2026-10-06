@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
 import { fillDeep } from '@/data/live/vars';
 import { WellbeingReflection } from './WellbeingReflection';
+import { play } from '@/audio/sfx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
@@ -88,6 +89,11 @@ export function FateEventView() {
   // Tudáspróba inicializálás
   const hasKnowledgeCheck = !!fateEvent?.knowledgeCheck;
   const playerKnowledge = player.financialSheet.acquiredKnowledge;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => { if (kcPhase === 'success') play('success'); else if (kcPhase === 'failure') play('warning'); }, [kcPhase]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => { if (fateEvent || resolvingStoryline) play('card'); }, [fateEvent?.id, resolvingStoryline?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {

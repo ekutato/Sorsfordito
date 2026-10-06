@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { UpdateBanner } from '@/ui/components/AppVersion';
+import { SoundBridge } from '@/audio/SoundBridge';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
@@ -37,6 +38,7 @@ export default function RootLayout({
           {children}
         </main>
         <UpdateBanner />
+        <SoundBridge />
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { BOARD, BOARD_SIZE, DISTRICTS, FIELD_EXPLAIN, FIELD_LABELS, FIELD_SHORT, districtOf, type FieldType } from '@/data/board';
 import { FIELD_STYLE, BOARD_PAPER } from './fieldStyle';
 import { DieFace, CyclingDieIcon } from './Die';
+import { play } from '@/audio/sfx';
 
 // A tábla alapgeometriája 358 px széles; a konténer szélességére skálázzuk.
 // Soronként egy negyed (4 mező), kígyózó útvonal; a negyed neve és témája a sor elején.
@@ -82,7 +83,9 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
     if (steps === 0) { setArrived(true); onArrived?.(); return; }
     setArrived(false);
     const t = setTimeout(() => { setArrived(true); onArrived?.(); }, (steps * perStep + 0.15) * 1000);
-    return () => clearTimeout(t);
+    // Lépésenként egy koppanás, a bábu mozgásával egy ütemben
+    const ticks = Array.from({ length: steps }, (_, i) => setTimeout(() => play('step'), (i + 1) * perStep * 1000));
+    return () => { clearTimeout(t); ticks.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from, position]);
 
@@ -291,6 +294,7 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
   const roll = () => {
     if (rolling || disabled) return;
     setRolling(true);
+    play('roll');
     let n = 0;
     const id = setInterval(() => {
       setFace(1 + Math.floor(Math.random() * 6)); // csak animáció; az érvényes dobás a rollBoard()-ból jön
