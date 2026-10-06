@@ -4,18 +4,20 @@
 // ============================================================================
 
 import type { InvestmentOption } from '@/types/financial';
+import { fillDeep } from '@/data/live/vars';
 
-export const INVESTMENT_OPTIONS: InvestmentOption[] = [
+/** Nyers tartalom {{változókkal}} - a megjelenítéshez a lenti, kitöltött INVESTMENT_OPTIONS-t használd */
+export const INVESTMENT_OPTIONS_RAW: InvestmentOption[] = [
 
   // === ERTEKPAPIR kategoria ===
 
   {
     id: 'inv-pmap',
-    name: 'Magyar Állampapír Plusz (PMÁP)',
+    name: 'Prémium Magyar Állampapír (PMÁP)',
     category: 'securities',
     description:
-      'Az állam által garantált, inflációkövető kötvény. 5 éves futamidő, ' +
-      'félévente növekvő kamat. A legbiztonságosabb magyar befektetés.',
+      'Az állam által garantált, inflációkövető állampapír: a kamata minden évben az előző évi ' +
+      'átlagos inflációhoz igazodik (most {{pmap_yield}}%), és évente egyszer fizet kamatot. A kamat adómentes.',
     entryPrice: 100_000,
     monthlyPassiveIncome: 580,  // Dinamikusan felulirodik
     scores: {
@@ -29,8 +31,8 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     },
     realWorldSource: 'https://www.akk.hu',
     realWorldInfo:
-      'A PMÁP Magyarország legkedveltebb lakossági állampapírja. ' +
-      'Államkincstári számlán (webkincstár.hu) vásárolható, min. 10 000 Ft-tól.',
+      'A PMÁP az egyik legkedveltebb lakossági állampapír. ' +
+      'Kincstári számlán (WebKincstár) vásárolható, min. 10 000 Ft-tól.',
     isDynamic: true,
     dynamicDataKey: 'akk.pmapYield',
     tier: 'free',
@@ -43,7 +45,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     description:
       'Tartós Befektetési Számlán (TBSZ) tartott tőzsdeindex-követő ETF. ' +
       '5 év után az összes hozam adómentes! Globálisan diverzifikált. ' +
-      'A hozam árfolyam-növekedésből jön — nincs havi kifizetés, de hosszú távon ~8-10%/év.',
+      'A hozam árfolyam-növekedésből jön — nincs havi kifizetés, a hozam évről évre ingadozik.',
     entryPrice: 200_000,
     monthlyPassiveIncome: 0,  // ETF: tőke-növekedés, NEM havi jövedelem! Hosszú távon ~8-10%/év, de nem havi kifizetés.
     scores: {
@@ -59,7 +61,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldSource: 'https://www.bet.hu',
     realWorldInfo:
       'A TBSZ (Tartós Befektetési Számla) Magyarország legnagyobb adóelőnye: ' +
-      '5 év után 0% adó a hozamra. Bármely brókernél nyitható (KBC, Random Capital, Interactive Brokers). ' +
+      '5 év után 0% adó a hozamra. Bankoknál és online brókereknél is nyitható. ' +
       'FONTOS: az ETF hozama tőke-növekedés (árfolyamemelkedés), nem havi kifizetés!',
     isDynamic: true,
     dynamicDataKey: 'stockMarket.buxYearlyChange',
@@ -71,7 +73,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     name: 'Magyar részvény (BÉT)',
     category: 'securities',
     description:
-      'Egyedi részvény a Budapesti Értéktőzsdéről (OTP, Mol, Richter). ' +
+      'Egyedi részvény a Budapesti Értéktőzsdéről, pl. Pannon Bankcsoport Nyrt., Duna Energia Nyrt., Tisza Gyógyszer Nyrt. (kitalált cégek). ' +
       'Magas hozampotenciál, de egyedi kockázat.',
     entryPrice: 150_000,
     monthlyPassiveIncome: 0,  // Arfolyamnyereseg, nem havi jovedelem
@@ -87,7 +89,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     requiredKnowledge: 'know-tbsz',
     realWorldSource: 'https://www.bet.hu',
     realWorldInfo:
-      'A BÉT 3 legnagyobb részvénye: OTP (bank), Mol (energia), Richter (gyógyszer). ' +
+      'A BÉT-en a legnagyobb súlyú részvények egy bank, egy energiacég és egy gyógyszergyártó - a játékban: Pannon Bankcsoport (PBX), Duna Energia (DNE), Tisza Gyógyszer (TGY). ' +
       'TBSZ-en tartva 5 év után adómentes.',
     isDynamic: true,
     dynamicDataKey: 'stockMarket.buxDailyChange',
@@ -101,10 +103,10 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     name: 'Bankbetét (lekötött, 1 év)',
     category: 'cash',
     description:
-      'Banki lekötött betét, fix kamattal. Alacsony hozam (~3,5-6% feltételekhez kötötten), ' +
+      'Banki lekötött betét, fix kamattal. Alacsony hozam (most átlagosan {{deposit_rate}}% körül), ' +
       'de az OBA védi 100 000 EUR-ig. A legegyszerűbb megtakarítás.',
     entryPrice: 50_000,
-    monthlyPassiveIncome: 190,  // ~4.5% éves kamat (feltétel nélkül ~3.5%, feltétellel 5-6%)
+    monthlyPassiveIncome: 190,  // ~4.5% éves kamat (game mechanic)
     scores: {
       returnPotential: 25,
       liquidity: 45,
@@ -117,7 +119,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
       'A bankbetétet az OBA (Országos Betétbiztosítási Alap) védi személyenként ' +
-      'és bankonként 100 000 EUR-ig. 2026-ban: feltétel nélkül ~3,5%, akciósan 5-6% (Gránit, K&H). ' +
+      'és bankonként 100 000 EUR-ig (most kb. {{oba_huf}} Ft). Az átlagos betéti kamat most {{deposit_rate}}%, akciós ajánlatokkal több is lehet. ' +
       'A kamatból a bank levonja a 15% SZJA-t és a 13% szochót (2023. július óta), összesen 28%-ot. Az állampapír és az 5 évet kitöltött TBSZ hozama ez alól mentes.',
     isDynamic: true,
     dynamicDataKey: 'mnb.baseRate',
@@ -142,9 +144,9 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 70,
       volatility: 95,
     },
-    realWorldSource: 'https://www.coingecko.com',
+    realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
-      'Magyarországon a kriptó-nyereség 15% SZJA-köteles. ' +
+      'Magyarországon a kriptó-nyereség 15% SZJA-köteles. Egy Bitcoin most kb. {{btc_huf}} Ft. ' +
       'Nincs betétbiztosítás, nincs felügyelet. Csak annyit fektess, amennyit hajlandó vagy elveszíteni.',
     isDynamic: false,
     tier: 'free',
@@ -170,10 +172,10 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 40,
       volatility: 15,
     },
-    realWorldSource: 'https://www.ingatlan.com',
+    realWorldSource: 'https://www.ksh.hu',
     realWorldInfo:
-      'Budapesten egy garázs ára 3-8M Ft, havi bérleti díj 20-40E Ft. ' +
-      'Éves hozam ~5-8%. Kevés karbantartás, de nehéz eladni gyorsan.',
+      'Budapesten egy garázs ára több millió forint, a bérleti díj havi néhány tízezer forint. ' +
+      'Kevés karbantartás, de nehéz eladni gyorsan.',
     isDynamic: true,
     dynamicDataKey: 'realEstate.budapestSqmPrice',
     tier: 'premium',
@@ -181,10 +183,10 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
 
   {
     id: 'inv-room-rent',
-    name: 'Szoba kiadása (Airbnb/albérlő)',
+    name: 'Szoba kiadása (albérlő / rövid távú kiadás)',
     category: 'real_estate',
     description:
-      'Ha van egy szabad szobád, kiadhatod albérlőnek vagy Airbnb-n. ' +
+      'Ha van egy szabad szobád, kiadhatod albérlőnek vagy rövid távra (online szállásplatformon). ' +
       'Nincs ingatlanvásárlás, de berendezés kell (ágy, textil, konyha).',
     entryPrice: 200_000,  // Alapvető berendezés: ágy, matrac, textil, konyhai felszerelés, takarítóeszközök
     monthlyPassiveIncome: 60_000,
@@ -197,9 +199,9 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 85,
       volatility: 30,
     },
-    realWorldSource: 'https://www.airbnb.hu',
+    realWorldSource: 'https://info.ntak.hu',
     realWorldInfo:
-      'Az albérlőből származó jövedelem adóköteles. Airbnb esetén szálláshely-szolgáltatási ' +
+      'Az albérlőből származó jövedelem adóköteles. Rövid távú kiadásnál szálláshely-szolgáltatási ' +
       'bejelentés kell az önkormányzatnál.',
     isDynamic: false,
     tier: 'premium',
@@ -229,7 +231,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldSource: 'https://www.nav.gov.hu',
     realWorldInfo:
       'Egyéni vállalkozás indítása ingyenes (online, Webes Ügysegéden). ' +
-      'Átalányadó: egyszerűsített adózás, 2026-ban évi ~39M Ft bevételig, 45% költséghányad.',
+      'Átalányadó: egyszerűsített adózás az éves minimálbér tízszereséig terjedő bevételig, általában 45% költséghányad.',
     isDynamic: false,
     tier: 'free',
   },
@@ -242,22 +244,22 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     category: 'commodity',
     description:
       'Fizikai arany (érme vagy tömb) vagy "papír arany" (ETF). ' +
-      'Értékmegőrző, válságálló – 2026-ban $5 000+/oz (+73% éves hozam!). ' +
+      'Értékmegőrző, válságálló – most kb. {{gold_usd}} USD/uncia. ' +
       'Nem termel jövedelmet, de geopolitikai válságban menedékeszköz.',
     entryPrice: 200_000,
     monthlyPassiveIncome: 0,  // Ertekmegorzo, nem jovedelemtermelo
     scores: {
-      returnPotential: 55,   // 2026-ban extrém +73% YoY
+      returnPotential: 55,
       liquidity: 65,
       safety: 70,
       inflationResistance: 90,
       returnSpeed: 25,
       accessibility: 60,
-      volatility: 35,         // Emelkedett az iráni háború miatt
+      volatility: 35,
     },
     realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
-      'Arany ára 2026 márciusban: ~$5 090/oz (~55 700 Ft/g). ' +
+      'Az arany ára most kb. {{gold_usd}} USD/uncia, azaz kb. {{gold_huf_g}} Ft/gramm. ' +
       'Az MNB saját aranytömbje (1g, 5g, 10g) a bankfiókokban vásárolható. ' +
       'Befektetési aranyra 0% ÁFA. Válságban értéke jellemzően nő.',
     isDynamic: false,
@@ -284,7 +286,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     },
     realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
-      'Ezüst ára 2026 márciusban: ~$82/oz. Az aranynál volatilisebb, ' +
+      'Az ezüst ára most kb. {{silver_usd}} USD/uncia. Az aranynál volatilisebb, ' +
       'de ipari kereslet is támogatja (napelem, EV, elektronika). ' +
       'Fizikai ezüstre 27% ÁFA van Magyarországon (aranyra 0%)!',
     isDynamic: false,
@@ -298,7 +300,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     name: 'Deviza: EUR tartás',
     category: 'cash',
     description:
-      'Euró vásárlás és tartás (Revolut, Wise, Lightyear). ' +
+      'Euró vásárlás és tartás (bankszámlán vagy fintech devizaszámlán). ' +
       'Forintgyengülés ellen véd — ha az EUR/HUF emelkedik, nyersz. ' +
       'Nincs kamat (hacsak nem lekötöd), de árfolyamnyereség lehet.',
     entryPrice: 50_000,
@@ -312,10 +314,10 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 90,
       volatility: 30,
     },
-    realWorldSource: 'https://www.revolut.com',
+    realWorldSource: 'https://www.mnb.hu/arfolyamok',
     realWorldInfo:
-      'EUR/HUF 2026 márciusban: ~390 Ft. Revoluton, Wise-on ingyenesen váltható (hétfő-péntek). ' +
-      'Lightyear-en EUR-ban befektethetsz tovább ETF-ekbe. ' +
+      'Egy euró most {{eur_huf}} Ft. Váltás előtt hasonlítsd össze a bankok és a fintech-szolgáltatók díjait, a devizaváltási és a hétvégi felárat. ' +
+      'Online befektetési platformon EUR-ban ETF-ekbe is fektethetsz. ' +
       'Devizaárfolyam-nyereség 15% SZJA-köteles.',
     isDynamic: true,
     dynamicDataKey: 'mnb.eurHufRate',
@@ -341,11 +343,11 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 90,
       volatility: 35,
     },
-    realWorldSource: 'https://www.wise.com',
+    realWorldSource: 'https://www.mnb.hu/arfolyamok',
     realWorldInfo:
-      'USD/HUF 2026 márciusban: ~341 Ft. Wise-on olcsó az átváltás (~0.4%). ' +
-      'Revolut ingyenes hétvégén nem (1% felár). ' +
-      'A dollár erősödése az iráni háború óta felgyorsult.',
+      'Egy dollár most {{usd_huf}} Ft. Az átváltás költsége szolgáltatónként eltér - ' +
+      'a fintech-szolgáltatóknál hétvégén gyakran felár van. ' +
+      'A dollár árfolyama mindkét irányba mozoghat, a forinthoz képest is.',
     isDynamic: true,
     dynamicDataKey: 'mnb.usdHufRate',
     tier: 'free',
@@ -397,7 +399,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 85,
       volatility: 0,
     },
-    realWorldSource: 'https://www.profession.hu',
+    realWorldSource: 'https://www.ksh.hu',
     realWorldInfo:
       'Angoltudás átlagosan 15-25%-kal magasabb fizetést jelent Magyarországon. ' +
       'Némettudás különösen értékes a nyugat-magyarországi régióban.',
@@ -432,7 +434,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldInfo:
       'Az önkéntes nyugdíjpénztári befizetés 20%-a visszajár adójóváírásként, max évi 150 000 Ft. ' +
       'A nyugdíjkorhatár elérése előtti kivét bünteti: 10 éven belül büntetőadó. ' +
-      'Legnagyobb pénztárak: OTP, Aranykor, Honvéd.',
+      'Több önkéntes nyugdíjpénztár közül választhatsz - a díjakat és a hozamokat az MNB oldalán hasonlíthatod össze.',
     isDynamic: false,
     tier: 'free',
   },
@@ -486,8 +488,8 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     requiredKnowledge: 'know-tbsz',
     realWorldSource: 'https://www.bet.hu',
     realWorldInfo:
-      'Magyar osztalékfizető részvények: OTP (~5-7% hozam), Mol (~4-6%), Richter (~2-3%). ' +
-      'Nemzetközi: Coca-Cola, Johnson & Johnson, Procter & Gamble (stabil osztaléknövelők). ' +
+      'Osztalékfizető részvények pl. a játékban: Pannon Bankcsoport Nyrt., Duna Energia Nyrt., Tisza Gyógyszer Nyrt. (kitalált cégek). ' +
+      'Az osztalékhozam évről évre változik; nemzetközi piacon is vannak stabil osztaléknövelő cégek. ' +
       'TBSZ-en tartva az osztalék is adómentes 5 év után!',
     isDynamic: false,
     tier: 'free',
@@ -502,7 +504,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       'Minden évben lejár egy — újrabefektetheted magasabb kamaton. ' +
       'Stabilitás + rugalmasság egyben.',
     entryPrice: 500_000,
-    monthlyPassiveIncome: 2_800, // ~6.5% átlagos éves hozam
+    monthlyPassiveIncome: 2_800, // game mechanic
     scores: {
       returnPotential: 35,
       liquidity: 50,
@@ -524,7 +526,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
 
   {
     id: 'inv-freelance-platform',
-    name: 'Freelance platform (Upwork/Fiverr)',
+    name: 'Freelance platform',
     category: 'business',
     description:
       'Regisztráció és profil-építés freelance platformon. ' +
@@ -542,11 +544,11 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       volatility: 55,
     },
     requiredKnowledge: 'know-freelance',
-    realWorldSource: 'https://www.upwork.com',
+    realWorldSource: 'https://www.nav.gov.hu',
     realWorldInfo:
       'Magyar freelancerek átlagosan 15-40 EUR/órát keresnek IT/design területen. ' +
       'A bevétel átalányadóval adózható (45% költséghányad 2026-ban). ' +
-      'Wise/Revolut EUR számla ajánlott a kifizetésekhez.',
+      'A kifizetésekhez EUR-számla (bank vagy fintech devizaszámla) jól jöhet - nézd meg a díjakat és a felügyeletet!',
     isDynamic: false,
     tier: 'free',
   },
@@ -573,7 +575,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
       'Az egészségpénztári befizetés 20%-a visszajár adójóváírásként. ' +
-      'OTP Egészségpénztár, Patika Egészségpénztár a legnagyobbak. ' +
+      'Több egészségpénztár közül választhatsz - a díjakat érdemes összehasonlítani. ' +
       'Kártyával közvetlenül fizethetsz patikában, optikusnál, fogorvosnál.',
     isDynamic: false,
     tier: 'premium',
@@ -586,7 +588,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     description:
       'Külföldi cégnek dolgozol remote, EUR-ban kapsz fizetést. ' +
       'A forint gyengülése automatikus béremelés — de a 183 napos adószabályra figyelj!',
-    entryPrice: 200_000, // Képzés, LinkedIn prémium, portfolio, tech stack frissítés
+    entryPrice: 200_000, // Képzés, portfolio, tech stack frissítés
     monthlyPassiveIncome: 80_000, // Extra a HUF fizetéshez képest
     scores: {
       returnPotential: 70,
@@ -598,9 +600,9 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       volatility: 40,
     },
     requiredKnowledge: 'know-eu-travel',
-    realWorldSource: 'https://www.wise.com',
+    realWorldSource: 'https://www.nav.gov.hu',
     realWorldInfo:
-      'Magyar fejlesztők remote fizetése: 2 000-5 000 EUR/hó (multinál helyben: 500-1 500k HUF). ' +
+      'Magyar fejlesztők remote fizetése: 2 000-5 000 EUR/hó (egy euró most {{eur_huf}} Ft). ' +
       'Fontos: ha Magyarországon laksz, itt adózol. ' +
       'Átalányadóval optimalizálható (45% költséghányad EV-ként).',
     isDynamic: false,
@@ -625,9 +627,9 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 80,
       volatility: 5,
     },
-    realWorldSource: 'https://www.kaptarbudapest.hu',
+    realWorldSource: 'https://www.nav.gov.hu',
     realWorldInfo:
-      'Budapesti coworking árak: 30-80k Ft/hó (Kaptár, Mosaik, Impact Hub). ' +
+      'Budapesti coworking irodák havidíja jellemzően néhány tízezer forint. ' +
       'Vidéken olcsóbb: 15-40k Ft/hó. ' +
       'A bérlet költségként elszámolható vállalkozóként.',
     isDynamic: false,
@@ -652,10 +654,10 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       accessibility: 60,
       volatility: 40,
     },
-    realWorldSource: 'https://www.mintos.com',
+    realWorldSource: 'https://www.mnb.hu',
     realWorldInfo:
-      'Legnépszerűbb EU P2P platformok: Mintos, Bondora, PeerBerry. ' +
-      'Éves hozam: 8-12%, de kockázatos (hitelnemfizetés). ' +
+      'Az EU-ban több P2P hitelezési platform működik. ' +
+      'A meghirdetett hozam magas lehet, de kockázatos (hitelnemfizetés, a platform csődje). Nincs OBA-védelem! ' +
       'EU-ban ECSP szabályozás alatt áll. A hozam 15% SZJA-köteles.',
     isDynamic: false,
     tier: 'free',
@@ -667,7 +669,7 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
     category: 'real_estate',
     description:
       'Lakásvásárlás és bérbeadás. Magas belépési küszöb, de stabil havi jövedelem ' +
-      'és hosszú távú értéknövekedés. Budapesten 4-6% éves bérleti hozam.',
+      'és hosszú távú értéknövekedés. A bérleti hozam a vételártól és a lakbértől függ.',
     entryPrice: 8_000_000, // Önerő + járulékos költségek
     monthlyPassiveIncome: 120_000,
     scores: {
@@ -680,17 +682,20 @@ export const INVESTMENT_OPTIONS: InvestmentOption[] = [
       volatility: 20,
     },
     requiredKnowledge: 'know-real-estate',
-    realWorldSource: 'https://www.ingatlan.com',
+    realWorldSource: 'https://www.ksh.hu',
     realWorldInfo:
-      'Budapest átlagos lakásár: 800k-1.2M Ft/m² (2026). ' +
-      'Átlagos albérleti díj: 180-250k Ft/hó (2 szobás). ' +
+      'Budapesten a használt lakások átlagos ára most {{sqm_bp}} Ft/m². ' +
+      'Egy kétszobás lakás átlagos bérleti díja {{rent_bp_2room}} Ft/hó. ' +
       'Bérleti jövedelem 15% SZJA-köteles (tételes vagy 10% átalány költségelszámolás). ' +
-      'NTAK regisztráció Airbnb-hez kötelező.',
+      'Rövid távú kiadáshoz NTAK regisztráció kötelező.',
     isDynamic: true,
     dynamicDataKey: 'realEstate.budapestRentAvg',
     tier: 'premium',
   },
 ];
+
+/** A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket (src/data/live/vars.ts) */
+export const INVESTMENT_OPTIONS: InvestmentOption[] = fillDeep(INVESTMENT_OPTIONS_RAW);
 
 /** Ingyenes befektetesek */
 export const FREE_INVESTMENTS = INVESTMENT_OPTIONS.filter(

@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { EpilogueId, VictoryLevel } from '@/types/game';
+import { fillDeep } from '@/data/live/vars';
 
 export interface EpilogueCard {
   id: EpilogueId;
@@ -16,7 +17,8 @@ export interface EpilogueCard {
   futureVision: string;
 }
 
-export const EPILOGUE_CARDS: EpilogueCard[] = [
+/** Nyers tartalom {{változókkal}} - a megjelenítéshez a lenti, kitöltött EPILOGUE_CARDS-t használd */
+export const EPILOGUE_CARDS_RAW: EpilogueCard[] = [
   {
     id: 'financial_ninja',
     title: 'A Pénzügyi Ninja',
@@ -25,7 +27,7 @@ export const EPILOGUE_CARDS: EpilogueCard[] = [
     conditions: 'Passzív jövedelem >= Havi kiadás',
     text:
       'Gratulálunk! A pénz neked dolgozik. Most már te döntöd el, reggel felkelsz-e. ' +
-      '(De azért kelj fel – a pénzügyi szabadság nem jelenti, hogy egész nap Netflixezhetsz. ' +
+      '(De azért kelj fel – a pénzügyi szabadság nem jelenti, hogy egész nap sorozatokat nézhetsz. ' +
       'Vagy igen? Te döntöd el. Ez a lényeg.)',
     lesson:
       'Megtanultad, hogy a pénzügyi szabadság nem gazdagság kérdése – hanem rendszer kérdése. ' +
@@ -62,8 +64,8 @@ export const EPILOGUE_CARDS: EpilogueCard[] = [
       'az infláció meg a szekrényed tetején ül és vigyorog. ' +
       'Jó hír: túlélni már tudás. Most jön a neheze: gyarapodni.',
     lesson:
-      'A „párnád alatt" tartott pénz minden évben veszít az értékéből (infláció ~4%). ' +
-      '100 000 Ft ma ≈ 66 000 Ft 10 év múlva. A pénz soha nem „áll" – vagy dolgozik, vagy fogy.',
+      'A „párnád alatt" tartott pénz minden évben veszít az értékéből (az infláció most évi {{inflation}}%). ' +
+      'Évi 4%-os inflációnál például 100 000 Ft vásárlóereje 10 év alatt kb. 66 000 Ft-ra csökken. A pénz soha nem „áll" – vagy dolgozik, vagy fogy.',
     futureVision:
       'Első lépés: nyiss egy állampapír-számlát (webkincstár.hu, 15 perc), ' +
       'és vegyél PMÁP-ot akár 10 000 Ft-ért. Ez már befektetés.',
@@ -142,6 +144,9 @@ export const EPILOGUE_CARDS: EpilogueCard[] = [
       'Következő lépés: alkalmazd, amit tanultál. A tudás tett nélkül csak érdekesség.',
   },
 ];
+
+/** A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket (src/data/live/vars.ts) */
+export const EPILOGUE_CARDS: EpilogueCard[] = fillDeep(EPILOGUE_CARDS_RAW);
 
 /**
  * Meghatározza az epilógust a pénzügyi adatok alapján

@@ -1,3 +1,4 @@
+import { fillDeep } from '@/data/live/vars';
 // ============================================================================
 // PENZUGYI SORSFORDITO - Knowledge Cards
 // Tudas kartyak - valós magyar pénzügyi ismeretek
@@ -46,7 +47,8 @@ export interface KnowledgeCard {
   quiz?: QuizQuestion[];
 }
 
-export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
+/** Nyers tartalom {{változókkal}} - a megjelenítéshez a lenti, kitöltött KNOWLEDGE_CARDS-t használd */
+export const KNOWLEDGE_CARDS_RAW: KnowledgeCard[] = [
   {
     id: 'know-tax',
     name: 'Adóoptimalizálás 101',
@@ -57,7 +59,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     unlocks: [],
     realWorldKnowledge:
       'Családi adókedvezmény: 1 gyerek után 66 670 Ft/hó adóalap-csökkentés. ' +
-      '25 év alatti fiatalok SZJA-mentessége: a bruttó átlagkereset szintjéig 0% SZJA (2026-ban évi ~8 millió Ft nagyságrendig; a pontos határt a NAV teszi közzé). ' +
+      '25 év alatti fiatalok SZJA-mentessége: a bruttó átlagkereset szintjéig 0% SZJA (a pontos havi határt a NAV teszi közzé). ' +
       'Négy vagy több gyermekes anyák élethosszig SZJA-mentesek.',
     sourceUrl: 'https://www.nav.gov.hu',
     tier: 'free',
@@ -76,7 +78,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
           'Csak az első munkahelyen dolgozók',
         ],
         correctIndex: 1,
-        explanation: 'Minden 25 év alatti fiatal jogosult, a bruttó átlagkereset szintjéig (2026-ban évi ~8 millió Ft nagyságrend). Ez havi 40-50 000 Ft megtakarítást jelent!',
+        explanation: 'Minden 25 év alatti fiatal jogosult, a bruttó átlagkereset szintjéig (a pontos határt a NAV teszi közzé). Ez havi 40-50 000 Ft megtakarítást jelent!',
       },
     ],
   },
@@ -93,7 +95,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       '1) Gyűjtőévet követő 3 év: 10% adó. 2) +2 év (összesen 5): 0% adó! ' +
       '3) Bármilyen tőzsdei termék tartható rajta (részvény, ETF, kötvény). ' +
       'FONTOS: nem a számlanyitástól, hanem a gyűjtőév végétől számít az 5 év! ' +
-      'Brókerszámla nyitása: KBC, Random Capital, vagy Interactive Brokers (IBKR). ' +
+      'Számlanyitás: bankoknál és online brókereknél is lehetséges - hasonlítsd össze a díjakat! ' +
       'Aranyszabály: csak azt a pénzt fektesd, amire 5+ évig nincs szükséged.',
     sourceUrl: 'https://www.bet.hu/tbsz',
     tier: 'free',
@@ -174,7 +176,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     unlocks: ['inv-online-biz'],
     realWorldKnowledge:
       'Egyéni vállalkozás indítása 2026-ban: online, 15 perc, ingyenes (Webes Ügysegéd). ' +
-      'Átalányadó: 2026-ban 45% költséghányad (korábban 40%), évi ~39M Ft bevételig. ' +
+      'Átalányadó: 2026-ban általában 45% költséghányad (korábban 40%), az éves minimálbér tízszereséig terjedő bevételig. ' +
       'KATA 2022 óta erősen korlátozott: csak magánszemélyeknek számlázóknak (pl. taxi). ' +
       'Kft. alapítás: min. 3M Ft törzstőke (pénzbeli is lehet).',
     sourceUrl: 'https://www.nav.gov.hu',
@@ -194,7 +196,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
           'A bevétel egy %-a elismert költség, a maradékra fizetsz adót',
         ],
         correctIndex: 2,
-        explanation: 'Az átalányadónál a bevétel 45%-a (szolgáltatás) vagy 80%-a (kereskedelem) elismert költség — nem kell számlát gyűjtened! A maradékra fizetsz 15% SZJA-t.',
+        explanation: 'Az átalányadónál a bevétel általában 45%-a (egyes tevékenységeknél 80 vagy 90%-a) elismert költség — nem kell számlát gyűjtened! A maradékra fizetsz 15% SZJA-t és a járulékokat.',
       },
     ],
   },
@@ -212,7 +214,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       '1) Lakásbiztosítás: évi ~30-50E Ft, fedezi a víz-, tűz-, betöréskárt. ' +
       '2) CASCO (autóra): évi ~80-200E Ft, saját autó sérülésére. ' +
       '3) Életbiztosítás (ha van hiteled): a bank megköveteli, de a piac összehasonlítása sokat spórolhat. ' +
-      'TIPP: biztositas.hu-n 5 perc alatt összehasonlíthatod az ajánlatokat.',
+      'TIPP: online összehasonlító oldalon néhány perc alatt összevetheted az ajánlatokat.',
     sourceUrl: 'https://www.mabisz.hu',
     tier: 'free',
     quiz: [
@@ -230,7 +232,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
         question: 'Mennyit biztosít az OBA (Betétbiztosítási Alap) személyenként és bankonként?',
         options: ['10 000 EUR', '1 000 000 EUR', '100 000 EUR'],
         correctIndex: 2,
-        explanation: 'Az OBA személyenként és bankonként 100 000 EUR-ig (kb. 40M Ft) védi a bankbetétedet. Ez automatikus — nem kell külön kérni!',
+        explanation: 'Az OBA személyenként és bankonként 100 000 EUR-ig (most kb. {{oba_huf}} Ft) védi a bankbetétedet. Ez automatikus — nem kell külön kérni!',
       },
     ],
   },
@@ -253,7 +255,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       '2) Felmondási idő: min. 30 nap, minden 3 ledolgozott év után +5 nap. ' +
       '3) Túlóra: +50% pótlék hétköznapon, +100% pihenőnapon. ' +
       '4) Alapszabadság: 20 nap + életkor után pótszabadság (+1-10 nap). ' +
-      '5) 2026-ban a minimálbér bruttó 322 800 Ft, garantált bérminimum 373 200 Ft.',
+      '5) Jelenleg a minimálbér bruttó {{min_wage}} Ft, a garantált bérminimum {{guaranteed_min_wage}} Ft.',
     sourceUrl: 'https://www.munkajog.hu',
     tier: 'free',
     quiz: [
@@ -342,7 +344,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       '2) 50/30/20 szabály: 50% szükségletek, 30% vágyak, 20% megtakarítás. ' +
       '3) Kamatos kamat: havi 20 000 Ft, 7% hozammal, 20 év = 10,4M Ft (4,8M befizetéssel!). ' +
       'Az OBA 100 000 EUR-ig védi a bankbetéteket személyenként és bankonként. ' +
-      'A PMÁP 2026-ban kb. 6,5-7% hozamot ad, állami garanciával.',
+      'A PMÁP kamata most {{pmap_yield}}% (az előző évi inflációhoz igazodik), állami garanciával.',
     sourceUrl: 'https://www.oba.hu',
     tier: 'free',
     quiz: [
@@ -389,9 +391,9 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     effectTarget: 'none',
     unlocks: [],
     realWorldKnowledge:
-      'Online bankválasztás: Wise, Revolut, OTP Simple – mindegyik más. ' +
+      'Online bank vagy fintech-szolgáltató választásakor nézd meg: van-e MNB-engedélye, kiterjed-e rá az OBA, mennyi a díj és a devizaváltási felár. ' +
       'Biztonsági alap: 2FA (kétfaktoros hitelesítés) MINDEN pénzügyi fiókra! ' +
-      'Mobil fizetés: Apple Pay / Google Pay – a kártyaszám nincs megosztva. ' +
+      'Mobil fizetés: mobiltárcával a kártyaszám nincs megosztva a kereskedővel. ' +
       'Adathalászat: soha ne kattints „banki" linkre SMS-ből vagy e-mailből! ' +
       'Az azonnali átutalás (AFR) 2024-től ingyenes és 5 mp alatt megérkezik. ' +
       'Magyar Bankszövetség: 2024-ben 12 milliárd Ft online csalási kár keletkezett.',
@@ -407,7 +409,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
         ],
         correctIndex: 0,
         explanation:
-          'A 2FA (pl. SMS-kód, Google Authenticator, biometrikus) a legfontosabb védelmi réteg. ' +
+          'A 2FA (pl. SMS-kód, hitelesítő app, biometrikus) a legfontosabb védelmi réteg. ' +
           'Még ha a jelszavadat ellopják, a 2FA nélkül nem tudnak belépni.',
       },
       {
@@ -646,7 +648,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
     unlocks: ['inv-freelance-platform'],
     realWorldKnowledge:
       'KATA 2022 óta: csak magánszemélyeknek számlázók használhatják, havi 50 000 Ft tételes adó, max 18M Ft/év bevétel. ' +
-      'Átalányadó 2026: 45% költséghányad (szolgáltatás), 80% (kereskedelem), max ~39M Ft/év bevételig. ' +
+      'Átalányadó 2026: általában 45% költséghányad, egyes kétkezi tevékenységeknél 80%, kiskereskedelemnél 90%, az éves minimálbér tízszereséig terjedő bevételig. ' +
       'Kft. alapítás: minimum 3M Ft törzstőke (pénzbeli is lehet). ' +
       'Számlázás: szamlazz.hu, billingo.hu — mindkettő NAV Online Számla kompatibilis. ' +
       'EV (egyéni vállalkozás) indítása: ingyenes, online, kb. 15 perc a Webes Ügysegéden.',
@@ -671,7 +673,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
         correctIndex: 2,
         explanation:
           'Szolgáltatási tevékenységnél 45% a költséghányad (2026-ban). ' +
-          'Kereskedelmi tevékenységnél 80%. A maradékra fizeted a 15% SZJA-t és a TB járulékot.',
+          'Egyes kétkezi tevékenységeknél 80%, kiskereskedelemnél 90%. A maradékra fizeted a 15% SZJA-t, a TB-járulékot és a szochót.',
       },
     ],
   },
@@ -875,7 +877,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       'Bérleti hozam számítás: éves bérleti díj / vételár × 100. Budapest átlag: 4-6%. ' +
       'Adózás: 15% SZJA a bérleti bevételre (10% költségátalány vagy tételes költségelszámolás). ' +
       '5 éves szabály: ha 5 éven belül eladod az ingatlant, a nyereségre 15% SZJA-t fizetsz. 5 év felett: 0%. ' +
-      'Airbnb szabályozás: NTAK (Nemzeti Turisztikai Adatszolgáltató Központ) regisztráció kötelező, helyi IFA adó. ' +
+      'Rövid távú kiadás szabályai: NTAK (Nemzeti Turisztikai Adatszolgáltató Központ) regisztráció kötelező, helyi IFA adó. ' +
       'Felújítás ROI: energetikai korszerűsítés (napelem, szigetelés) növeli az értéket és csökkenti a rezsit.',
     sourceUrl: 'https://www.nav.gov.hu',
     tier: 'premium',
@@ -954,7 +956,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
       'EU szabad munkavállalás: bármely EU-tagállamban dolgozhatsz engedély nélkül. ' +
       '183 napos szabály: ha egy naptári évben 183+ napot tartózkodsz egy országban, ott adózol. ' +
       'Kettős adóztatás elkerülése: Magyarország 80+ országgal kötött egyezményt. ' +
-      'Wise / Revolut: olcsó nemzetközi utalás (bankközi árfolyam, ~0,5% díj vs bank 2-4%). ' +
+      'Nemzetközi utalásnál a teljes költség = díj + árfolyam-felár; a bankok és a fintech-szolgáltatók között nagy lehet a különbség. ' +
       'Nyugdíj összeszámítás: S1 nyomtatvánnyal az EU-s TB jogviszonyok összeadódnak a nyugdíjhoz. ' +
       'Külföldi munkabér: a nettó magasabb lehet, de az életköltség (lakás, élelmiszer) is lényegesen magasabb!',
     sourceUrl: 'https://eures.ec.europa.eu',
@@ -973,20 +975,23 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
           'ott keletkezik adókötelezettséged. Ez a kettős adóztatás elkerülésének alapszabálya.',
       },
       {
-        question: 'Melyik szolgáltatás a legolcsóbb nemzetközi utalásra?',
+        question: 'Mit hasonlíts össze, ha devizában utalsz külföldre?',
         options: [
-          'Hagyományos banki átutalás',
-          'Western Union',
-          'Wise vagy Revolut',
+          'Csak a feltüntetett utalási díjat, az árfolyam mindenhol ugyanaz',
+          'A díjat és az árfolyam-felárat együtt',
+          'Csak a gyorsaságot, a költség mindenhol hasonló',
         ],
-        correctIndex: 2,
+        correctIndex: 1,
         explanation:
-          'A Wise és Revolut bankközi árfolyamon váltanak, ~0,5% díjjal. A hagyományos bankok 2-4% spread-et számolnak, ' +
-          'plusz átutalási díjat. Rendszeres külföldi bevételnél évi 100 000+ Ft-ot spórolhatsz.',
+          'A teljes költség = utalási díj + árfolyam-felár (spread). A bankok és a fintech-szolgáltatók eltérő felárat számolnak, ' +
+          'hétvégén gyakran magasabbat. Mindig a ténylegesen megérkező összeget hasonlítsd! Rendszeres külföldi bevételnél ez évi 100 000+ Ft különbség is lehet.',
       },
     ],
   },
 ];
+
+/** A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket (src/data/live/vars.ts) */
+export const KNOWLEDGE_CARDS: KnowledgeCard[] = fillDeep(KNOWLEDGE_CARDS_RAW);
 
 export const FREE_KNOWLEDGE = KNOWLEDGE_CARDS.filter((k) => k.tier === 'free');
 export const PREMIUM_KNOWLEDGE = KNOWLEDGE_CARDS.filter((k) => k.tier === 'premium');

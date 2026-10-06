@@ -51,7 +51,7 @@ export function LiveDataPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={onClose}>
       <div role="dialog" aria-label="Heti adatok" onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#172036] border border-white/10 p-4 safe-bottom">
+        className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#172036] border border-white/10 p-4 safe-bottom text-left">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-extrabold">Heti adatok - {weekLabel()}</h2>

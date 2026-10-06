@@ -96,6 +96,8 @@ M6:                                          ████████
 9. **Milion-függetlenség:** a Milion-specifikus elemek (koncentrikus körök, életcélmezők, "Vacak" pakli, adomány, mentordíj) csak a kikapcsolt `milion-szemlelet` csomagban lehetnek, élesben nem aktiválhatók.
 10. **Csapdakártyák:** minden csaló ajánlatnak legyen ellenőrizhető vészjele és kivédési útja; a kimenetel a játékos tudásán múljon, ne szerencsén.
 11. **Semlegesség:** nincs termékajánlás, nincs pártpolitikai állásfoglalás; hírből csak saját megfogalmazás + forráslink.
+   - **Márkanevek:** csak állami és intézményi név maradhat (MNB, KSH, ÁKK, NAV, BÉT/BUX, Magyar Közlöny, WebKincstár, Ügyfélkapu, SZÉP-kártya, Diákhitel Központ, OBA). Minden más általános megnevezés vagy kitalált cég: Pannon Bankcsoport Nyrt. (PBX), Duna Energia Nyrt. (DNE), Tisza Gyógyszer Nyrt. (TGY), Hármashatár Távközlés Nyrt. (HTK), Kárpát Technológia Nyrt. (KTE) - első említéskor "(kitalált cég)" jelöléssel.
+12. **Élő adatok a szövegben:** időérzékeny számot (árfolyam, kamat, hozam, ár, bér, infláció) soha nem írunk be fixen - a `{{változó}}` a heti csomagból jön (`src/data/live/vars.ts`, lista: `LIVE_VAR_DEFS`). Történeti adat csak évszámmal. A `content-freshness` teszt ezt ellenőrzi. Heti frissítés: `docs/heti-rutin.md`.
 
 ---
 

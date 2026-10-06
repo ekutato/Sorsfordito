@@ -16,6 +16,7 @@ import { INHERITANCE_DECISIONS_SPRINT, INHERITANCE_SCRIPTED_FATE_EVENTS } from '
 import { DANI_EXTENDED_DECISIONS } from './dani-extended';
 import { FRESH_START_EXTENDED_DECISIONS } from './fresh-start-extended';
 import { INHERITANCE_EXTENDED_DECISIONS } from './inheritance-extended';
+import { liveConditionHolds, type LiveCondition } from '@/data/live/vars';
 
 // Re-export az egyedi fájlokból
 export { DANI_DECISIONS_SPRINT, DANI_SCRIPTED_FATE_EVENTS } from './dani-sprint';
@@ -139,7 +140,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         description: 'Minden megy tovább, ahogy eddig.',
         financialEffects: [],
         didYouKnow:
-          'Ha a fizetésed nem nő évi 5%-kal, valójában csökken (az infláció miatt). ' +
+          'Ha a fizetésed nem nő legalább az inflációval (most {{inflation}}%), valójában csökken. ' +
           '2023-2025 között az átlagbér ~10%-kal emelkedett évente.',
       },
     ],
@@ -164,30 +165,30 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -200_000, description: 'ETF vásárlás' },
         ],
         didYouKnow:
-          'A globális részvénypiac (S&P 500) átlagos éves hozama ~10% (1926-2024). ' +
+          'Az amerikai részvénypiac (S&P 500) átlagos éves hozama ~10% volt (1926-2024). ' +
           'De volt olyan év, amikor -37% esett (2008). Türelem kell!',
       },
       {
         id: 'gen-invest-b',
         label: 'Kiegyensúlyozott: PMÁP + vegyes',
         description:
-          'Az állampapír biztonságos, felette marad az inflációnak.',
+          'Az állampapír biztonságos, a PMÁP kamata az inflációt követi.',
         financialEffects: [
           { target: 'balance', amount: -100_000, description: 'PMÁP vásárlás' },
         ],
         didYouKnow:
-          'A PMÁP (Magyar Állampapír Plusz) 2024-ben 6,5-7%+ hozamot adott. ' +
-          'Államgarancia, féléves kamatfizetés, és bármikor feltörhető.',
+          'A PMÁP (Prémium Magyar Állampapír) kamata most {{pmap_yield}}%: az előző évi átlagos inflációt ({{prev_year_inflation}}%) követi egy kis prémiummal. ' +
+          'Államgarancia, évente egyszeri kamatfizetés, és lejárat előtt is visszaváltható.',
       },
       {
         id: 'gen-invest-c',
         label: 'Óvatos: megtakarítás bankszámlán',
         description:
-          'Lekötöd a megtakarítást. Biztonságos, de alig ver az inflációt.',
+          'Lekötöd a megtakarítást. Biztonságos, de a hozam az infláció közelében marad.',
         financialEffects: [],
         didYouKnow:
-          'A bankbetét 2026-ban ~3,5-5% kamatot ad, de az infláció ~4%. ' +
-          'Reálértéken alig keresz rajta — viszont a pénzed biztonságban van.',
+          'A lekötött bankbetét most átlagosan {{deposit_rate}}% kamatot ad, az infláció {{inflation}}%. ' +
+          'A kamatból 28% adót vonnak le, így reálértéken kevés marad — viszont a pénzed biztonságban van (OBA).',
       },
     ],
     characterPresets: ['fresh_start', 'career_start', 'inheritance'],
@@ -250,12 +251,12 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         id: 'gen-insurance-a',
         label: 'Átváltasz olcsóbb biztosítóra',
         description:
-          'Összehasonlítod a biztositas.hu-n az ajánlatokat és évi 40 000 Ft-ot spórolsz.',
+          'Összehasonlítod egy online biztosítási összehasonlító oldalon az ajánlatokat és évi 40 000 Ft-ot spórolsz.',
         financialEffects: [
           { target: 'other', amount: -3_300, description: 'Biztosítás megtakarítás (havi)' },
         ],
         didYouKnow:
-          'A biztositas.hu-n 5 perc alatt összehasonlíthatsz 10+ biztosítót. ' +
+          'Egy online összehasonlító oldalon néhány perc alatt összevetheted a biztosítók ajánlatait. ' +
           'Átlagosan 20-30%-ot spórolhatsz éves szinten csak a váltással!',
       },
       {
@@ -359,7 +360,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
           { target: 'loanPayments', amount: -8_000, description: 'Alacsonyabb havi törlesztő' },
         ],
         didYouKnow:
-          'A hitelkiváltás (refinanszírozás) 2026-ban díjmentes, ha a régi szerződés 3+ éves. ' +
+          'A hitelkiváltásnál számold bele az előtörlesztési díjat és az új hitel induló költségeit is. ' +
           'Mindig a THM-et hasonlítsd, ne csak a kamatot!',
       },
       {
@@ -387,13 +388,13 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         id: 'gen-edu-a',
         label: 'Szakmai tanfolyam (online)',
         description:
-          'Udemy / Coursera kurzus: –50 000 Ft egyszeri. 2-3 hónap tanulás, értékes tudás.',
+          'Online kurzusplatformon elérhető képzés: –50 000 Ft egyszeri. 2-3 hónap tanulás, értékes tudás.',
         financialEffects: [
           { target: 'balance', amount: -50_000, description: 'Online kurzus díja' },
           { target: 'salary', amount: 25_000, description: 'Béremelkedés a képzés után' },
         ],
         didYouKnow:
-          'A Coursera és Udemy kurzusok 10-50 EUR-ba kerülnek, de a tudás tartósan emeli a piaci értéked.',
+          'Az online kurzusplatformok képzései sokszor néhány ezer forintba kerülnek, de a tudás tartósan emeli a piaci értéked.',
       },
       {
         id: 'gen-edu-b',
@@ -443,7 +444,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
           { target: 'loanPayments', amount: 110_000, description: 'Lakáshitel törlesztő' },
         ],
         didYouKnow:
-          'Budapesten egy 50 m²-es lakás átlagára 2026-ban ~25-35M Ft. ' +
+          'Budapesten a használt lakások átlagos négyzetméterára most {{sqm_bp}} Ft - egy 50 m²-es lakás ennek ötvenszerese. ' +
           'A CSOK Plusz-szal akár 3% kamattal is hitelezhetnek.',
       },
       {
@@ -528,7 +529,7 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   // --- Pozitív események (fizetés kell) ---
   {
     id: 'fate-gen-01', round: 0, title: 'Fizetésemelés',
-    description: 'A munkahelyed éves inflációkövető emelést adott: +5% nettó fizetés.',
+    description: 'A munkahelyed éves inflációkövető emelést adott (az infláció most {{inflation}}%): +15 000 Ft nettó havonta.',
     type: 'positive' as const,
     effects: [{ target: 'salary', amount: 15_000 }],
     requires: { hasSalary: true },
@@ -675,7 +676,7 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   },
   {
     id: 'fate-gen-23', round: 0, title: 'Háztartási tárgy eladása',
-    description: 'A Marketplace-en eladtad a régi bútorodat/kütyüdet: +40 000 Ft.',
+    description: 'Egy online piactéren eladtad a régi bútorodat/kütyüdet: +40 000 Ft.',
     type: 'positive' as const,
     effects: [{ target: 'balance', amount: 40_000 }],
   },
@@ -777,7 +778,7 @@ const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
         question: 'Melyik fizetési mód a legbiztonságosabb online munka esetén?',
         options: [
           'Azonnali banki átutalás (AFR) a saját számlára',
-          'Előre utalás ismeretlen megbízónak PayPal-on',
+          'Előre utalás ismeretlen megbízónak online fizetési szolgáltatáson',
           'Kriptovalutás fizetés anonim walletbe',
         ],
         correctIndex: 0,
@@ -956,7 +957,7 @@ const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
         correctIndex: 1,
         explanation:
           '2026-ban az átalányadó költséghányada szolgáltatásokra 45% (korábban 40%). ' +
-          'Ez azt jelenti, hogy a bevétel 55%-ára fizetsz 15% SZJA-t + 18,5% TB-járulékot.',
+          'Ez azt jelenti, hogy a bevétel 55%-ára fizetsz 15% SZJA-t + 18,5% TB-járulékot + 13% szochót.',
       },
       successEffects: [{ target: 'balance', amount: 85_000 }],
       noKnowledgeMessage:
@@ -1277,6 +1278,8 @@ export function getDecisionForRound(
 export type FateEventEntry = {
   id: string;
   round: number;
+  /** Élő feltétel: ugyanarra a körre több változat, a heti adatok döntik el, melyik jön */
+  liveCondition?: LiveCondition;
   title: string;
   description: string;
   type: 'positive' | 'negative' | 'decision';
@@ -1356,7 +1359,10 @@ export function getFateEventForRound(
   events: FateEventEntry[],
   round: number
 ): FateEventEntry | undefined {
-  const e = events.find((ev) => ev.round === round);
+  const sameRound = events.filter((ev) => ev.round === round);
+  // A feltételes változatok közül az, amelyik a heti adatok szerint igaz; különben a feltétel nélküli
+  const e = sameRound.find((ev) => ev.liveCondition && liveConditionHolds(ev.liveCondition))
+    ?? sameRound.find((ev) => !ev.liveCondition);
   return e ? withWellbeingFate(e) : undefined;
 }
 

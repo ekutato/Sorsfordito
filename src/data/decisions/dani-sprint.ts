@@ -56,7 +56,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         label: 'Otthon maradsz, ingázol',
         description:
           'Hozzájárulás otthon: –40 000 Ft/hó. MÁV országbérlet: –18 900 Ft/hó. ' +
-          'Megtakarítás: +146 000 Ft/hó az albérlethez képest, de napi 3 óra az utazás.',
+          'Jóval olcsóbb, mint az önálló albérlet, de napi 3 óra az utazás.',
         financialEffects: [
           { target: 'housing', amount: 40_000, description: 'Háztartásba hozzájárulás' },
           { target: 'transport', amount: 18_900, description: 'MÁV országbérlet (Kecskemét–Bp, BKK-val együtt)' },
@@ -129,7 +129,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'dani-d02-c',
         label: 'YOLO mód: élvezed az első fizetést',
         description:
-          'Új telefon (180 000 Ft részletre), hétvégi bulizás, rendelés a Wolton. ' +
+          'Új telefon (180 000 Ft részletre), hétvégi bulizás, rendelés ételfutár-appon. ' +
           'Megérdemelted! (De a megtakarítás várat magára.)',
         financialEffects: [
           { target: 'balance', amount: -180_000, description: 'Új telefon (részletre is mehet)' },
@@ -170,20 +170,20 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'debt_reduction', monthlyAmount: 20_000, durationRounds: -1, description: 'Extra diákhitel-törlesztés' },
         ],
         nextDecisionId: 'dani-d05',
-        didYouKnow: 'A DH2 kamatmentes az EGÉSZ futamidő alatt — tanulmányok alatt ÉS után is! Ez Magyarország legjobb kölcsöne. A DH1 viszont diploma után piaci kamatra vált (~5-7%). Ne keverd össze őket!',
+        didYouKnow: 'A DH2 kamatmentes az EGÉSZ futamidő alatt — tanulmányok alatt ÉS után is! Ez Magyarország legjobb kölcsöne. A DH1 viszont kamatozó hitel (jelenleg {{dh1_rate}}% kamattal). Ne keverd össze őket!',
       },
       {
         id: 'dani-d03-b',
         label: 'Igen, felvettem – minimálisan törlesztek, a pénzt befektetem',
         description:
           'Van 3 200 000 Ft DH2 tartozásod. Csak a kötelező 30 000 Ft/hó-t fizeted. ' +
-          'A megmaradó pénzt PMÁP-ba teszed (~6-7% hozam).',
+          'A megmaradó pénzt PMÁP-ba teszed (most {{pmap_yield}}% éves kamat).',
         financialEffects: [
           { target: 'loanPayments', amount: 30_000, description: 'DH2 havi törlesztő' },
         ],
         nextDecisionId: 'dani-d05',
         unlocksInvestment: ['inv-pmap'],
-        didYouKnow: 'Mivel a DH2 0%-os, matematikailag jobban jársz, ha a pénzt befekteted (pl. PMÁP 6-7% hozam). A „jó adósság" iskolapéldája.',
+        didYouKnow: 'Mivel a DH2 0%-os, matematikailag jobban jársz, ha a pénzt biztonságosan, kamatozóan tartod (pl. PMÁP, most {{pmap_yield}}%). A „jó adósság" iskolapéldája.',
       },
       {
         id: 'dani-d03-c',
@@ -210,7 +210,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     title: 'Az első befektetésed',
     situation:
       'A kollégád mesél a TBSZ-ről: 5 év után adómentes a hozam! ' +
-      'Közben a TikTokon mindenki kriptót tolja. Az édesapád azt mondja: „tedd az OTP-be." ' +
+      'Közben a videós közösségi médiában mindenki kriptót tolja. Az édesapád azt mondja: „tedd be a bankba." ' +
       'Neked {{balance}} Ft van a számládon.',
     dynamicVariables: {
       balance: 'player.balance',
@@ -220,13 +220,13 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'dani-d04-a',
         label: 'PMÁP – az állampapír biztonsága',
         description:
-          'Magyar Állampapír Plusz: {{pmap_yield}}% hozam, állam garantálja. ' +
+          'Prémium Magyar Állampapír: most {{pmap_yield}}% éves kamat, az állam garantálja. ' +
           'Minimum 10 000 Ft-tól, webkincstár.hu-n 15 perc alatt megvehető.',
         financialEffects: [
           { target: 'balance', amount: -100_000, description: 'PMÁP vásárlás' },
         ],
         unlocksInvestment: ['inv-pmap'],
-        didYouKnow: 'A PMÁP kamata félévente nő (lépcsős kamat). Az 5. évben a legmagasabb. Ha előbb kiszeded, csak a kisebb kamatot kapod.',
+        didYouKnow: 'A PMÁP kamata minden évben az előző évi átlagos inflációhoz igazodik (plusz egy kis prémium), és évente egyszer fizet kamatot. Ha az infláció lassul, a következő évi kamat is kisebb lesz.',
       },
       {
         id: 'dani-d04-b',
@@ -277,7 +277,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         financialEffects: [
           { target: 'salary', amount: 35_000, description: 'Fizetésemelés (ha sikerül)' },
         ],
-        didYouKnow: 'Fizetéstárgyalási tipp: készülj konkrét számokkal (piaci átlag, saját eredmények). A Profession.hu bérkalkukátora ingyenes.',
+        didYouKnow: 'Fizetéstárgyalási tipp: készülj konkrét számokkal (piaci átlag, saját eredmények). Az álláshirdetési oldalak bérfelmérései és a KSH keresetstatisztikái ingyen elérhetők.',
       },
       {
         id: 'dani-d05-b',
@@ -303,7 +303,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'salary', monthlyAmount: 50_000, durationRounds: -1, description: 'Béremelkedés a képzés után (6 hónap múlva)' },
         ],
         unlocksInvestment: ['inv-professional-cert'],
-        didYouKnow: 'A Diákhitel 1-et felnőttképzésre is felhasználhatod! 0%-os kamat a tanulmányok idejére.',
+        didYouKnow: 'Képzési díjra a Diákhitel Központ kötött felhasználású, kamatmentes hitele (DH2) is szóba jöhet - a feltételeket mindig a hivatalos oldalon ellenőrizd!',
       },
     ],
     characterPresets: ['career_start'],
@@ -331,12 +331,12 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'dani-d06-a',
         label: 'Agresszív megtakarítás – lakás-önerő',
         description:
-          'Mindent félreteszel. Cél: 3 éven belül lakás-önerő (20%, ~5-8M Ft). ' +
+          'Mindent félreteszel. Cél: 3 éven belül lakás-önerő (a vételár 20%-a). ' +
           'Szigorú büdzsé, de a saját otthon a végcél.',
         financialEffects: [
           { target: 'other', amount: -15_000, description: 'Még szigorúbb büdzsé' },
         ],
-        didYouKnow: 'A lakáshitel önerő minimum 20% (2026-ban). Budapesti kis lakás (~30M Ft) esetén ez 6M Ft. Kamattámogatott hitellel olcsóbb.',
+        didYouKnow: 'A lakáshitelhez jellemzően a vételár legalább 20%-a kell önerőként (egyes állami programoknál kevesebb). Budapesten a használt lakások átlagos négyzetméterára most {{sqm_bp}} Ft - egy kis lakás önereje is milliókban mérhető. Kamattámogatott hitellel olcsóbb.',
       },
       {
         id: 'dani-d06-b',
@@ -362,7 +362,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'salary', monthlyAmount: 80_000, durationRounds: -1, description: 'Freelance mellékbevétel (átlag)' },
         ],
         unlocksKnowledge: ['know-business'],
-        didYouKnow: 'Egyéni vállalkozás indítása 2026-ban online, ingyenes (Webes Ügysegéd). Átalányadó 2026: 45% költséghányad (szolgáltatások), kereskedelemnél 80%. Évi ~39M Ft bevételig.',
+        didYouKnow: 'Egyéni vállalkozás indítása 2026-ban online, ingyenes (Webes Ügysegéd). Átalányadó 2026: általában 45% költséghányad, egyes kétkezi tevékenységeknél 80%, kiskereskedelemnél 90%. Bevételi határ: az éves minimálbér tízszerese.',
       },
     ],
     characterPresets: ['career_start'],
@@ -381,13 +381,25 @@ export const DANI_SCRIPTED_FATE_EVENTS = [
     type: 'positive' as const, effects: [{ target: 'balance', amount: 20_000 }],
   },
   {
-    id: 'fate-dani-02', round: 2, title: 'Forint gyengülés: drágulás',
+    id: 'fate-dani-02', round: 2, title: 'Gyengül a forint',
+    liveCondition: 'forint_gyengul' as const,
     description:
-      'A forint árfolyama gyengült (EUR/HUF 400+), az import termékek megdrágultak. ' +
-      'Az élelmiszer- és közlekedési költségeid is emelkedtek.',
+      'A forint gyengült: egy euró már {{eur_huf}} Ft. Az import termékek drágulnak, ' +
+      'és az élelmiszer- és közlekedési költségeid is emelkednek.',
     type: 'negative' as const, effects: [
       { target: 'transport', amount: 8_000 },
       { target: 'food', amount: 5_000 },
+    ],
+  },
+  {
+    id: 'fate-dani-02b', round: 2, title: 'Erősödik a forint',
+    liveCondition: 'forint_erosodik' as const,
+    description:
+      'Egy euró most {{eur_huf}} Ft - erősödött a forint. Olcsóbb lesz az import, ' +
+      'a külföldi út is kevesebbe kerül, és az üzemanyag is olcsóbbá válhat. ' +
+      'Tanulság: az árfolyam mindkét irányba mozog - ami ma olcsó, holnap drágulhat.',
+    type: 'positive' as const, effects: [
+      { target: 'transport', amount: -3_000 },
     ],
   },
   {

@@ -43,9 +43,9 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'salary', amount: -126_000, description: 'GYED alatti jövedelemcsökkenés (420K → ~294K GYED, átmeneti)' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 294_000, durationRounds: 4, description: 'GYED ellátás (fizetés 70%-a, max ~330 000 Ft/hó)' },
+          { target: 'salary', monthlyAmount: 294_000, durationRounds: 4, description: 'GYED ellátás (fizetés 70%-a, felső határral)' },
         ],
-        didYouKnow: 'GYED (első 2 év): a korábbi fizetésed 70%-a, max ~330 000 Ft/hó (2026). GYES (2 éves kor után, 3 éves korig): a nyugdíjminimum, 28 500 Ft/hó. A Babaváró feltétele: házasság, nő max 40 év, 3 év TB jogviszony.',
+        didYouKnow: 'GYED (első 2 év): a korábbi fizetésed 70%-a, legfeljebb a minimálbér ({{min_wage}} Ft) kétszeresének 70%-a (bruttó). GYES (2 éves kor után, 3 éves korig): a nyugdíjminimum, 28 500 Ft/hó. A Babaváró feltétele: házasság, nő max 40 év, 3 év TB jogviszony.',
       },
       {
         id: 'inh-ext-01-b',
@@ -185,7 +185,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -1_000_000, description: 'Nemzetközi portfólió diverzifikáció' },
         ],
         unlocksInvestment: ['inv-tbsz-etf', 'inv-forex-eur'],
-        didYouKnow: 'A devizadiverzifikáció fontos: a forint az elmúlt 10 évben átlagosan évi 3-4%-ot gyengült az euróhoz képest. EUR vagy USD eszközök természetes védelmet adnak.',
+        didYouKnow: 'A devizadiverzifikáció fontos: a forint hosszú távon inkább gyengült az euróhoz képest (most {{eur_huf}} Ft/EUR), de évről évre mindkét irányba mozoghat. EUR vagy USD eszközök természetes védelmet adnak.',
       },
     ],
     characterPresets: ['inheritance'],
@@ -231,7 +231,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'salary', monthlyAmount: 600_000, durationRounds: -1, description: 'Tanácsadó cég bevétel (beindulás után)' },
         ],
         unlocksKnowledge: ['know-business'],
-        didYouKnow: 'Egyéni tanácsadó cégek (Kft.) alapítása: min. 3M Ft törzstőke (de elég 1.5M Ft készpénz). A KATA megszűnése óta az átalányadó a legnépszerűbb kisvállalkozói forma.',
+        didYouKnow: 'Egyéni tanácsadó cégek (Kft.) alapítása: min. 3M Ft törzstőke (de elég 1.5M Ft készpénz). A KATA 2022-es szigorítása óta az átalányadó a legnépszerűbb kisvállalkozói forma.',
       },
       {
         id: 'inh-ext-04-c',
@@ -245,7 +245,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
         ongoingEffects: [
           { target: 'salary', monthlyAmount: 80_000, durationRounds: -1, description: 'Aktív befektetéskezelés hozama' },
         ],
-        didYouKnow: 'A 4 napos munkahét kísérletei világszerte pozitív eredményeket mutattak: a termelékenység nem csökkent, a kiégés viszont 71%-kal mérséklődött.',
+        didYouKnow: 'A 4 napos munkahét kísérletei világszerte pozitív eredményeket mutattak: a termelékenység nem csökkent, a kiégés viszont jelentősen mérséklődött (2022-es brit kísérlet).',
       },
     ],
     characterPresets: ['inheritance'],

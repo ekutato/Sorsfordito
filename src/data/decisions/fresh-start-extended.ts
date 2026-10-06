@@ -103,7 +103,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         id: 'fs-ext-02-a',
         label: 'Multinacionális cég',
         description:
-          'Stabil, jól fizető multi (Bosch, Audi, Morgan Stanley, stb.). ' +
+          'Stabil, jól fizető multi (autóipar, pénzügyi szolgáltatás, IT stb.). ' +
           'Nettó ~350 000 Ft/hó + cafeteria. De a bejárás drágább, és dress code is van.',
         financialEffects: [
           { target: 'salary', amount: 350_000, description: 'Multinacionális nettó fizetés' },
@@ -174,7 +174,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'utilities', amount: 35_000, description: 'Rezsi (víz, gáz, áram, net)' },
         ],
         didYouKnow:
-          'Budapesten az átlagos garzon albérlet 150-200 000 Ft/hó (2025). ' +
+          'Budapesten az átlagos albérletár most {{rent_bp}} Ft/hó - a garzonok ennél olcsóbbak. ' +
           'A kaució általában 2 havi díj – ezt visszakapod, ha rendben hagyod a lakást. Mindig kérj írásos szerződést!',
       },
       {
@@ -254,7 +254,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         ],
         didYouKnow:
           'A proporcionális megosztás a pénzügyi tanácsadók szerint a legfenntarthatóbb modell. ' +
-          'Egy egyszerű Splitwise vagy Google Sheet alkalmazás segít nyomon követni a kiadásokat.',
+          'Egy egyszerű közös költségmegosztó táblázat segít nyomon követni a kiadásokat.',
       },
       {
         id: 'fs-ext-04-c',

@@ -61,13 +61,13 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'transport', amount: 10_000, description: 'Bejárás a képzőhelyre' },
         ],
         nextDecisionId: 'fs-d02',
-        didYouKnow: 'A szakmunkások iránti kereslet rekord magas. Egy tapasztalt villanyszerelő vagy hegesztő 500-800 ezer Ft-ot is kereshet Magyarországon.',
+        didYouKnow: 'A szakmunkások iránti kereslet nagy. Egy tapasztalt villanyszerelő vagy hegesztő akár az országos nettó átlagkereset ({{avg_wage}} Ft) felett is kereshet.',
       },
       {
         id: 'fs-d01-c',
         label: 'Azonnal dolgozni mész',
         description:
-          'Győri gyárak (Audi, beszállítók): gyártósor / raktáros — 240-280 000 Ft nettó. ' +
+          'Győri gyárak (autógyár, beszállítók): gyártósor / raktáros — 240-280 000 Ft nettó. ' +
           'Azonnal van fizetésed, de nincs képesítésed. ' +
           'Később nehezebb lesz feljebb lépni végzettség nélkül.',
         financialEffects: [
@@ -76,7 +76,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'food', amount: 30_000, description: 'Saját étkezés' },
         ],
         nextDecisionId: 'fs-d02',
-        didYouKnow: 'A 25 év alatti fiatalok a bruttó átlagkeresethez kötött havi határig nem fizetnek SZJA-t (a pontos összeget a NAV teszi közzé). Minimálbéres (bruttó 322 800 Ft) fizetésnél ez havi kb. 48 000 Ft-tal több nettót jelent!',
+        didYouKnow: 'A 25 év alatti fiatalok a bruttó átlagkeresethez kötött havi határig nem fizetnek SZJA-t (a pontos összeget a NAV teszi közzé). Minimálbéres (bruttó {{min_wage}} Ft) fizetésnél ez a bruttó bér 15%-ával több nettót jelent minden hónapban!',
       },
     ],
     characterPresets: ['fresh_start'],
@@ -168,7 +168,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         financialEffects: [
           { target: 'salary', amount: 75_000, description: 'Diákhitel 1 havi folyósítás' },
         ],
-        didYouKnow: 'A DH1 kamata tanulmányok alatt 0% (2026-ban), de diploma után piaci kamatra vált (~5-7%). Ha 3 évig felveszed: ~2.7M Ft adósság, ami a törlesztéssel 3.5M Ft-ra nőhet!',
+        didYouKnow: 'A DH1 kamatozó hitel (jelenleg {{dh1_rate}}% kamattal), a törlesztés a tanulmányok után indul. Ha 3 évig havi 75 000 Ft-ot veszel fel, ~2,7M Ft tőketartozásod lesz, amit kamatostul kell visszafizetni!',
       },
       {
         id: 'fs-d03-b',
@@ -221,31 +221,31 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Biztonságos, azonnal elérhető. De az infláció megeszi: ' +
           'éves szinten {{inflation}}%-kal kevesebbet ér. Egyszerű, de drága.',
         financialEffects: [],
-        didYouKnow: 'Ha 100 000 Ft-ot hagysz a folyószámlán 5%-os inflációval, egy év múlva csak ~95 000 Ft-ot ér vásárlóerőben. A semmi is költség!',
+        didYouKnow: 'Ha 100 000 Ft-ot hagysz a folyószámlán {{inflation}}%-os inflációnál, egy év múlva ugyanannyi pénzért nagyjából ennyivel kevesebbet tudsz venni. A semmi is költség!',
       },
       {
         id: 'fs-d04-b',
         label: 'MÁP Plusz – az állam garantálja',
         description:
           'Minimum 10 000 Ft-tól vásárolható, webkincstár.hu-n. ' +
-          'A hozam veri az inflációt ({{pmap_yield}}% / év). 5 éves lekötés, de bármikor kiváltható.',
+          'Most átlagosan {{map_plus_yield}}% éves kamat (az infláció {{inflation}}%). 5 éves futamidő, de lejárat előtt is visszaváltható.',
         financialEffects: [
           { target: 'balance', amount: -50_000, description: 'MÁP Plusz vásárlás' },
         ],
         unlocksInvestment: ['inv-pmap'],
-        didYouKnow: 'A webkincstár.hu-n 15 perc alatt nyithatsz számlát. A PMÁP a magyar lakosság legnépszerűbb befektetése: 7000 milliárd Ft-nyi van kint.',
+        didYouKnow: 'A WebKincstárban online nyithatsz számlát. A lakossági állampapírok kamata SZJA- és szochomentes, így ugyanakkora kamatnál többet kapsz kézhez, mint egy bankbetétnél.',
       },
       {
         id: 'fs-d04-c',
         label: 'Takarékos bankbetét (lekötés)',
         description:
-          'Banki lekötött betét: feltétel nélkül ~3,5%, akciósan 5-6% (2026). ' +
-          'Kicsit jobb, mint a folyószámla, de a kamatból 19,5% adót levonnak.',
+          'Banki lekötött betét: most átlagosan {{deposit_rate}}% körül, akciósan ennél több is lehet. ' +
+          'Kicsit jobb, mint a folyószámla, de a kamatból 28% adót (15% SZJA + 13% szocho) levonnak.',
         financialEffects: [
           { target: 'balance', amount: -30_000, description: 'Betét lekötés' },
         ],
         unlocksInvestment: ['inv-bank-deposit'],
-        didYouKnow: 'Az OBA (Országos Betétbiztosítási Alap) 100 000 EUR-ig védi a bankbetétedet. Ez kb. 40M Ft – szóval a te megtakarításod biztonságban van.',
+        didYouKnow: 'Az OBA (Országos Betétbiztosítási Alap) 100 000 EUR-ig védi a bankbetétedet. Ez most kb. {{oba_huf}} Ft – szóval a te megtakarításod biztonságban van.',
       },
     ],
     characterPresets: ['fresh_start'],
@@ -286,7 +286,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'fs-d05-b',
         label: 'Albérletbe költözöl (lakótárssal)',
         description:
-          'Megosztott lakás: ~100-130 000 Ft/hó (feles). ' +
+          'Megosztott lakás: a lakbér fele (egy átlagos budapesti albérlet most {{rent_bp}} Ft/hó). ' +
           'Szabadság, de drága. Kaució: 2 havi bérleti díj.',
         financialEffects: [
           { target: 'balance', amount: -260_000, description: 'Kaució + költözés' },
@@ -294,7 +294,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'utilities', amount: 20_000, description: 'Megosztott rezsi' },
           { target: 'food', amount: 40_000, description: 'Saját élelmiszer' },
         ],
-        didYouKnow: 'A lakótársi együttélésben MINDIG legyen írásos megállapodás a költségmegosztásról. Egy sablont ingyen letölthetsz az albérlet.hu-ról.',
+        didYouKnow: 'A lakótársi együttélésben MINDIG legyen írásos megállapodás a költségmegosztásról. Mintát ingyen találsz az interneten, de egy egyszerű közös költségmegosztó táblázat is megteszi.',
       },
       {
         id: 'fs-d05-c',
@@ -305,7 +305,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         financialEffects: [
           { target: 'housing', amount: 15_000, description: 'Hozzájárulás otthon' },
         ],
-        didYouKnow: 'A „szülőknél lakás" sztig­ma? Globálisan az 18-29 évesek 50%-a él a szüleivel. Pénzügyileg ez lehet a legokosabb döntés!',
+        didYouKnow: 'A „szülőknél lakás" szégyen? Az EU-ban a fiatalok átlagosan 26 éves koruk körül költöznek el otthonról (Eurostat, 2023). Pénzügyileg ez lehet a legokosabb döntés!',
       },
     ],
     characterPresets: ['fresh_start'],
@@ -322,7 +322,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
     title: 'Kell a saját autó?',
     situation:
       'Havonta {{transport}} Ft-ot költesz közlekedésre (BKK bérlet / vonat). ' +
-      'Egy ismerős eladná a 10 éves Suzuki Swiftjét 1 200 000 Ft-ért. ' +
+      'Egy ismerős eladná a 10 éves kisautóját 1 200 000 Ft-ért. ' +
       'A szalonban pedig 0 Ft önerővel kínálnak új autót hitelre. ' +
       'Megéri saját kocsit tartani, vagy a tömegközlekedés az okosabb?',
     dynamicVariables: {
@@ -333,7 +333,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'fs-d05b-a',
         label: 'Veszel használt autót (készpénz)',
         description:
-          'Suzuki Swift, 2016, 120 000 km. Ára: 1 200 000 Ft készpénzben. ' +
+          '10 éves kisautó, 120 000 km. Ára: 1 200 000 Ft készpénzben. ' +
           'Havi fenntartás: KGFB ~8 000 Ft, benzin ~25 000 Ft, szerviz ~12 000 Ft/hó átlag. ' +
           'Cserébe a BKK bérlet megszűnik.',
         financialEffects: [
@@ -350,8 +350,8 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'fs-d05b-b',
         label: 'Autóhitelre veszel újat',
         description:
-          'Új Dacia Sandero, 5 500 000 Ft. Önerő: 500 000 Ft, hitel: 5 000 000 Ft, ' +
-          '5 évre, THM ~12%. Havi törlesztő: 110 000 Ft. ' +
+          'Új belépő kategóriás kisautó, 5 500 000 Ft. Önerő: 500 000 Ft, hitel: 5 000 000 Ft, ' +
+          '5 évre, a THM-et a bank egyedileg adja. Havi törlesztő: ~110 000 Ft. ' +
           'A banknak CASCO biztosítás kötelező (évi ~120 000 Ft).',
         financialEffects: [
           { target: 'balance', amount: -500_000, description: 'Autóhitel önerő' },
@@ -368,13 +368,13 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'fs-d05b-c',
         label: 'Marad a tömegközlekedés',
         description:
-          'BKK havibérlet: 9 500 Ft. MÁV Vármegye-bérlet: max 10 890 Ft/hó. ' +
+          'Havi bérlet (Budapest-bérlet vagy vármegyebérlet): töredéke egy autó havi költségének. ' +
           'Nincs parkolás, nincs szerviz, nincs KGFB. ' +
           'A megspórolt pénzt befektetheted.',
         financialEffects: [],
         didYouKnow:
           'Egy autó TELJES fenntartási költsége évi 1-1,5M Ft (még ha „olcsó" is). ' +
-          'BKK bérlet: ~114 000 Ft/év (teljes árú), diák: ~41 400 Ft/év. ' +
+          'Egy éves bérletköltség ennek csak a töredéke, diákoknak még kevesebb. ' +
           'A különbség befektetve 10 év alatt akár 10-15M Ft is lehet!',
       },
     ],
@@ -410,7 +410,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         ongoingEffects: [
           { target: 'salary', monthlyAmount: 65_000, durationRounds: -1, description: 'Mellékállás bevétel' },
         ],
-        didYouKnow: 'A magyar fiatalok 40%-a végez valamilyen mellékállást. A Wolt, Foodpanda, Bolt futárok átlagosan 800-1200 Ft/óra nettót keresnek.',
+        didYouKnow: 'Sok fiatal végez valamilyen mellékállást. Az ételfutár-appoknak dolgozó futárok bevétele erősen ingadozik (napszak, időjárás, borravaló) - számold ki, mennyi marad az üzemanyag és a járulékok után!',
       },
       {
         id: 'fs-d06-b',
@@ -486,13 +486,24 @@ export const FRESH_START_SCRIPTED_FATE_EVENTS = [
     type: 'positive' as const, effects: [{ target: 'balance', amount: 45_000 }],
   },
   {
-    id: 'fate-fs-06', round: 6, title: 'Áremelkedés a boltban',
+    id: 'fate-fs-06', round: 6, title: 'Gyorsul a drágulás',
+    liveCondition: 'inflacio_emelkedik' as const,
     description:
-      'Az alapvető élelmiszerek ára ismét emelkedett (liszt, olaj, hús átlag +8-12%). ' +
+      'Gyorsul az infláció: az árak egy év alatt átlagosan {{inflation}}%-kal nőttek. ' +
       'A havi bevásárlás drágább lett, a rezsi is nőtt.',
     type: 'negative' as const, effects: [
       { target: 'food', amount: 5_000 },
       { target: 'utilities', amount: 3_000 },
+    ],
+  },
+  {
+    id: 'fate-fs-06b', round: 6, title: 'Lassul a drágulás',
+    liveCondition: 'inflacio_csokken' as const,
+    description:
+      'Lassul az infláció: az árak egy év alatt átlagosan csak {{inflation}}%-kal nőttek. ' +
+      'Ez jó hír, de az árszínvonal így is emelkedik - a félretett pénzed vásárlóereje lassabban, de tovább fogy.',
+    type: 'negative' as const, effects: [
+      { target: 'food', amount: 2_000 },
     ],
   },
   {
@@ -509,7 +520,7 @@ export const FRESH_START_SCRIPTED_FATE_EVENTS = [
   {
     id: 'fate-fs-08', round: 8, title: 'Ismerős ajánl egy tanfolyamot',
     description:
-      'Egy ismerős díjmentes online kurzust ajánl (Excel, Canva, vagy programozás alapok). ' +
+      'Egy ismerős díjmentes online kurzust ajánl (táblázatkezelés, grafikai tervezés vagy programozás alapok). ' +
       'Ha elvégzed, új készséget szerezhetsz – és egy hétvégi freelance munkát is kapsz belőle!',
     type: 'positive' as const, effects: [{ target: 'balance', amount: 25_000 }],
   },

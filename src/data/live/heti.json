@@ -145,7 +145,7 @@
       "asOf": "2026-03-01",
       "verified": false,
       "source": "Előző (márciusi) érték - a friss források ellentmondanak (lakossági ~1 éves DKJ 4,83%, aukciós átlaghozam-hírek 6,8% körül, eltérő dátumokkal); a játékvezető döntése szükséges",
-      "url": ""
+      "url": "https://www.akk.hu/"
     },
     "akk.fiveYearBondYield": {
       "value": 5.28,

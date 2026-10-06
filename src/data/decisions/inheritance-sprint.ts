@@ -69,7 +69,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'amíg tájékozódsz. Bölcs, de az infláció ({{inflation}}%) eszi az értékét.',
         financialEffects: [],
         nextDecisionId: 'inh-d02',
-        didYouKnow: 'A „ne dönts sietve" szabály igaz, DE a készpénzen ülés is döntés: az infláció évi 4-5%-ot eszik a vásárlóerőből.',
+        didYouKnow: 'A „ne dönts sietve" szabály igaz, DE a készpénzen ülés is döntés: az infláció (most évi {{inflation}}%) folyamatosan eszi a vásárlóerőt.',
       },
     ],
     characterPresets: ['inheritance'],
@@ -171,15 +171,15 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'inh-d03-c',
-        label: 'Mobilházat építesz rá (Airbnb)',
+        label: 'Mobilházat építesz rá (rövid távú kiadás)',
         description:
-          'Mobilház telepítés: ~3-5M Ft. Utána Airbnb / vendégház kiadása: ' +
+          'Mobilház telepítés: ~3-5M Ft. Utána rövid távú lakáskiadás (online szállásplatformon) / vendégház: ' +
           '+40-100 000 Ft/hó bevétel (vidéken alacsonyabb kihasználtság, erős szezonalitás). Nagy befektetés.',
         financialEffects: [
           { target: 'balance', amount: -4_000_000, description: 'Mobilház telepítés + berendezés' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 65_000, durationRounds: -1, description: 'Airbnb vendégház bevétel (vidéki átlag, szezonális)' },
+          { target: 'salary', monthlyAmount: 65_000, durationRounds: -1, description: 'Vendégház bevétel (vidéki átlag, szezonális)' },
         ],
         unlocksInvestment: ['inv-room-rental'],
         unlocksKnowledge: ['know-business'],
@@ -199,7 +199,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Befektetés',
     title: 'Portfólió-építés',
     situation:
-      'A számládon {{balance}} Ft van. A pénzügyi tanácsadód (YouTube videó) ' +
+      'A számládon {{balance}} Ft van. A pénzügyi „tanácsadód" (egy videómegosztón látott videó) ' +
       'azt mondja: „Ne tedd az összes tojást egy kosárba!" ' +
       'A kérdés: hogyan diverzifikálj?',
     dynamicVariables: {
@@ -208,9 +208,9 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
     options: [
       {
         id: 'inh-d04-a',
-        label: 'Konzervatív: 70% PMÁP + 30% bankbetét',
+        label: 'Konzervatív: 30% bankbetét + 70% PMÁP',
         description:
-          'Biztonságos, kiszámítható. PMÁP hozam: {{pmap_yield}}%/év, betét: 3-4%. ' +
+          'Biztonságos, kiszámítható. PMÁP: most {{pmap_yield}}%/év, lekötött betét: átlagosan {{deposit_rate}}% körül. ' +
           'Nem fog a szomszéd irigykedni, de éjjel nyugodtan alszol.',
         financialEffects: [
           { target: 'balance', amount: -1_000_000, description: 'Konzervatív portfólió befektetés' },
@@ -220,7 +220,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'inh-d04-b',
-        label: 'Kiegyensúlyozott: 40% PMÁP + 40% ETF + 20% részvény',
+        label: 'Kiegyensúlyozott: 20% részvény + 40% ETF + 40% PMÁP',
         description:
           'TBSZ-számlán: magyar részvények + globális ETF. Várható hozam: 8-12%/év. ' +
           'Kockázat: közepes. 5 éves távlatban a TBSZ adómentes!',
@@ -290,7 +290,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'salary', monthlyAmount: 50_000, durationRounds: -1, description: 'Online vállalkozás bevétel (lassú indulás)' },
         ],
         unlocksKnowledge: ['know-business'],
-        didYouKnow: 'Az egyéni vállalkozás indítása online, ingyenes a Webes Ügysegéden (nyilvantarto.hu). Átalányadó 2026: 45% költséghányad (szolgáltatásoknál), kereskedelemnél 80%.',
+        didYouKnow: 'Az egyéni vállalkozás indítása online, ingyenes a Webes Ügysegéden (nyilvantarto.hu). Átalányadó 2026: általában 45% költséghányad, egyes kétkezi tevékenységeknél 80%, kiskereskedelemnél 90%.',
       },
       {
         id: 'inh-d05-c',
@@ -423,8 +423,8 @@ export const INHERITANCE_SCRIPTED_FATE_EVENTS = [
     ],
   },
   {
-    id: 'fate-inh-07', round: 7, title: 'PMÁP kamatfizetés',
-    description: 'Az első féléves kamat megérkezett a PMÁP-odra. +42 000 Ft hozam!',
+    id: 'fate-inh-07', round: 7, title: 'Állampapír-kamat érkezett',
+    description: 'Megérkezett az állampapírod kamata: +42 000 Ft. A PMÁP évente egyszer fizet kamatot (most {{pmap_yield}}%), és a kamat adómentes!',
     type: 'positive' as const, effects: [{ target: 'balance', amount: 42_000 }],
   },
   {
@@ -433,13 +433,25 @@ export const INHERITANCE_SCRIPTED_FATE_EVENTS = [
     type: 'negative' as const, effects: [{ target: 'housing', amount: 20_000 }],
   },
   {
-    id: 'fate-inh-09', round: 9, title: 'Forint erősödés: jó hír!',
+    id: 'fate-inh-09', round: 9, title: 'Erősödik a forint',
+    liveCondition: 'forint_erosodik' as const,
     description:
-      'Az MNB szigorító lépéseket jelentett be, a piac bizalmat szavazott: ' +
-      'EUR/HUF 390-re erősödött. Az import termékek olcsóbbak lettek.',
+      'Egy euró most {{eur_huf}} Ft - erősödött a forint. ' +
+      'Az import termékek olcsóbbak lettek, a külföldi út is kevesebbe kerül.',
     type: 'positive' as const, effects: [
       { target: 'food', amount: -4_000 },
       { target: 'other', amount: -3_000 },
+    ],
+  },
+  {
+    id: 'fate-inh-09b', round: 9, title: 'Gyengül a forint',
+    liveCondition: 'forint_gyengul' as const,
+    description:
+      'A forint gyengült: egy euró már {{eur_huf}} Ft. Az import termékek és az üzemanyag drágulnak. ' +
+      'Tanulság: az árfolyam mindkét irányba mozog - a devizában tartott megtakarítás ilyenkor többet ér forintban.',
+    type: 'negative' as const, effects: [
+      { target: 'food', amount: 4_000 },
+      { target: 'transport', amount: 3_000 },
     ],
   },
   {
@@ -449,7 +461,7 @@ export const INHERITANCE_SCRIPTED_FATE_EVENTS = [
   },
   {
     id: 'fate-inh-11', round: 11, title: 'Év végi bónusz',
-    description: 'A céged jól zárta az évet: egyszeri jutalom 200 000 Ft (bruttó, nettó: ~150 000).',
+    description: 'A céged jól zárta az évet: egyszeri jutalom 225 000 Ft (bruttó, nettó: ~150 000).',
     type: 'positive' as const, effects: [{ target: 'balance', amount: 150_000 }],
   },
   {

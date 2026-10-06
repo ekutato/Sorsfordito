@@ -38,11 +38,11 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
         label: 'Agresszív spórolás lakás önerőre',
         description:
           'Havi –30 000 Ft-ot vágsz a kiadásaidból (szórakozás, rendelés, előfizetések). ' +
-          'Szigorú büdzsé, cél: 5-8M Ft önerő összegyűjtése 3 éven belül.',
+          'Szigorú büdzsé, cél: a lakás-önerő összegyűjtése 3 éven belül.',
         financialEffects: [
           { target: 'other', amount: -30_000, description: 'Szigorú büdzsé (lakás-önerő megtakarítás)' },
         ],
-        didYouKnow: 'A lakáshitel önerő minimum 20%. Egy 35 millió Ft-os budapesti lakásnál ez 7M Ft. A Lakás-takarékpénztár megszűnt, de az önkéntes nyugdíjpénztári megtakarítás lakáscélra is felhasználható!',
+        didYouKnow: 'A lakáshitel önerő jellemzően a vételár 20%-a. Budapesten a használt lakások átlagos négyzetméterára most {{sqm_bp}} Ft, így egy kis lakás önereje is milliókban mérhető. A Lakás-takarékpénztár megszűnt, de az önkéntes nyugdíjpénztári megtakarítás lakáscélra is felhasználható!',
       },
       {
         id: 'dani-ext-01-b',
@@ -113,7 +113,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
         label: 'Teljesen külön pénzügyek',
         description:
           'Mindenki a sajátjából gazdálkodik. Szabadság, de dupla költség: ' +
-          'két külön Netflix, két biztosítás stb. Havi +5 000 Ft extra kiadás.',
+          'két külön streaming-előfizetés, két biztosítás stb. Havi +5 000 Ft extra kiadás.',
         financialEffects: [
           { target: 'other', amount: 5_000, description: 'Dupla szolgáltatások, extra admin' },
         ],
@@ -259,7 +259,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -1_000_000, description: 'TBSZ befektetés (ETF + osztalékrészvény)' },
         ],
         unlocksInvestment: ['inv-tbsz-etf', 'inv-dividend-stock'],
-        didYouKnow: 'A TBSZ-en évente max ~6M Ft-ot fektethetsz be (a nyitás évében). 5 év lejárat után a teljes hozam adómentes — szemben a normál 15% SZJA-val!',
+        didYouKnow: 'A TBSZ-re csak a nyitás évében fizethetsz be (felső határ nincs, minimum 25 000 Ft). 5 év lejárat után a teljes hozam adómentes — szemben a normál 15% SZJA-val!',
       },
       {
         id: 'dani-ext-05-b',

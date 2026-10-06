@@ -24,7 +24,7 @@ export const LIFEPATH_MILESTONES: readonly LifepathMilestone[] = [
   { age: 18, id: 'lp-palyavalasztas', title: 'Pályaválasztás', decision: 'Egyetem (diákhitellel vagy anélkül), szakma vagy azonnali munka?',
     realRule: 'Diákhitel2: legfeljebb a tandíj összege, 0% kamattal; Diákhitel1: változó kamattal.' },
   { age: 22, id: 'lp-elso-allas', title: 'Első teljes állás', decision: 'Mekkora megtakarítási rátával indulsz? Itt dől el a legtöbb.',
-    realRule: 'Minimálbér 2026-ban bruttó 322 800 Ft, garantált bérminimum 373 200 Ft.' },
+    realRule: 'Minimálbér jelenleg bruttó {{min_wage}} Ft, garantált bérminimum {{guaranteed_min_wage}} Ft.' },
   { age: 24, id: 'lp-koltozes', title: 'Önálló lakhatás', decision: 'Albérlet, lakótárs vagy otthon maradás - és mennyit spórolsz vele?' },
   { age: 27, id: 'lp-elso-lakas', title: 'Első saját lakás', decision: 'Vásárolsz-e, és ha igen, támogatott hitellel?',
     realRule: 'Támogatott lakáshitelek: a kamat, az összeg és a feltételek a heti adatcsomagból jönnek, mert gyakran változnak.' },

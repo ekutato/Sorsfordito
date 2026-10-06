@@ -1,3 +1,4 @@
+import { fillDeep } from '@/data/live/vars';
 // ============================================================================
 // PENZUGYI SORSFORDITO - Pénzügyi Fogalomtár
 // A játékban előforduló pénzügyi rövidítések és fogalmak magyarázata
@@ -22,22 +23,24 @@ export interface GlossaryEntry {
   sourceName?: string;
 }
 
-export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
+/** Nyers tartalom {{változókkal}} - a megjelenítéshez a lenti, kitöltött FINANCIAL_GLOSSARY-t használd */
+export const FINANCIAL_GLOSSARY_RAW: GlossaryEntry[] = [
   // --- Állampapírok & Megtakarítások ---
   {
     term: 'PMÁP',
     fullName: 'Prémium Magyar Állampapír',
     description:
-      'Az állam által kibocsátott, inflációkövető kötvény magánszemélyeknek. ' +
-      'Havonta fizet kamatot, és az állam garantálja a visszafizetést.',
+      'Az állam által kibocsátott, inflációkövető állampapír magánszemélyeknek. ' +
+      'Kamata minden évben az előző évi átlagos infláció plusz egy kis prémium (most {{pmap_yield}}%). ' +
+      'Évente egyszer fizet kamatot, és az állam garantálja a visszafizetést.',
     pros: [
       'Államilag garantált (nem bukhatsz rajta)',
-      'Infláció felett fizet kamatot',
-      'Havi kamatfizetés, szabadon felhasználható',
+      'A kamat az előző évi inflációt követi, prémiummal',
+      'Évente egyszeri kamatfizetés, a kamat adómentes',
     ],
     cons: [
-      '5 éves futamidő (idő előtt visszaváltható, de alacsonyabb hozam)',
-      'Nem a legmagasabb hozam (de biztonságos)',
+      'Több éves futamidő (idő előtt visszaváltható, de díj ellenében)',
+      'Ha az infláció lassul, a következő évi kamat is kisebb',
     ],
     risk: 'minimális',
     sourceUrl: 'https://www.allampapir.hu',
@@ -50,13 +53,13 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
       'Speciális értékpapírszámla, ahol 5 év után a teljes hozam adómentes (0% adó). ' +
       '3 év után 10% adó. Részvény, ETF, kötvény mind tartható rajta.',
     pros: [
-      '5 év után 0% adó a hozamra (normálisan 15%)',
+      '5 év után 0% adó a hozamra (normál esetben 15% SZJA + 13% szocho)',
       'Bármilyen értékpapírt tarthatsz rajta',
       'Évente nyithatsz újat (több TBSZ párhuzamosan)',
     ],
     cons: [
       '5 évig nem szabad kivenni (különben elvész az adóelőny)',
-      'Évente egyszer lehet pénzt betenni',
+      'Csak a nyitás évében lehet pénzt befizetni',
       'Kripto NEM tartható TBSZ-en',
     ],
     risk: 'alacsony',
@@ -92,7 +95,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
       'Magyarországon a személyi jövedelemadó egységesen 15%. ' +
       'Fontos: 25 év alattiak számára az SZJA mentes a bruttó átlagbér összegéig!',
     pros: [
-      '25 év alatti kedvezmény (2026-ban évi ~8 millió Ft nagyságrendig mentes)',
+      '25 év alatti kedvezmény (a bruttó átlagkereset szintjéig mentes)',
       'Családi adókedvezmény gyermekek után',
       'Önkéntes nyugdíjpénztári adó-visszatérítés (20%)',
     ],
@@ -152,12 +155,12 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
       'Hallgatói hitel szabad felhasználásra, államilag támogatott kamattal. ' +
       'Törlesztés a tanulmányok befejezése után indul, a jövedelem arányában.',
     pros: [
-      'Tanulmányok alatt 0% kamat (2026-ban)',
+      'Államilag támogatott kamat (jelenleg {{dh1_rate}}%)',
       'Tanulmányok alatt nem kell törleszteni',
       'Jövedelem arányos törlesztés',
     ],
     cons: [
-      'Diploma után piaci kamatra vált (~5-7%)',
+      'Kamatozó hitel: a tartozás a kamattal együtt nő',
       'Adósság, amit később törlesztened kell',
       'Ha nem fejezed be az egyetemet, a törlesztés akkor is indul',
     ],
@@ -233,7 +236,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     fullName: 'Országos Betétbiztosítási Alap',
     description:
       'Ha a bankod csődbe menne, az OBA személy/bank kombináció alapján ' +
-      '100 000 EUR-ig (kb. 40M Ft) garantálja a betéted visszafizetését.',
+      '100 000 EUR-ig (most kb. {{oba_huf}} Ft) garantálja a betéted visszafizetését.',
     pros: [
       '100 000 EUR-ig teljes védelem személyenként/bankonként',
       '20 munkanapon belül kifizetés',
@@ -252,7 +255,8 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     fullName: 'Budapesti Értéktőzsde',
     description:
       'A magyar tőzsde, ahol részvényekkel, kötvényekkel és ETF-ekkel kereskedhetsz. ' +
-      'Legnagyobb cégek: OTP, Mol, Richter, Telekom.',
+      'A legnagyobb kibocsátók között van bank, energiacég, gyógyszergyártó és távközlési cég - a játékban: ' +
+      'Pannon Bankcsoport Nyrt., Duna Energia Nyrt., Tisza Gyógyszer Nyrt., Hármashatár Távközlés Nyrt. (kitalált cégek).',
     pros: [
       'Magyar cégekbe fektethetsz (forintban)',
       'Szabályozott, biztonságos kereskedés',
@@ -308,7 +312,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     fullName: 'Láthatatlan kiadások (latte-faktor)',
     description:
       'Kis tételek, amiket nem veszünk észre, de összeadódnak: napi kávé (1 200 Ft × 20 = 24 000 Ft/hó), ' +
-      'Wolt felár, előfizetések, applikáció-vásárlások. Éves szinten akár 300-500 000 Ft.',
+      'ételfutár-felár, előfizetések, applikáció-vásárlások. Éves szinten akár 300-500 000 Ft.',
     pros: [
       'Ha felismered, sokat spórolhatsz (havi 20-50 000 Ft)',
       'Nem igényel radikális életmódváltást, csak tudatosságot',
@@ -336,18 +340,18 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     risk: '—',
   },
   {
-    term: 'Wolt',
-    fullName: 'Ételkiszállítás felára (Wolt, Foodpanda)',
+    term: 'ételfutár-app',
+    fullName: 'Ételkiszállítás felára (ételfutár-appok)',
     description:
-      'Az ételrendelés kiszállítási díja + szervízdíj + az étterem Wolt-on drágább árai ' +
-      'összesen 30-50%-kal drágítják a rendelést a helyszíni árhoz képest.',
+      'Az ételrendelés kiszállítási díja + szervizdíj + az étterem appon belüli drágább árai ' +
+      'összesen 30-50%-kal drágíthatják a rendelést a helyszíni árhoz képest.',
     pros: [
       'Kényelmes, időt spórol',
-      'Wolt+ előfizetéssel csökkenthető a kiszállítási díj',
+      'Előfizetéssel csökkenthető a kiszállítási díj (de az is pénz)',
     ],
     cons: [
       'Heti 3× rendelés ≈ havi 40-60 000 Ft (főzéssel 20-30 000 Ft lenne)',
-      'Emelt árak az appon belül (étterem + Wolt árrés)',
+      'Emelt árak az appon belül (étterem + platform árrés)',
       'Impulzusrendelés veszélye (éjszakai rendelések)',
     ],
     risk: '—',
@@ -365,7 +369,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     ],
     cons: [
       'Házasság szükséges (legalább az egyik fél 40 év alatti)',
-      'Ha nem születik gyermek 5 éven belül → piaci kamat (jelenleg ~10%)',
+      'Ha nem születik gyermek 5 éven belül → kamatozóvá válik, és a kamattámogatást is vissza kell fizetni',
       'Visszafizetési kötelezettség gyermek nélkül',
     ],
     risk: 'közepes',
@@ -396,11 +400,11 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     fullName: 'Deviza (külföldi valuta befektetés)',
     description:
       'Külföldi valuta (EUR, USD, CHF) tartása megtakarítási céllal. ' +
-      'Ha a forint gyengül, a devizád forintban többet ér. Revoluton, Wise-on, Lightyear-en könnyen elérhető.',
+      'Ha a forint gyengül, a devizád forintban többet ér. Bankszámlán vagy fintech devizaszámlán könnyen elérhető (egy euró most {{eur_huf}} Ft).',
     pros: [
       'Forintgyengülés ellen véd (diverzifikáció)',
       'Nagyon likvid (azonnal visszaváltható)',
-      'Alacsony költségű platformokon (Revolut, Wise) szinte ingyenes',
+      'Egyes szolgáltatóknál hétköznap olcsó a váltás (nézd meg a felárat!)',
     ],
     cons: [
       'Ha a forint erősödik, veszítesz rajta',
@@ -414,7 +418,7 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     fullName: 'Nemesfém befektetés (arany, ezüst)',
     description:
       'Arany és ezüst tartása fizikai formában (érme, tömb) vagy ETF-ben. ' +
-      'Történelmileg válságálló, infláció-rezisztens. 2026-ban az arany +73%-ot emelkedett.',
+      'Történelmileg válságálló, infláció-rezisztens. Az arany ára most kb. {{gold_usd}} USD/uncia.',
     pros: [
       'Inflációvédelem (évezredes értékmegőrző)',
       'Geopolitikai válságban értéke nő (menedékeszköz)',
@@ -430,64 +434,24 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     sourceName: 'MNB (aranytömb értékesítés)',
   },
   {
-    term: 'Revolut',
-    fullName: 'Revolut (neobank / fintech alkalmazás)',
+    term: 'Fintech-szolgáltatók',
+    fullName: 'Fintech-szolgáltatók (online bankok, devizaszámlák, befektetési appok)',
     description:
-      'Digitális bank app, ami ingyenes devizaváltást, kártyát és befektetési funkciókat kínál. ' +
-      'Magyarországon is elérhető, de nem magyar bank (litván banklicenc).',
+      'Mobilalkalmazáson keresztül működő pénzügyi szolgáltatók: devizaszámla, nemzetközi utalás, ' +
+      'kártya, befektetés. Sokszor olcsók és kényelmesek, de nem mindegyik bank, és nem mindegyik magyar felügyelet alatt áll.',
     pros: [
-      'Ingyenes devizaváltás (hétfő-péntek, 1000 EUR/hó-ig)',
+      'Gyors, kényelmes, sokszor alacsony díjak',
       'Több devizában tarthatod a pénzed',
-      'Kripto, részvény és nemesfém is elérhető az appban',
+      'Hétköznap gyakran kedvező devizaváltás',
     ],
     cons: [
-      'Hétvégén 1% felár a váltásra',
-      'Magyar betétbiztosítás NEM vonatkozik rá (litván OBA)',
-      'Ügyfélszolgálat nehezen elérhető',
+      'Ellenőrizd: van-e MNB- vagy más EU-s felügyeleti engedélye',
+      'Ellenőrizd: kiterjed-e a betétre az OBA vagy egy másik ország betétbiztosítása - a nem banki szolgáltatónál nincs betétbiztosítás',
+      'Nézd meg a díjakat, a devizaváltási felárat és a hétvégi felárat is',
     ],
     risk: 'alacsony',
-    sourceUrl: 'https://www.revolut.com',
-    sourceName: 'Revolut',
-  },
-  {
-    term: 'Lightyear',
-    fullName: 'Lightyear (befektetési platform)',
-    description:
-      'Észt fintech bróker, ami ETF-eket és részvényeket kínál alacsony díjjal. ' +
-      'EUR-ban tarthatod a pénzed és fektethetsz – kiváló TBSZ alternatíva külföldi papírokra.',
-    pros: [
-      'Alacsony kereskedési díj (0 jutalék sok ETF-re)',
-      'EUR-ban tartott számla (forint-kockázat nélkül)',
-      'Egyszerű, átlátható felület',
-    ],
-    cons: [
-      'Nem magyar bróker (nincs magyar adóoptimalizálás/TBSZ)',
-      'Korlátozott termékpaletta a nagyobb brókerekhez képest',
-      'Fiatal cég, kevés track record',
-    ],
-    risk: 'alacsony',
-    sourceUrl: 'https://www.lightyear.com',
-    sourceName: 'Lightyear',
-  },
-  {
-    term: 'Wise',
-    fullName: 'Wise (TransferWise) – nemzetközi pénzküldés',
-    description:
-      'Nemzetközi pénzküldő és multi-deviza számla. A legolcsóbb módja a külföldi utalásnak ' +
-      'és devizatartásnak. Nem bank, de sok bankszerű funkciót kínál.',
-    pros: [
-      'Nagyon alacsony átváltási díj (~0,4%)',
-      'Valódi közép-árfolyamot használ (nem banki spread)',
-      'Több devizában tarthatod a pénzed',
-    ],
-    cons: [
-      'Nem bank (nincs betétbiztosítás a szokott értelemben)',
-      'Befektetési funkció korlátozott',
-      'Nem magyar cég (brit licenc)',
-    ],
-    risk: 'alacsony',
-    sourceUrl: 'https://www.wise.com',
-    sourceName: 'Wise',
+    sourceUrl: 'https://www.mnb.hu/fogyasztovedelem',
+    sourceName: 'MNB Fogyasztóvédelem',
   },
 
   // --- Egyéb fogalmak ---
@@ -523,6 +487,9 @@ export const FINANCIAL_GLOSSARY: GlossaryEntry[] = [
     sourceName: 'KSH (Központi Statisztikai Hivatal)',
   },
 ];
+
+/** A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket (src/data/live/vars.ts) */
+export const FINANCIAL_GLOSSARY: GlossaryEntry[] = fillDeep(FINANCIAL_GLOSSARY_RAW);
 
 /**
  * Fogalom keresése a szótárban (case-insensitive).

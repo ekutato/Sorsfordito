@@ -1,10 +1,10 @@
 // Hol használja a játék az egyes heti értékeket? A tartalmi szövegekben lévő
 // {{változókból}} számolva (+ a kezdőképernyő gazdasági összefoglalója).
 import { getDecisionsFor, getScriptedFateEvents, GENERIC_LATE_GAME_DECISIONS, GENERIC_FATE_EVENTS, STORYLINE_FATE_EVENTS } from '@/data/decisions';
-import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
-import { INVESTMENT_OPTIONS } from '@/data/investment-options';
-import { FINANCIAL_GLOSSARY } from '@/data/financial-glossary';
-import { EPILOGUE_CARDS } from '@/data/epilogues';
+import { KNOWLEDGE_CARDS_RAW as KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
+import { INVESTMENT_OPTIONS_RAW as INVESTMENT_OPTIONS } from '@/data/investment-options';
+import { FINANCIAL_GLOSSARY_RAW as FINANCIAL_GLOSSARY } from '@/data/financial-glossary';
+import { EPILOGUE_CARDS_RAW as EPILOGUE_CARDS } from '@/data/epilogues';
 import { TRAP_CARDS, TEMPTATION_CARDS, RECHARGE_CARDS, ENCOUNTER_CARDS, OFFICE_CARDS } from '@/data/field-cards';
 import type { LifeSituationId, TimeScale } from '@/types/game';
 import { liveKeysOfVar, varsIn } from './vars';

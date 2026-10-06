@@ -22,6 +22,7 @@ import { BoardFull, BoardStrip, BoardLegend, DiceButton } from '@/ui/board/Board
 import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { gameRules } from '@/store/settings-store';
+import { fillDeep } from '@/data/live/vars';
 import { DiceInfo } from '@/ui/board/DiceInfo';
 import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
@@ -1049,7 +1050,8 @@ function BoardLayer() {
   const rolledNow = b.rolledRound === game.currentRound;
   const field = BOARD[b.position];
   const visit = b.visits[field.type] ?? 0;
-  const card = rolledNow ? cardForField(field.type, visit) : undefined;
+  const rawCard = rolledNow ? cardForField(field.type, visit) : undefined;
+  const card = rawCard ? fillDeep(rawCard) : undefined;
   const cardOpen = !!card && b.resolvedRound !== game.currentRound;
 
   // 1) Dobás előtt és közvetlenül utána: a tábla kinyílik (egy képernyőn), a bábu mezőről
