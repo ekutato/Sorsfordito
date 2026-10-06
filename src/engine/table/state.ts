@@ -68,6 +68,8 @@ export interface TablePlayer {
   done: boolean;
   /** A saját játékának legutóbbi jelentése */
   report?: PlayerReport;
+  /** Ha a játék indulása után csatlakozott: melyik asztali fordulóban (a saját tempójában játszik) */
+  lateJoinRound?: number;
 }
 
 export interface TableState {
@@ -144,11 +146,14 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
   switch (a.type) {
     case 'join': {
       if (s.players.some((p) => p.id === a.playerId)) return reduceTable(s, { type: 'reconnect', playerId: a.playerId });
-      if (s.phase !== 'lobby' || s.players.length >= MAX_PLAYERS) return s;
+      // Játék közben is be lehet szállni: a késői játékos a saját tempójában, az 1. körtől játszik
+      if (s.phase === 'finished' || s.players.length >= MAX_PLAYERS) return s;
+      const late = s.phase === 'playing' || s.phase === 'paused';
       const name = a.name.trim().slice(0, 24) || `Játékos ${s.players.length + 1}`;
       const player: TablePlayer = {
         id: a.playerId, name, color: PLAYER_COLORS[s.players.length % PLAYER_COLORS.length],
         connected: true, remote: a.remote, position: 0, done: false,
+        ...(late ? { lateJoinRound: s.round } : {}),
       };
       return { ...s, players: [...s.players, player] };
     }
@@ -157,9 +162,12 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       return { ...s, players: mapPlayer(s, a.playerId, (p) => ({ ...p, connected: false })) };
     case 'reconnect':
       return { ...s, players: mapPlayer(s, a.playerId, (p) => ({ ...p, connected: true })) };
-    case 'setProfile':
-      if (s.phase !== 'lobby') return s;
-      return { ...s, players: mapPlayer(s, a.playerId, (p) => ({ ...p, profileId: a.profileId, goal: a.goal?.slice(0, 140) })) };
+    case 'setProfile': {
+      const p = s.players.find((x) => x.id === a.playerId);
+      // A lobbyban bárki válthat; játék közben csak a késői játékos választhat egyszer
+      if (s.phase !== 'lobby' && !(p?.lateJoinRound !== undefined && !p.profileId)) return s;
+      return { ...s, players: mapPlayer(s, a.playerId, (x) => ({ ...x, profileId: a.profileId, goal: a.goal?.slice(0, 140) })) };
+    }
     case 'configure':
       if (!isHost(s, a.by) || s.phase !== 'lobby') return s;
       return { ...s, config: { ...s.config, ...a.config } };
@@ -214,9 +222,14 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
   }
 }
 
+/** Későn csatlakozott, és még nem érte utol az asztali fordulót: nem tartja fel a többieket */
+export function isCatchingUp(s: TableState, p: TablePlayer): boolean {
+  return p.lateJoinRound !== undefined && (p.report?.currentRound ?? 0) < s.round;
+}
+
 /** A forduló akkor zárul, ha minden csatlakozott játékos kész (a kiesettek nem tartják fel a többieket) */
 export function closeRoundIfDone(s: TableState, nextSharedFateId?: string): TableState {
-  const active = s.players.filter((p) => p.connected);
+  const active = s.players.filter((p) => p.connected && !isCatchingUp(s, p));
   if (active.length === 0 || !active.every((p) => p.done)) return s;
   if (s.round >= s.config.totalRounds) return { ...s, phase: 'finished' };
   return startRound(s, nextSharedFateId);

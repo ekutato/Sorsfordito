@@ -8,7 +8,7 @@ import { EpilogueScreen } from '@/ui/screens/EpilogueScreen';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { useTableStore, loadSession } from '@/store/table-store';
-import { TableEntry, TableLobby } from '@/ui/table/TableLobby';
+import { TableEntry, TableLobby, LateJoin, NotAdmitted } from '@/ui/table/TableLobby';
 import { useTableAutoStart, useTableReporter } from '@/ui/table/useTableSync';
 
 export default function Home() {
@@ -30,6 +30,7 @@ export default function Home() {
   const tableRole = useTableStore((s) => s.role);
   const table = useTableStore((s) => s.table);
   const entry = useTableStore((s) => s.entry);
+  const tablePlayerId = useTableStore((s) => s.playerId);
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('szoba');
     if (code && !loadSession()) useTableStore.getState().openEntry(code.toUpperCase().slice(0, 4));
@@ -43,6 +44,9 @@ export default function Home() {
   if (tableRole && !table) return <TableLobby />;
   if (!tableRole && entry) return <TableEntry initialCode={entry.code} onBack={() => useTableStore.getState().closeEntry()} />;
   if (tableRole && table && table.phase !== 'lobby' && !inTableGame) {
+    const me = table.players.find((p) => p.id === tablePlayerId);
+    if (!me) return <NotAdmitted />;
+    if (!me.profileId) return <LateJoin />;
     return <div className="flex-1 flex items-center justify-center p-6 text-lg">A játék indul…</div>;
   }
 

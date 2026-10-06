@@ -22,8 +22,10 @@ export async function startHostRoom(
   roomCode: string, hostId: string, hostName: string,
   onState: (s: TableState) => void, onError: (e: Error) => void,
   onChat: (from: string, text: string) => void = () => {},
+  /** Új szoba: nem töltjük vissza a korábbi (azonos kódú) mentést */
+  fresh = false,
 ): Promise<HostRoom> {
-  let state = loadState(roomCode) ?? createTable(roomCode, hostId, hostName);
+  let state = (fresh ? null : loadState(roomCode)) ?? createTable(roomCode, hostId, hostName);
   const connPlayer = new Map<string, string>();
   const lastSeen = new Map<string, number>();
   let transport: HostTransport | undefined;

@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { useTableStore } from '@/store/table-store';
+import { useTableStore, inviteLink } from '@/store/table-store';
+import { isCatchingUp } from '@/engine/table/state';
 import { formatHUF } from '@/engine/financial-calculator';
 import type { TableState } from '@/engine/table/state';
 
@@ -21,14 +22,17 @@ export function TableBar() {
         <span className="text-sm font-semibold">
           Asztal {table.roomCode} · {table.phase === 'finished' ? 'vége' : `${table.round}. forduló`} · {doneCount}/{active} kész
         </span>
-        <button onClick={() => setOpen((o) => !o)} className="text-sm underline" aria-expanded={open}>{open ? 'Bezár' : 'Ranglista'}</button>
+        <span className="flex items-center gap-3">
+          <InviteButton code={table.roomCode} />
+          <button onClick={() => setOpen((o) => !o)} className="text-sm underline" aria-expanded={open}>{open ? 'Bezár' : 'Ranglista'}</button>
+        </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {table.players.map((p) => (
           <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
             style={{ background: 'rgba(255,255,255,0.06)', opacity: p.connected ? 1 : 0.5 }}>
             <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
-            {p.name}{p.id === playerId ? ' (te)' : ''} {p.done ? '✓ kész' : p.connected ? '· játszik' : '(kiesett)'}
+            {p.name}{p.id === playerId ? ' (te)' : ''} {!p.connected ? '(kiesett)' : isCatchingUp(table, p) ? `· felzárkózik (${p.report?.currentRound ?? 1}. kör)` : p.done ? '✓ kész' : '· játszik'}
           </span>
         ))}
       </div>
@@ -51,6 +55,19 @@ export function TableBar() {
       </div>
     </div>
   );
+}
+
+/** Meghívó játék közben is: később érkezők a kóddal / linkkel beszállhatnak */
+function InviteButton({ code }: { code: string }) {
+  const [done, setDone] = useState(false);
+  const share = async () => {
+    const link = inviteLink(code);
+    try {
+      if (navigator.share) await navigator.share({ title: 'Pénzügyi Sorsfordító', text: `Szállj be a játékba! Szobakód: ${code}`, url: link });
+      else { await navigator.clipboard.writeText(link); setDone(true); setTimeout(() => setDone(false), 2000); }
+    } catch { /* megszakítva */ }
+  };
+  return <button onClick={share} className="text-sm underline">{done ? 'Kimásolva ✓' : 'Meghívó'}</button>;
 }
 
 /** Kapcsolat állapota: újracsatlakozás folyamatban / sikerült; kiesett játékosok */
@@ -99,7 +116,7 @@ export function Leaderboard({ table, final }: { table: TableState; final?: boole
         <tbody>
           {[...rows].sort((a, b) => b.report!.netWorth - a.report!.netWorth).map((p) => (
             <tr key={p.id} className="border-t border-white/5">
-              <td className="py-1"><span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style={{ background: p.color }} />{p.name}</td>
+              <td className="py-1"><span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style={{ background: p.color }} />{p.name}{p.lateJoinRound !== undefined ? <span className="text-xs text-[var(--color-text-muted)]"> (később csatlakozott)</span> : null}</td>
               <td className="font-mono">{formatHUF(p.report!.netWorth)}</td>
               <td>{p.report!.wellbeing}/100</td>
               <td>{p.report!.safety}%</td>

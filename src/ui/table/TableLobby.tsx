@@ -53,6 +53,54 @@ export function TableEntry({ initialCode, onBack }: { initialCode?: string; onBa
   );
 }
 
+/** Karakterválasztó (a lobbyban és a késői csatlakozásnál) */
+export function CharacterPicker({ selected, onPick }: { selected?: string; onPick: (id: string) => void }) {
+  return (
+    <div className="space-y-2">
+      {PRESETS_BY_DIFFICULTY.map((p) => (
+        <button key={p.id} onClick={() => onPick(p.id)} aria-pressed={selected === p.id}
+          className={`w-full text-left rounded-xl border px-4 py-3 ${selected === p.id ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/5'}`}>
+          <span className="text-base font-semibold">{p.avatar} {p.name} ({p.age} év)</span>
+          <span className="block text-sm text-[var(--color-text-muted)]">Kezdő egyenleg: {formatHUF(p.startingFinancials.balance)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Játék közben érkezett játékos: karakterválasztás, aztán indul a saját játéka */
+export function LateJoin() {
+  const { table, setProfile, leave } = useTableStore();
+  if (!table) return null;
+  return (
+    <div className="flex-1 flex flex-col px-5 py-6 space-y-5">
+      <div>
+        <h1 className="text-2xl font-extrabold">A játék már elindult</h1>
+        <p className="text-base text-[var(--color-text-muted)] mt-1">
+          Asztal {table.roomCode} · a többiek a {table.round}. fordulónál tartanak. Válassz karaktert: a saját tempódban, az 1. körtől játszol, és a ranglistán veled együtt mérjük az eredményt.
+        </p>
+      </div>
+      <CharacterPicker onPick={setProfile} />
+      <ConnectionBanner />
+      <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
+    </div>
+  );
+}
+
+/** A szoba nem fogadta a belépést (megtelt vagy véget ért) */
+export function NotAdmitted() {
+  const { table, leave } = useTableStore();
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-4 text-center">
+      <h1 className="text-xl font-extrabold">Nem sikerült beszállni</h1>
+      <p className="text-base text-[var(--color-text-muted)]">
+        {table?.phase === 'finished' ? 'Ez a játék már véget ért.' : 'A szoba megtelt (legfeljebb 10 fő).'} Kérj új szobakódot a játékvezetőtől.
+      </p>
+      <button onClick={leave} className="h-12 px-6 rounded-xl text-base font-bold" style={{ background: '#F2A33A', color: '#0E1525' }}>Kilépek</button>
+    </div>
+  );
+}
+
 /** Váróterem: kód, meghívás, játékosok, karakterválasztás, indítás */
 export function TableLobby() {
   const { table, role, playerId, roomCode, setProfile, configure, start, leave, error } = useTableStore();
@@ -109,15 +157,7 @@ export function TableLobby() {
 
       <section className="space-y-2">
         <h2 className="text-lg font-bold">A karaktered</h2>
-        <div className="space-y-2">
-          {PRESETS_BY_DIFFICULTY.map((p) => (
-            <button key={p.id} onClick={() => setProfile(p.id)} aria-pressed={me?.profileId === p.id}
-              className={`w-full text-left rounded-xl border px-4 py-3 ${me?.profileId === p.id ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/5'}`}>
-              <span className="text-base font-semibold">{p.avatar} {p.name} ({p.age} év)</span>
-              <span className="block text-sm text-[var(--color-text-muted)]">Kezdő egyenleg: {formatHUF(p.startingFinancials.balance)}</span>
-            </button>
-          ))}
-        </div>
+        <CharacterPicker selected={me?.profileId} onPick={setProfile} />
       </section>
 
       {isHost ? (
@@ -132,10 +172,15 @@ export function TableLobby() {
             ))}
           </div>
           <p className="text-sm text-[var(--color-text-muted)]">{TIME_SCALE_CONFIGS[scale].totalRounds} forduló. A szabályok a Játékmesteri beállításaid szerint mindenkire ugyanazok.</p>
+          {table.players.length === 1 && allReady && (
+            <p className="text-sm rounded-lg px-3 py-2" style={{ background: '#FEF3C7', color: '#1C1A16' }}>
+              Egyelőre egyedül vagy. Ha most indítasz, a többiek később is beszállhatnak a kóddal, és a saját tempójukban, az 1. körtől játszanak.
+            </p>
+          )}
           <button onClick={() => { if (!table.config.timeScale) configure({ timeScale: scale, totalRounds: TIME_SCALE_CONFIGS[scale].totalRounds, monthsPerRound: TIME_SCALE_CONFIGS[scale].monthsPerRound }); start(); }}
             disabled={!allReady}
             className={`w-full h-14 rounded-2xl text-lg font-extrabold disabled:opacity-40 ${allReady ? 'pulse-cta' : ''}`} style={{ background: '#F2A33A', color: '#0E1525' }}>
-            {allReady ? 'Indítás' : 'Mindenki válasszon karaktert'}
+            {!allReady ? 'Mindenki válasszon karaktert' : table.players.length === 1 ? 'Indítás egyedül' : `Indítás (${table.players.length} játékos)`}
           </button>
         </section>
       ) : (

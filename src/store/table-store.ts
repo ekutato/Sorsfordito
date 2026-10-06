@@ -65,6 +65,8 @@ let lastAlive = 0;
 let listenersOn = false;
 /** Szándékos kilépés után nem próbálkozunk újra */
 let stopped = false;
+/** A következő host-indítás új szoba (nem a mentés visszatöltése) */
+let freshNext = false;
 
 export const useTableStore = create<TableStore>()((set, get) => {
   const addReaction = (from: string, text: string) => {
@@ -108,6 +110,8 @@ export const useTableStore = create<TableStore>()((set, get) => {
     set({ role, roomCode, playerId, status: get().status === 'idle' ? 'connecting' : get().status });
     try {
       if (role === 'host') {
+        const fresh = freshNext;
+        freshNext = false;
         host = await startHostRoom(roomCode, playerId, name,
           (s) => { set({ table: s }); markConnected(); },
           (e) => {
@@ -116,7 +120,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
             if (/unavailable-id|is taken/i.test(m) || /network|server|socket|disconnect/i.test(m)) lost(friendlyError(e));
             else set({ error: friendlyError(e) });
           },
-          addReaction);
+          addReaction, fresh);
       } else {
         client = await joinClientRoom(roomCode, name, true, {
           state: (s) => { set({ table: s }); markConnected(); },
@@ -187,6 +191,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
 
     createRoom: async (name, config, code) => {
       const roomCode = code ?? generateRoomCode(() => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32);
+      freshNext = true;
       await begin({ role: 'host', roomCode, name });
       if (config && host && host.state().phase === 'lobby') {
         host.dispatch({ type: 'configure', by: get().playerId ?? '', config: { ...DEFAULT_CONFIG, ...config } });

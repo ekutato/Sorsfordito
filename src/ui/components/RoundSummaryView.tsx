@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { useTableStore } from '@/store/table-store';
+import { isCatchingUp } from '@/engine/table/state';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
 
@@ -34,7 +35,7 @@ export function RoundSummaryView() {
   const inTable = !!game.config.table && !!table;
   const iAmDone = (game.tableDoneRound ?? 0) >= game.currentRound;
   const tableMovedOn = !!table && (table.phase === 'finished' || table.round > game.currentRound);
-  const others = table?.players.filter((p) => p.connected) ?? [];
+  const others = table ? table.players.filter((p) => p.connected && !isCatchingUp(table, p)) : [];
   const doneCount = others.filter((p) => p.done || (p.report?.finishedRound ?? 0) >= game.currentRound).length;
   const markDone = () => useGameStore.setState((st) => (st.game ? { game: { ...st.game, tableDoneRound: st.game.currentRound } } : st));
 

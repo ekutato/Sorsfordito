@@ -165,3 +165,48 @@ describe('asztali játék: jelentések és közös körzárás', () => {
     expect(reduceTable(s, { type: 'report', playerId: 'nincs-ilyen', report: rep(1) })).toBe(s);
   });
 });
+
+describe('késői csatlakozás', () => {
+  const rep = (currentRound: number, finishedRound: number) => ({ finishedRound, currentRound, position: 0, balance: 0, netWorth: 0, wellbeing: 50, freedom: 0, safety: 0 });
+
+  it('elindult játékba is be lehet szállni; a karaktert egyszer választhatja', () => {
+    let s = createTable('ABCD', 'host', 'Host', { ...DEFAULT_CONFIG, totalRounds: 5 }, 1);
+    s = reduceTable(s, { type: 'setProfile', playerId: 'host', profileId: 'career_start' });
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    s = reduceTable(s, { type: 'join', playerId: 'late', name: 'Kési', remote: true });
+    const late = s.players.find((p) => p.id === 'late')!;
+    expect(late.lateJoinRound).toBe(1);
+    s = reduceTable(s, { type: 'setProfile', playerId: 'late', profileId: 'fresh_start' });
+    expect(s.players.find((p) => p.id === 'late')!.profileId).toBe('fresh_start');
+    s = reduceTable(s, { type: 'setProfile', playerId: 'late', profileId: 'inheritance' });
+    expect(s.players.find((p) => p.id === 'late')!.profileId).toBe('fresh_start');
+    // a host játék közben nem válthat karaktert
+    s = reduceTable(s, { type: 'setProfile', playerId: 'host', profileId: 'inheritance' });
+    expect(s.players.find((p) => p.id === 'host')!.profileId).toBe('career_start');
+  });
+
+  it('a felzárkózó játékos nem tartja fel a kört; ha utolérte, beszámít', () => {
+    let s = createTable('ABCD', 'host', 'Host', { ...DEFAULT_CONFIG, totalRounds: 9 }, 1);
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(2, 1) });
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(3, 2) });
+    expect(s.round).toBe(3);
+    s = reduceTable(s, { type: 'join', playerId: 'late', name: 'Kési', remote: true });
+    s = reduceTable(s, { type: 'report', playerId: 'late', report: rep(1, 0) });
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(4, 3) });
+    expect(s.round).toBe(4); // nem várta meg a felzárkózót
+    s = reduceTable(s, { type: 'report', playerId: 'late', report: rep(4, 3) });
+    s = reduceTable(s, { type: 'report', playerId: 'host', report: rep(5, 4) });
+    expect(s.round).toBe(4); // most már őt is várja
+    s = reduceTable(s, { type: 'report', playerId: 'late', report: rep(5, 4) });
+    expect(s.round).toBe(5);
+  });
+
+  it('teli szobába és befejezett játékba nem lehet beszállni', () => {
+    let s = lobbyWith(10);
+    s = reduceTable(s, { type: 'start', by: 'host' });
+    expect(reduceTable(s, { type: 'join', playerId: 'x11', name: 'Tizenegy', remote: true }).players).toHaveLength(10);
+    const fin = { ...s, phase: 'finished' as const };
+    expect(reduceTable(fin, { type: 'join', playerId: 'y', name: 'Y', remote: true })).toBe(fin);
+  });
+});
