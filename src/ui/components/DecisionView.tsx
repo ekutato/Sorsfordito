@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
+import { WellbeingReflection } from './WellbeingReflection';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
@@ -24,6 +26,7 @@ export function DecisionView() {
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showDidYouKnow, setShowDidYouKnow] = useState(false);
+  const [reflected, setReflected] = useState(false);
 
   if (!game) return null;
 
@@ -196,10 +199,10 @@ export function DecisionView() {
       details: { decisionCardId: decision.id, optionId: option.id },
     });
 
-    // Mutasd a "Tudtad?" panelt
+    // Mutasd a "Tudtad?" panelt; személyes mérlegelésnél a játékos maga lép tovább
     if (option.didYouKnow) {
       setShowDidYouKnow(true);
-    } else {
+    } else if (!SUBJECTIVE_WELLBEING[option.id]) {
       // Ha nincs didYouKnow, azonnal tovabb
       setTimeout(() => setPhase('round_invest'), 800);
     }
@@ -352,13 +355,19 @@ export function DecisionView() {
               </motion.div>
             )}
 
-            <button
-              onClick={() => setPhase('round_invest')}
-              className="pulse-cta w-full bg-brand-600 hover:bg-brand-500 text-white
-                         font-semibold py-3 rounded-xl transition-colors mt-4"
-            >
-              Tovább →
-            </button>
+            {SUBJECTIVE_WELLBEING[chosenOption.id] && !reflected ? (
+              <div className="mt-4">
+                <WellbeingReflection reflection={SUBJECTIVE_WELLBEING[chosenOption.id]} onDone={() => setReflected(true)} />
+              </div>
+            ) : (
+              <button
+                onClick={() => setPhase('round_invest')}
+                className="pulse-cta w-full bg-brand-600 hover:bg-brand-500 text-white
+                           font-semibold py-3 rounded-xl transition-colors mt-4"
+              >
+                Tovább →
+              </button>
+            )}
           </motion.div>
         );
       })()}

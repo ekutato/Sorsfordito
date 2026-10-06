@@ -8,6 +8,8 @@ import { formatHUF } from '@/engine/financial-calculator';
 import { LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import type { LifeSituationId } from '@/types/game';
 
+import { gameRules } from '@/store/settings-store';
+
 export function EpilogueScreen() {
   const game = useGameStore((s) => s.game);
   const resetGame = useGameStore((s) => s.resetGame);
@@ -199,6 +201,11 @@ export function EpilogueScreen() {
 
   return (
     <div className="flex flex-col min-h-screen p-6">
+      {gameRules(game.config).testMode && (
+        <div role="note" className="mb-4 rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-200">
+          Tesztjáték - tesztmódban (kézi beállításokkal) játszott eredmény
+        </div>
+      )}
       {/* Epilogus kartya */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}

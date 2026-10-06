@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
+import { WellbeingReflection } from './WellbeingReflection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
@@ -40,6 +42,8 @@ export function FateEventView() {
 
   const [kcPhase, setKcPhase] = useState<KnowledgeCheckPhase>('idle');
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  // Személyes mérlegelésre váró opció (életmódbeli döntés: a játékos dönti el a jólléti hatást)
+  const [reflecting, setReflecting] = useState<number | null>(null);
 
   if (!game) return null;
 
@@ -756,7 +760,8 @@ export function FateEventView() {
               return (
                 <button
                   key={i}
-                  onClick={() => handleOptionSelect(option)}
+                  onClick={() => (SUBJECTIVE_WELLBEING[`${fateEvent.id}:${i}`] ? setReflecting(i) : handleOptionSelect(option))}
+                  disabled={reflecting !== null}
                   className={`w-full text-left p-3 rounded-xl transition-colors border ${
                     hasImpact && balanceImpact < 0
                       ? 'bg-money-negative/10 border-money-negative/30 hover:bg-money-negative/20'
@@ -779,7 +784,15 @@ export function FateEventView() {
               );
             })}
           </div>
-        ) : fateEvent.type !== 'decision' ? (
+        ) : null}
+        {reflecting !== null && fateEvent.options?.[reflecting] && (
+          <div className="mt-3">
+            <p className="text-sm mb-2">A döntésed: <b>{fateEvent.options[reflecting].label}</b></p>
+            <WellbeingReflection reflection={SUBJECTIVE_WELLBEING[`${fateEvent.id}:${reflecting}`]}
+              onDone={() => handleOptionSelect(fateEvent.options![reflecting])} />
+          </div>
+        )}
+        {fateEvent.type === 'decision' && fateEvent.options && fateEvent.options.length > 0 ? null : fateEvent.type !== 'decision' ? (
           <button
             onClick={handleAccept}
             className={`w-full ${config.btn} text-white

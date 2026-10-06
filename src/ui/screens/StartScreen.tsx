@@ -7,6 +7,10 @@ import { useFreemiumStore } from '@/store/freemium-store';
 import { PRESETS_BY_DIFFICULTY, LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import { fetchPreGameContext } from '@/data-sources';
 import { formatHUF } from '@/engine/financial-calculator';
+import { useSettingsStore } from '@/store/settings-store';
+import { SettingsButton } from '@/ui/components/SettingsPanel';
+import { VersionTag } from '@/ui/components/AppVersion';
+import { TEST_MODE_MAX_BALANCE } from '@/types/game';
 import type { LifeSituationId, TimeScale } from '@/types/game';
 
 type SetupStep = 'name' | 'situation' | 'timeScale' | 'ready';
@@ -22,6 +26,8 @@ export function StartScreen() {
 
   const startNewGame = useGameStore((s) => s.startNewGame);
   const isFeatureAvailable = useFreemiumStore((s) => s.isFeatureAvailable);
+  const allowCustomBalance = useSettingsStore((s) => s.customStartBalance);
+  const testMode = useSettingsStore((s) => s.testMode);
 
   const handleStart = async () => {
     if (!selectedSituation || !playerName.trim()) return;
@@ -44,6 +50,7 @@ export function StartScreen() {
           playerCount: 1,
           useLiveData: hasLiveData,
           startDate,
+          rules: useSettingsStore.getState().rules(),
         },
         selectedSituation,
         playerName.trim(),
@@ -62,6 +69,7 @@ export function StartScreen() {
           playerCount: 1,
           useLiveData: false,
           startDate,
+          rules: useSettingsStore.getState().rules(),
         },
         selectedSituation,
         playerName.trim(),
@@ -74,7 +82,7 @@ export function StartScreen() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-6">
+    <div className="relative flex flex-col min-h-screen p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -88,6 +96,8 @@ export function StartScreen() {
           Valós adatok. Valós döntések. Valós tanulságok.
         </p>
       </motion.div>
+
+      <div className="absolute right-4 top-4 safe-top"><SettingsButton /></div>
 
       <AnimatePresence mode="wait">
         {/* 1. lepes: Nev megadasa */}
@@ -245,41 +255,50 @@ export function StartScreen() {
               })}
             </div>
 
-            {/* Kezdő egyenleg állítás */}
+            {/* Kezdő egyenleg: alapból csak kijelzés; egyéni állítás csak játékmesteri engedéllyel */}
             {selectedSituation && (() => {
               const p = LIFE_SITUATION_PRESETS[selectedSituation];
               const defaultBal = p.startingFinancials.balance;
-              const current = customBalance ?? defaultBal;
+              const editable = allowCustomBalance || testMode;
+              const maxBal = testMode ? TEST_MODE_MAX_BALANCE : Math.max(defaultBal, p.maxStartBalance ?? defaultBal);
+              const current = Math.min(customBalance ?? defaultBal, maxBal);
               return (
                 <div className="mt-4 bg-[var(--color-bg-card)] border border-white/10 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-[var(--color-text-muted)]">Kezdő egyenleg</span>
-                    <span className={`font-mono text-sm font-semibold ${current >= 0 ? 'text-money-positive' : 'text-money-negative'}`}>
-                      {formatHUF(current)}
+                    <span className={`font-mono text-base font-semibold ${current >= 0 ? 'text-money-positive' : 'text-money-negative'}`}>
+                      {formatHUF(editable ? current : defaultBal)}
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.max(defaultBal * 3, 10_000_000)}
-                    step={50_000}
-                    value={current}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setCustomBalance(val === defaultBal ? null : val);
-                    }}
-                    className="w-full accent-brand-400"
-                  />
-                  <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mt-1">
-                    <span>0 Ft</span>
-                    <button
-                      onClick={() => setCustomBalance(null)}
-                      className="text-brand-400 hover:text-brand-300"
-                    >
-                      Alapértelmezett: {formatHUF(defaultBal)}
-                    </button>
-                    <span>{formatHUF(Math.max(defaultBal * 3, 10_000_000))}</span>
-                  </div>
+                  {editable && (
+                    <>
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxBal}
+                        step={10_000}
+                        value={current}
+                        aria-label="Kezdő egyenleg"
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setCustomBalance(val === defaultBal ? null : val);
+                        }}
+                        className="w-full accent-brand-400 mt-3"
+                      />
+                      {testMode && (
+                        <input type="number" min={0} max={maxBal} step={1000} value={current} aria-label="Pontos kezdő egyenleg"
+                          onChange={(e) => setCustomBalance(Math.min(maxBal, Math.max(0, Number(e.target.value) || 0)))}
+                          className="mt-2 w-full bg-[var(--color-bg)] border border-white/10 rounded-lg px-3 py-2 font-mono text-sm" />
+                      )}
+                      <div className="flex justify-between text-xs text-[var(--color-text-muted)] mt-1">
+                        <span>0 Ft</span>
+                        <button onClick={() => setCustomBalance(null)} className="text-brand-400 hover:text-brand-300">
+                          Alap: {formatHUF(defaultBal)}
+                        </button>
+                        <span>{formatHUF(maxBal)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })()}

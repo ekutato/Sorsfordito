@@ -4,7 +4,8 @@ import { useGameStore } from './game-store';
 import { moveOnBoard, BOARD, FIELD_LABELS } from '@/data/board';
 import { canAfford, type FieldCard, type FieldOption } from '@/data/field-cards';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
-import { TIME_SCALE_CONFIGS, type SoloBoardState } from '@/types/game';
+import { TIME_SCALE_CONFIGS, type SoloBoardState, type DiceRollSource } from '@/types/game';
+import type { FieldType } from '@/data/board';
 import type { Expenses } from '@/types/financial';
 
 const EXPENSE_KEYS = ['housing', 'utilities', 'food', 'transport', 'loanPayments', 'other'] as const;
@@ -16,6 +17,25 @@ export function secureDieRoll(): number {
     crypto.getRandomValues(buf);
     if (buf[0] < 252) return (buf[0] % 6) + 1; // 252 = 6 × 42, a maradék torzítaná az eloszlást
   }
+}
+
+const ROLL_STATS_KEY = 'sorsfordito-dobasok';
+
+/** Az app összes eddigi dobásának gyakorisága (1..6), játékokon át, ezen a készüléken */
+export function readRollStats(): number[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(ROLL_STATS_KEY) ?? 'null');
+    if (Array.isArray(v) && v.length === 6 && v.every((n) => Number.isInteger(n) && n >= 0)) return v;
+  } catch {}
+  return [0, 0, 0, 0, 0, 0];
+}
+
+function recordRoll(value: number) {
+  try {
+    const c = readRollStats();
+    c[value - 1] += 1;
+    localStorage.setItem(ROLL_STATS_KEY, JSON.stringify(c));
+  } catch {}
 }
 
 export function emptyBoard(): SoloBoardState {
@@ -32,8 +52,13 @@ function applyEffect(target: string, amount: number, description: string) {
   else if (isWellbeingTarget(target)) s.modifyWellbeing(pid, wellbeingKeyOf(target), amount);
 }
 
-/** Körönként egyszer: dobás, lépés, esedékes visszaállítások */
-export function rollBoard(): number | undefined {
+const SOURCE_LABEL: Record<DiceRollSource, string> = { app: '', physical: ' (saját kocka)', test: ' (teszt: kézi érték)' };
+
+/**
+ * Körönként egyszer: dobás, lépés, esedékes visszaállítások.
+ * `manual`: saját (fizikai) kockával dobott vagy tesztmódban választott érték, 1-6.
+ */
+export function rollBoard(manual?: { value: number; source: Exclude<DiceRollSource, 'app'> }): number | undefined {
   const { game } = useGameStore.getState();
   if (!game) return;
   const board = game.board ?? emptyBoard();
@@ -42,7 +67,10 @@ export function rollBoard(): number | undefined {
   const due = board.reverts.filter((r) => r.atRound <= game.currentRound);
   for (const r of due) applyEffect(r.target, r.amount, 'Lejárt időleges kiadás');
 
-  const roll = secureDieRoll();
+  if (manual && !(Number.isInteger(manual.value) && manual.value >= 1 && manual.value <= 6)) return;
+  const roll = manual ? manual.value : secureDieRoll();
+  const source: DiceRollSource = manual ? manual.source : 'app';
+  if (source === 'app') recordRoll(roll);
   const moved = moveOnBoard(board.position, roll);
   const next: SoloBoardState = {
     ...board,
@@ -53,12 +81,13 @@ export function rollBoard(): number | undefined {
     lastResult: undefined,
     awaitingOutcomeAck: false,
     awaitingContinue: true,
+    rolls: [...(board.rolls ?? []), { value: roll, source }],
     reverts: board.reverts.filter((r) => r.atRound > game.currentRound),
   };
   useGameStore.setState((st) => (st.game ? { game: { ...st.game, board: next } } : st));
   useGameStore.getState().logEvent({
     type: 'decision',
-    description: `Dobás: ${roll} → ${FIELD_LABELS[BOARD[moved.position].type]} mező`,
+    description: `Dobás: ${roll}${SOURCE_LABEL[source]} → ${FIELD_LABELS[BOARD[moved.position].type]} mező`,
     financialImpact: 0,
   });
   return roll;
@@ -92,7 +121,7 @@ export function resolveFieldCard(fieldType: string, option?: FieldOption, card?:
     resolvedRound: game.currentRound,
     lastOutcome: option?.outcome,
     lastResult: option && card
-      ? { field: fieldType, title: card.title, choice: option.label, effects: option.effects, realStep: card.realStep, sourceUrl: card.sourceUrl }
+      ? { field: fieldType, title: card.title, choice: option.label, effects: option.effects, realStep: card.realStep, sourceUrl: card.sourceUrl, reflection: option.reflection }
       : undefined,
     awaitingOutcomeAck: !!(option && card),
     visits: { ...latest.visits, [fieldType]: (latest.visits[fieldType] ?? 0) + 1 },
@@ -114,4 +143,38 @@ export function continueBoard() {
   useGameStore.setState((st) =>
     st.game?.board ? { game: { ...st.game, board: { ...st.game.board, awaitingContinue: false } } } : st,
   );
+}
+
+// --- Tesztmód eszközei (csak bekapcsolt tesztmódban érhetők el a felületen) ---
+
+/** Ugrás a következő adott típusú mezőre; a kör mezőkártyája ennek megfelelően jön */
+export function testJumpTo(field: FieldType) {
+  const { game } = useGameStore.getState();
+  if (!game) return;
+  const board = game.board ?? emptyBoard();
+  let pos = board.position;
+  for (let i = 1; i <= BOARD.length; i++) {
+    const idx = (board.position + i) % BOARD.length;
+    if (BOARD[idx].type === field) { pos = idx; break; }
+  }
+  const next: SoloBoardState = {
+    ...board, position: pos, rolledRound: game.currentRound, awaitingContinue: true,
+    resolvedRound: undefined, lastOutcome: undefined, lastResult: undefined, awaitingOutcomeAck: false,
+  };
+  useGameStore.setState((st) => (st.game ? { game: { ...st.game, board: next } } : st));
+  useGameStore.getState().logEvent({ type: 'decision', description: `Teszt: ugrás a(z) ${FIELD_LABELS[field]} mezőre`, financialImpact: 0 });
+}
+
+/** A kör tartalmának átugrása: egyenesen a kör összegzésére */
+export function testSkipRound() {
+  const { game } = useGameStore.getState();
+  if (!game) return;
+  const board = game.board ?? emptyBoard();
+  const next: SoloBoardState = {
+    ...board, rolledRound: game.currentRound, resolvedRound: game.currentRound,
+    awaitingContinue: false, awaitingOutcomeAck: false,
+  };
+  useGameStore.setState((st) => (st.game ? { game: { ...st.game, board: next } } : st));
+  useGameStore.getState().logEvent({ type: 'decision', description: 'Teszt: kör átugorva', financialImpact: 0 });
+  useGameStore.getState().setPhase('round_summary');
 }

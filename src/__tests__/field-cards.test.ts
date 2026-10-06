@@ -61,8 +61,10 @@ describe('fedezet a mezőkártyákon', () => {
     const { resolveFieldCard, acknowledgeOutcome } = await import('@/store/board-actions');
     useGameStore.getState().startNewGame(
       { timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10' },
-      'career_start', 'Teszt', undefined, -100_000,
+      'career_start', 'Teszt',
     );
+    // mínuszos egyenleg (a kezdő egyenleg nem lehet negatív, ezért utólag vonjuk le)
+    useGameStore.getState().modifyBalance('player-1', -185_000, 'teszt');
     const cafe = ENCOUNTER_CARDS.find((c) => c.id === 'tal-baratod-uzlete')!;
     const join = cafe.options.find((o) => optionCost(o) > 0)!;
     const advice = cafe.options.find((o) => o.label.startsWith('Segítek'))!;

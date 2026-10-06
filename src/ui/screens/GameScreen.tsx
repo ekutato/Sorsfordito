@@ -15,12 +15,16 @@ import { LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import type { LifeSituationId } from '@/types/game';
 import type { Investment } from '@/types/financial';
 import type { GameState } from '@/types/game';
-import { BOARD, FIELD_LABELS } from '@/data/board';
+import { BOARD, FIELD_LABELS, FIELD_EXPLAIN, districtOf } from '@/data/board';
 import { cardForField, FIELD_HINTS } from '@/data/field-cards';
 import { rollBoard, resolveFieldCard, emptyBoard, continueBoard, acknowledgeOutcome } from '@/store/board-actions';
-import { BoardFull, BoardStrip, DiceButton } from '@/ui/board/BoardView';
+import { BoardFull, BoardStrip, BoardLegend, DiceButton } from '@/ui/board/BoardView';
 import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
 import { VersionTag } from '@/ui/components/AppVersion';
+import { gameRules } from '@/store/settings-store';
+import { DiceInfo } from '@/ui/board/DiceInfo';
+import type { GameRules, DiceRollSource } from '@/types/game';
+import { SettingsPanel } from '@/ui/components/SettingsPanel';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
 const MARKET_INVEST_OFFERS = 3;
@@ -43,6 +47,7 @@ export function GameScreen() {
       <div className="sticky sticky-safe z-20 backdrop-blur-sm px-4 pt-3 pb-2" style={{ background: 'var(--color-bg)' }}>
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm text-[var(--color-text-muted)]">
+            {gameRules(game.config).testMode && <span className="mr-1.5 text-xs font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-[#0E1525]">TESZT</span>}
             <span className="font-semibold text-white">{player.name}</span>
             {' · '}
             {game.currentRound}/{tsConfig.totalRounds}. kör
@@ -183,6 +188,8 @@ function IncomeExpensePhase() {
   const player = game.players[game.activePlayerIndex];
   const sheet = player.financialSheet;
   const isIncome = game.phase === 'round_income';
+  const rules = gameRules(game.config);
+  const canEditIncomeExpense = rules.allowIncomeExpenseEdit || rules.testMode;
 
   // Minimum bér (nettó, 2026)
   const MIN_WAGE_NET = 214_000;
@@ -300,8 +307,8 @@ function IncomeExpensePhase() {
         <h3 className="font-display text-lg font-semibold">
           {isIncome ? '💰 Bevételek' : '💸 Kiadások'}
         </h3>
-        {/* Testreszabás gomb — csak az 1. körben, vagy ha nincs editing */}
-        {game.currentRound <= 2 && !isEditing && (
+        {/* Testreszabás gomb - csak játékmesteri engedéllyel ("Valós helyzet modellezése") vagy tesztmódban */}
+        {canEditIncomeExpense && game.currentRound <= 2 && !isEditing && (
           <button
             onClick={handleStartEdit}
             className="text-xs text-brand-400 hover:text-brand-300 transition-colors
@@ -314,6 +321,11 @@ function IncomeExpensePhase() {
       <p className="text-xs text-[var(--color-text-muted)] mb-3">
         Egyenleg: <span className="font-mono font-semibold text-white">{formatHUF(sheet.balance)}</span>
       </p>
+      {!canEditIncomeExpense && game.currentRound === 1 && (
+        <p className="text-xs text-[var(--color-text-muted)] -mt-2 mb-3">
+          Egyenlő esélyű játék: a {isIncome ? 'bevételed' : 'kiadásod'} a döntéseidből alakul.
+        </p>
+      )}
 
       {/* Előző kör egyszeri tranzakciói */}
       {prevRoundEvents.length > 0 && (
@@ -653,7 +665,7 @@ function InvestPhase() {
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {investBoughtThisRound >= MAX_INVEST_PER_ROUND && (
             <div className="bg-brand-600/10 border border-brand-500/30 rounded-xl px-3 py-2 mb-1 text-xs text-brand-300">
-              📦 Ebben a körben már befektettél. Legközelebb újra tudsz vásárolni!
+              📦 Ebben a körben ennyi befektetés lehetséges. A következő körben újra vásárolhatsz.
             </div>
           )}
           {availableInvestments.length === 0 ? (
@@ -763,7 +775,7 @@ function InvestPhase() {
                                    text-white font-semibold py-2.5 rounded-xl transition-colors"
                       >
                         {investBoughtThisRound >= MAX_INVEST_PER_ROUND
-                          ? '📦 Ebben a körben már befektettél'
+                          ? '📦 Ebben a körben ennyi befektetés lehetséges'
                           : !canAfford
                           ? 'Nincs elég pénzed'
                           : needsKnowledge
@@ -784,7 +796,7 @@ function InvestPhase() {
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND && (
             <div className="bg-brand-600/10 border border-brand-500/30 rounded-xl px-3 py-2 mb-1 text-xs text-brand-300">
-              📚 Ebben a körben már szereztél tudást. A következő körben új lapokat húzol!
+              📚 Ebben a körben ennyi tanulás lehetséges. A következő körben új lapokat húzol.
             </div>
           )}
           {availableKnowledge.length === 0 ? (
@@ -916,7 +928,7 @@ function InvestPhase() {
                                        text-white font-semibold py-2.5 rounded-xl transition-colors"
                           >
                             {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND
-                              ? '📚 Ebben a körben már eleget tanultál'
+                              ? '📚 Ebben a körben ennyi tanulás lehetséges'
                               : selectedKnowledge.price === 0
                               ? '✅ Megtanultam! (ingyenes)'
                               : `✅ Megszerzem a tudást: ${formatHUF(selectedKnowledge.price)}`}
@@ -933,7 +945,7 @@ function InvestPhase() {
                                      text-white font-semibold py-2.5 rounded-xl transition-colors"
                         >
                           {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND
-                            ? '📚 Ebben a körben már eleget tanultál'
+                            ? '📚 Ebben a körben ennyi tanulás lehetséges'
                             : !canAfford
                             ? 'Nincs elég pénzed'
                             : selectedKnowledge.quiz && selectedKnowledge.quiz.length > 0
@@ -1028,6 +1040,7 @@ function BoardLayer() {
   const game = useGameStore((s) => s.game);
   const [expanded, setExpanded] = useState(false);
   if (!game) return null;
+  const rules = gameRules(game.config);
   const player = game.players[game.activePlayerIndex];
   const b = game.board ?? emptyBoard();
   const rolledNow = b.rolledRound === game.currentRound;
@@ -1041,13 +1054,15 @@ function BoardLayer() {
     return (
       <section className="space-y-3" aria-label="Tábla">
         <BoardFull position={b.position} highlight={rolledNow ? b.position : undefined} pawnLabel={player.name} />
+        <BoardLegend />
         <div className="sticky bottom-3 z-10 space-y-2">
           {!rolledNow ? (
-            <DiceButton onRoll={rollBoard} />
+            <DiceControls rules={rules} rolls={b.rolls ?? []} />
           ) : (
             <>
-              <div className="rounded-xl px-3 py-2 text-sm border border-white/10" style={{ background: "#0E1525" }}>
-                Dobtál: <b>{b.lastRoll}</b> → <b>{FIELD_LABELS[field.type]}</b> mező
+              <div className="rounded-xl px-3 py-2 text-sm border border-white/10 space-y-0.5" style={{ background: "#0E1525" }}>
+                <p className="text-base">{b.lastRoll ? <>Dobtál: <b>{b.lastRoll}</b> → </> : null}<b>{FIELD_LABELS[field.type]}</b> mező · {districtOf(field.index).label}</p>
+                <p className="text-[var(--color-text-muted)]">{FIELD_EXPLAIN[field.type]}</p>
               </div>
               <button onClick={continueBoard} className="pulse-cta w-full h-14 rounded-2xl font-extrabold text-lg"
                 style={{ background: '#F2A33A', color: '#0E1525' }}>
@@ -1067,7 +1082,7 @@ function BoardLayer() {
       <section className="space-y-3">
         {expanded ? <BoardFull position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
         <p className="text-sm text-[var(--color-text-muted)]">Dobtál: <b>{b.lastRoll}</b></p>
-        <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance}
+        <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
           onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
       </section>
     );
@@ -1098,13 +1113,53 @@ function BoardLayer() {
 }
 
 
+/** Dobás: az app véletlenje vagy saját kocka; tesztmódban kézi érték; átlátható forrás */
+function DiceControls({ rules, rolls }: { rules: GameRules; rolls: Array<{ value: number; source: DiceRollSource }> }) {
+  const [info, setInfo] = useState(false);
+  const pick = (source: 'physical' | 'test') => (
+    <div className="grid grid-cols-6 gap-1.5">
+      {[1, 2, 3, 4, 5, 6].map((v) => (
+        <button key={v} onClick={() => rollBoard({ value: v, source })} aria-label={`Dobott érték: ${v}`}
+          className={`h-12 rounded-xl text-xl font-extrabold ${source === 'physical' ? 'pulse-cta' : ''}`}
+          style={source === 'physical' ? { background: '#F2A33A', color: '#0E1525' } : { background: '#2A3550', color: '#F4F1EA' }}>
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+  return (
+    <div className="space-y-2 rounded-2xl p-2" style={{ background: '#0E1525' }}>
+      {rules.diceSource === 'physical' ? (
+        <>
+          <p className="text-base font-bold px-1">Dobj a saját kockáddal - mennyit dobtál?</p>
+          {pick('physical')}
+        </>
+      ) : (
+        <DiceButton onRoll={rollBoard} />
+      )}
+      {rules.testMode && rules.diceSource !== 'physical' && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-amber-200 px-1">Teszt: kézi kockaérték</p>
+          {pick('test')}
+        </div>
+      )}
+      <button onClick={() => setInfo(true)} className="w-full text-sm underline text-[var(--color-text-muted)] py-1">
+        Honnan jön a véletlen? ({rolls.length} dobás eddig)
+      </button>
+      {info && <DiceInfo rolls={rolls} onClose={() => setInfo(false)} />}
+    </div>
+  );
+}
+
 /** Játékmenü: új játék indítása (teszteléshez is), megerősítéssel */
 function GameMenu() {
   const resetGame = useGameStore((s) => s.resetGame);
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [settings, setSettings] = useState(false);
   return (
     <div className="relative">
+      {settings && <SettingsPanel onClose={() => setSettings(false)} />}
       <button aria-label="Menü" aria-expanded={open} onClick={() => { setOpen((o) => !o); setConfirm(false); }}
         className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -1112,9 +1167,14 @@ function GameMenu() {
       {open && (
         <div className="absolute right-0 top-12 z-30 w-60 rounded-xl border border-white/10 bg-[#172036] p-2 shadow-xl">
           {!confirm ? (
-            <button onClick={() => setConfirm(true)} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
-              Új játék indítása
-            </button>
+            <>
+              <button onClick={() => { setSettings(true); setOpen(false); }} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
+                Játékmesteri beállítások
+              </button>
+              <button onClick={() => setConfirm(true)} className="w-full text-left px-3 py-3 rounded-lg hover:bg-white/5 text-sm font-semibold">
+                Új játék indítása
+              </button>
+            </>
           ) : (
             <div className="p-2 space-y-2">
               <p className="text-sm">Biztosan újrakezded? A mostani játék elvész.</p>

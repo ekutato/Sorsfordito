@@ -1,12 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSettingsStore } from '@/store/settings-store';
 
 export const APP_VERSION = `v${process.env.NEXT_PUBLIC_BUILD_DATE ?? ''} · ${process.env.NEXT_PUBLIC_BUILD_ID ?? 'helyi'}`;
 
-/** Kis verziófelirat: így látszik, melyik változat fut (böngészőben és az APK-ban is) */
+/**
+ * Kis verziófelirat: így látszik, melyik változat fut (böngészőben és az APK-ban is).
+ * Rejtett kapcsoló: 5 koppintás (3 mp-en belül) be- vagy kikapcsolja a tesztmódot.
+ */
 export function VersionTag({ className = '' }: { className?: string }) {
-  return <span className={`text-xs text-[var(--color-text-muted)] font-mono ${className}`}>{APP_VERSION}</span>;
+  const toggle = useSettingsStore((s) => s.toggleTestMode);
+  const taps = useRef<number[]>([]);
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(null), 2500);
+    return () => clearTimeout(t);
+  }, [note]);
+  const onTap = () => {
+    const now = Date.now();
+    taps.current = [...taps.current.filter((t) => now - t < 3000), now];
+    if (taps.current.length >= 5) {
+      taps.current = [];
+      setNote(toggle() ? 'Tesztmód bekapcsolva' : 'Tesztmód kikapcsolva');
+    }
+  };
+  return (
+    <span className={`text-xs text-[var(--color-text-muted)] font-mono select-none ${className}`} onClick={onTap}>
+      {note ?? APP_VERSION}
+    </span>
+  );
 }
 
 /**

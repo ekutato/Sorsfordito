@@ -35,7 +35,34 @@ export interface GameConfig {
 
   /** A jatek kezdo datuma (valoságos, pl. "2026-03") */
   startDate: string;
+
+  /** Játékmesteri szabályok - indításkor rögzülnek, a játék alatt nem változnak */
+  rules?: GameRules;
 }
+
+export interface GameRules {
+  /** Egyéni kezdő egyenleg a karakter felső határáig */
+  customStartBalance: boolean;
+  /** "Valós helyzet modellezése": a bevétel és a kiadás szerkeszthető */
+  allowIncomeExpenseEdit: boolean;
+  /** Csapdaóra másodpercben (0 = kikapcsolva) */
+  trapTimerSeconds: 0 | 10 | 20 | 30;
+  /** A kocka forrása: az app kriptográfiai véletlenje vagy saját, fizikai kocka */
+  diceSource: 'app' | 'physical';
+  /** Tesztmód: korlátlan egyenleg, kézi kockaérték, mezőugrás, körátugrás */
+  testMode: boolean;
+}
+
+export const DEFAULT_RULES: GameRules = {
+  customStartBalance: false,
+  allowIncomeExpenseEdit: false,
+  trapTimerSeconds: 20,
+  diceSource: 'app',
+  testMode: false,
+};
+
+/** Tesztmódban a kezdő egyenleg felső határa */
+export const TEST_MODE_MAX_BALANCE = 20_000_000;
 
 export interface TimeScaleConfig {
   /** Hany kort tartalmaz */
@@ -198,6 +225,9 @@ export interface CharacterPreset {
 
   /** Nehezsegi szint (1-3) */
   difficulty: 1 | 2 | 3;
+
+  /** Egyéni kezdő egyenleg felső határa (ha a játékmester engedi) */
+  maxStartBalance?: HUF;
 
   /** Freemium tier */
   tier: 'free' | 'premium';
@@ -477,6 +507,9 @@ export interface GameEvent {
 
 // --- Táblás mód (egyjátékos) ---
 
+/** app = kriptográfiai véletlen, physical = saját kocka, test = tesztmódban kézzel választott */
+export type DiceRollSource = 'app' | 'physical' | 'test';
+
 export interface SoloBoardState {
   /** A bábu mezője (0-23) */
   position: number;
@@ -486,6 +519,8 @@ export interface SoloBoardState {
   rolledRound?: number;
   /** Dobás után a nagy tábla nyitva marad, amíg a játékos a "Tovább" gombra nem nyom */
   awaitingContinue?: boolean;
+  /** A játék összes dobása sorrendben, a forrással együtt */
+  rolls?: Array<{ value: number; source: DiceRollSource }>;
   /** A mezőkártya lezárva ebben a körben */
   resolvedRound?: number;
   /** Mezőtípusonként hányszor járt ott (a kártyák ismétlés nélkül körbejárnak) */
@@ -500,6 +535,7 @@ export interface SoloBoardState {
     effects: Array<{ target: string; amount: number }>;
     realStep: string;
     sourceUrl?: string;
+    reflection?: { keys: import('./wellbeing').WellbeingKey[]; prompt: string };
   };
   /** Az eredménylap nyitva, amíg a játékos a "Tovább" gombra nem nyom */
   awaitingOutcomeAck?: boolean;

@@ -7,6 +7,7 @@
 
 import type { FieldType } from './board';
 import { LIVE_DATA } from './live';
+import type { WellbeingKey } from '@/types/wellbeing';
 
 export interface FieldEffect {
   target: string;
@@ -20,6 +21,8 @@ export interface FieldOption {
   durationMonths?: number;
   /** Mi történik - a választás után jelenik meg */
   outcome: string;
+  /** Életmódbeli választásnál a jólléti hatást a játékos mérlegeli (nincs univerzális igazság) */
+  reflection?: { keys: WellbeingKey[]; prompt: string };
 }
 
 /** Az opció azonnali pénzigénye (a negatív egyenleghatások összege, Ft) */
@@ -126,11 +129,13 @@ export const TEMPTATION_CARDS: FieldCard[] = [
     title: 'Most vedd meg, később fizesd',
     body: 'Az új telefon négy részletben, „kamatmentesen”. Ha egy részletet lekésel, késedelmi díj jön, és a havi kiadásod négy hónapig magasabb.',
     options: [
-      { label: 'Megveszem részletre', effects: [{ target: 'other', amount: 12_000 }, { target: 'wellbeing.eletero', amount: 1 }], durationMonths: 4,
+      { label: 'Megveszem részletre', effects: [{ target: 'other', amount: 12_000 }], durationMonths: 4,
+        reflection: { keys: ['eletero'], prompt: 'Új telefon részletre: van, akinek ez valódi öröm, van, akit a havi részlet nyomaszt.' },
         outcome: 'Örülsz az új telefonnak, de négy hónapig 12 000 Ft-tal nagyobb a havi kiadásod.' },
       { label: 'Olcsóbb, felújított készüléket veszek készpénzért', effects: [{ target: 'balance', amount: -60_000 }],
         outcome: 'Egyszer fizettél, havi teher nélkül.' },
-      { label: 'Kivárok, a régi még működik', effects: [{ target: 'wellbeing.eletero', amount: -1 }],
+      { label: 'Kivárok, a régi még működik', effects: [],
+        reflection: { keys: ['eletero'], prompt: 'Kivárni a régi telefonnal: van, akinek ez nyugodt döntés, van, akit bosszant a lassú készülék.' },
         outcome: 'Kicsit bosszant, de a pénzed megmaradt.' },
     ],
     realStep: 'Részletre vásárlás előtt olvasd el a késedelmi díjakat, és számold össze a teljes visszafizetendő összeget.',
@@ -157,9 +162,11 @@ export const RECHARGE_CARDS: FieldCard[] = [
     title: 'Feltöltődés',
     body: 'Egy szabad hétvége. Mivel töltöd?',
     options: [
-      { label: 'Kirándulás a barátokkal (ingyen)', effects: [{ target: 'wellbeing.egyensuly', amount: 1 }, { target: 'wellbeing.egeszseg', amount: 1 }],
+      { label: 'Kirándulás a barátokkal (ingyen)', effects: [],
+        reflection: { keys: ['egyensuly', 'egeszseg'], prompt: 'Közös kirándulás: van, akit feltölt a társaság és a mozgás, van, akinek a csendes pihenés jobb.' },
         outcome: 'Feltöltődtél, és a kapcsolataid is erősödtek.' },
-      { label: 'Wellness hétvége (40 000 Ft)', effects: [{ target: 'balance', amount: -40_000 }, { target: 'wellbeing.eletero', amount: 2 }],
+      { label: 'Wellness hétvége (40 000 Ft)', effects: [{ target: 'balance', amount: -40_000 }],
+        reflection: { keys: ['eletero'], prompt: 'Wellness hétvége: van, akit tényleg kipihentet, van, akinek az ára miatt nem az igazi.' },
         outcome: 'Kipihented magad - ennek ára volt.' },
       { label: 'Túlórát vállalok', effects: [{ target: 'balance', amount: 30_000 }, { target: 'wellbeing.eletero', amount: -1 }],
         outcome: 'Több pénz, kevesebb pihenés.' },
@@ -175,9 +182,11 @@ export const ENCOUNTER_CARDS: FieldCard[] = [
     title: 'Találkozás: közös vállalkozás',
     body: 'Egy régi barátod kávézót nyitna, és társat keres 2 000 000 Ft-tal. Szerződés még nincs, csak lelkesedés.',
     options: [
-      { label: 'Beszállok, de előbb írásban rögzítjük a feltételeket', effects: [{ target: 'balance', amount: -2_000_000 }, { target: 'wellbeing.egyensuly', amount: 1 }],
+      { label: 'Beszállok, de előbb írásban rögzítjük a feltételeket', effects: [{ target: 'balance', amount: -2_000_000 }],
+        reflection: { keys: ['egyensuly'], prompt: 'Közös vállalkozás egy baráttal: van, akinek ez összetartozás, van, akit a pénzügyi kötődés feszít.' },
         outcome: 'Társak lettetek, tiszta szabályokkal. Hogy megtérül-e, később kiderül.' },
-      { label: 'Segítek tanáccsal, pénzzel nem', effects: [{ target: 'wellbeing.egyensuly', amount: 1 }],
+      { label: 'Segítek tanáccsal, pénzzel nem', effects: [],
+        reflection: { keys: ['egyensuly'], prompt: 'Tanáccsal segíteni, pénzzel nem: van, akinek ez tiszta határ, van, akit bűntudat gyötör miatta.' },
         outcome: 'A barátság megmaradt, a pénzed is.' },
       { label: 'Nemet mondok', effects: [],
         outcome: 'Megértette. Nem minden lehetőség a tiéd.' },

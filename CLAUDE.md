@@ -92,6 +92,7 @@ M6:                                          ████████
 6. **Glossary kiemelés:** Ha egy szó (pl. „infláció") többször előfordul egy szövegben, csak az ELSŐ előfordulásnál legyen kiemelve/klikkelhető.
 7. **Többjátékos mód:** 2026-10-től fejlesztés alatt (2-10 fő, egy asztalnál és távolról is). Ld. `docs/fejlesztesi-terv-2026-10.md`.
 8. **Jólléti index:** három jelölő -5..+5 skálán, belső kulcsok: `eletero`, `egeszseg`, `egyensuly` (feliratok: Életerő, Egészség, Egyensúly). A feliratok a szabálycsomagból (`src/rulesets/`) jönnek — Milion-paraméterezésnél ott cserélhetők. Hatás-célpont: `wellbeing.<kulcs>` (pont, nem Ft).
+   - **Nincsenek univerzális igazságok:** életmódbeli döntés (lakhatás, együttélés, család, pályairány, szabadidő, ingázás, kockázatvállalás) jólléti hatását a játékos mérlegeli (`SUBJECTIVE_WELLBEING`, feltölt +1 / semleges 0 / megterhel -1). Fix hatás (`WELLBEING_EFFECTS`) csak megalapozott esetben: adósság/tartalékhiány → szorongás, csalás → stressz, tartós túlmunka → kimerülés.
 9. **Milion-függetlenség:** a Milion-specifikus elemek (koncentrikus körök, életcélmezők, "Vacak" pakli, adomány, mentordíj) csak a kikapcsolt `milion-szemlelet` csomagban lehetnek, élesben nem aktiválhatók.
 10. **Csapdakártyák:** minden csaló ajánlatnak legyen ellenőrizhető vészjele és kivédési útja; a kimenetel a játékos tudásán múljon, ne szerencsén.
 11. **Semlegesség:** nincs termékajánlás, nincs pártpolitikai állásfoglalás; hírből csak saját megfogalmazás + forráslink.
@@ -146,6 +147,10 @@ M6:                                          ████████
 - Per-round purchase limits: max 1 befektetés + max 1 tudáskártya / kör, "heti piac": körönként 3 húzott befektetési és 2 tudásajánlat (a játéknaplóból számolva)
 - Csapdakártyán 20 mp-es "sürgetés" óra + "Megállok és utánanézek" gomb (megállítja, megmutatja a vészjeleket); lejáratkor: egészség -1, pénzveszteség nincs
 - A soron következő gombon `pulse-cta` (prefers-reduced-motion esetén kikapcsol)
+- Játékmesteri beállítások (`src/store/settings-store.ts`, `SettingsPanel`): egyéni kezdő egyenleg (karakterenkénti `maxStartBalance`), "Valós helyzet modellezése" (bevétel/kiadás szerkesztése), csapdaóra, kocka forrása. Indításkor a `GameConfig.rules`-ba másolódnak; a `clampStartBalance` a motorban is véd.
+- Tesztmód: a verziófeliratra 5 koppintás; korlátlan egyenleg (20 M Ft), kézi kockaérték, mezőre ugrás, körátugrás, "Tesztjáték" jelölés
+- Kocka: `secureDieRoll` (crypto + elutasításos mintavétel); "Honnan jön a véletlen?" lap dobásnaplóval és eloszlással; "Saját kockával dobok" lehetőség
+- Tábla: 6 tematikus negyed × 4 mező (`DISTRICTS` a `src/data/board.ts`-ben), mezőnként rövid felirat és jelmagyarázat
 
 ### Fájl struktúra
 ```

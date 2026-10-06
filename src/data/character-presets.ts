@@ -53,6 +53,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       'Első megtakarítás stratégia',
       'Szülőktől való anyagi függetlenedés',
     ],
+    maxStartBalance: 500_000,
     difficulty: 1,
     tier: 'free',  // TODO: premium a véglegesben
   },
@@ -96,6 +97,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       'Első befektetések',
       'Karrierépítés vs. életminőség',
     ],
+    maxStartBalance: 1_000_000,
     difficulty: 2,
     tier: 'free', // Ez az ingyenes preset
   },
@@ -144,6 +146,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       'Ingatlan (vidéki telek) kezelése',
       'Vállalkozás indítása',
     ],
+    maxStartBalance: 8_000_000,
     difficulty: 3,
     tier: 'free',  // TODO: premium a véglegesben
   },

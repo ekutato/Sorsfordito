@@ -28,7 +28,7 @@ import type {
 } from '@/types/financial';
 import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
-import { TIME_SCALE_CONFIGS } from '@/types/game';
+import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
 import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
 
 // --- Seged fuggvenyek ---
@@ -79,10 +79,23 @@ function computeFinancials(sheet: FinancialSheet): ComputedFinancials {
   };
 }
 
+/**
+ * A kért kezdő egyenleg a szabályok szerint: alapból a preset értéke,
+ * egyéni beállításnál 0 és a karakter felső határa közé vágva, tesztmódban 20 M Ft-ig.
+ */
+export function clampStartBalance(presetId: CharacterPresetId, requested: number | undefined, rules: GameRules = DEFAULT_RULES): number {
+  const preset = CHARACTER_PRESETS[presetId];
+  const base = preset.startingFinancials.balance;
+  if (requested === undefined || (!rules.customStartBalance && !rules.testMode)) return base;
+  const max = rules.testMode ? TEST_MODE_MAX_BALANCE : Math.max(base, preset.maxStartBalance ?? base);
+  return Math.min(max, Math.max(0, Math.round(requested)));
+}
+
 function createFinancialSheet(
   playerId: string,
   presetId: CharacterPresetId,
-  balanceOverride?: number
+  balanceOverride?: number,
+  rules?: GameRules
 ): FinancialSheet {
   const preset = CHARACTER_PRESETS[presetId];
   const sf = preset.startingFinancials;
@@ -117,7 +130,7 @@ function createFinancialSheet(
 
   const sheet: FinancialSheet = {
     playerId,
-    balance: balanceOverride ?? sf.balance,
+    balance: clampStartBalance(presetId, balanceOverride, rules),
     income,
     expenses,
     investments: [],
@@ -198,7 +211,7 @@ export const useGameStore = create<GameStore>()(
         const playerId = `player-1`;
         const tsConfig = TIME_SCALE_CONFIGS[config.timeScale];
 
-        const financialSheet = createFinancialSheet(playerId, characterPreset, balanceOverride);
+        const financialSheet = createFinancialSheet(playerId, characterPreset, balanceOverride, config.rules);
 
         const player: PlayerState = {
           playerId,

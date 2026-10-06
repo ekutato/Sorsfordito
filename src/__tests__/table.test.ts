@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTable, reduceTable, generateRoomCode, publicView, DEFAULT_CONFIG, MAX_PLAYERS, type TableState } from '@/engine/table/state';
-import { moveOnBoard, BOARD_SIZE, BOARD } from '@/data/board';
+import { moveOnBoard, BOARD_SIZE, BOARD, DISTRICTS, FIELD_LABELS, districtOf } from '@/data/board';
 
 function lobbyWith(n: number): TableState {
   let s = createTable('ABCD', 'host', 'Host', DEFAULT_CONFIG, 12345);
@@ -9,10 +9,25 @@ function lobbyWith(n: number): TableState {
 }
 
 describe('tábla', () => {
-  it('24 mező, két fizetésnap, a lépés körbeér', () => {
+  it('24 mező, egy fizetésnap, a lépés körbeér', () => {
     expect(BOARD_SIZE).toBe(24);
-    expect(BOARD.filter((f) => f.type === 'payday')).toHaveLength(2);
+    expect(BOARD.filter((f) => f.type === 'payday')).toHaveLength(1);
     expect(moveOnBoard(22, 3)).toEqual({ position: 1, passedYearEnd: true, passedPaydays: 1 });
+  });
+
+  it('tematikus negyedek: soronként 4 mező, minden mezőtípus szerepel', () => {
+    expect(DISTRICTS).toHaveLength(6);
+    for (const d of DISTRICTS) expect(d.fields).toHaveLength(4);
+    for (const f of BOARD) expect(districtOf(f.index).id).toBe(f.district);
+    const types = new Set(BOARD.map((f) => f.type));
+    expect(types.size).toBe(Object.keys(FIELD_LABELS).length);
+    // a csapdák a Bankutcán, a kísértések a Piactéren, a találkozások a Közösségi téren vannak
+    for (const f of BOARD) {
+      if (f.type === 'trap') expect(f.district).toBe('bankutca');
+      if (f.type === 'temptation') expect(f.district).toBe('piacter');
+      if (f.type === 'encounter' || f.type === 'recharge') expect(f.district).toBe('kozossegi-ter');
+      if (f.type === 'office') expect(f.district).toBe('hivatal');
+    }
   });
 });
 
