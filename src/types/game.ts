@@ -40,7 +40,8 @@ export interface GameConfig {
   rules?: GameRules;
 
   /** Asztali (többjátékos) játék: melyik szobához tartozik ez a saját játék */
-  table?: { roomCode: string };
+  /** Asztali játék: a szoba, és a közös mezőkártya-pakli adatai */
+  table?: { roomCode: string; deckSeed?: number; slot?: number };
 }
 
 export interface GameRules {

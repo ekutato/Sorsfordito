@@ -230,14 +230,24 @@ export function marketNewsCard(index: number): FieldCard | undefined {
 }
 
 /** A mezőhöz tartozó kártya; a soron következő lapot a mező látogatásainak száma adja (ismétlés nélkül körbejár) */
+/** Közös asztali pakli: minden játékosnak saját helye van, a lapok egy közös keverésből jönnek */
+export interface SharedDeck { seed: number; slot: number; players: number }
+
 /**
- * A mező kártyája. A paklik játékonként (seed: a játék azonosítója) más sorrendben jönnek,
- * így két játékos azonos mezőn sem ugyanazt a lapot húzza; egy játékon belül nincs ismétlés,
- * amíg a pakli el nem fogy. Seed nélkül a pakli eredeti sorrendje (tesztekhez).
+ * A mező kártyája.
+ * - Asztali játékban (shared): a lap indexe látogatás × játékosszám + hely a közösen kevert pakliban, így
+ *   amíg egy mezőtípus pakliját végig nem húzzák, két játékos soha nem kap azonos lapot (üzenetváltás nélkül).
+ * - Egyjátékos módban: a pakli játékonként (seed: a játék azonosítója) kevert, egy játékon belül nincs ismétlés.
+ * - Seed nélkül a pakli eredeti sorrendje (tesztekhez).
  */
-export function cardForField(field: FieldType, visit: number, seed?: string): FieldCard | undefined {
+export function cardForField(field: FieldType, visit: number, seed?: string, shared?: SharedDeck): FieldCard | undefined {
   const pick = (cards: FieldCard[]) => {
     if (!cards.length) return undefined;
+    if (shared) {
+      const deck = shuffle(cards, createRng(seedFromString(`asztal-${shared.seed}-${field}`)));
+      const n = Math.max(1, shared.players);
+      return deck[(visit * n + shared.slot) % deck.length];
+    }
     const deck = seed ? shuffle(cards, createRng(seedFromString(`${seed}-${field}`))) : cards;
     return deck[visit % deck.length];
   };
@@ -247,7 +257,8 @@ export function cardForField(field: FieldType, visit: number, seed?: string): Fi
     case 'recharge': return pick(RECHARGE_CARDS);
     case 'encounter': return pick(ENCOUNTER_CARDS);
     case 'office': return pick(OFFICE_CARDS);
-    case 'market_news': return marketNewsCard(seed ? visit + (seedFromString(seed) % 97) : visit);
+    case 'market_news':
+      return marketNewsCard(shared ? visit * Math.max(1, shared.players) + shared.slot : seed ? visit + (seedFromString(seed) % 97) : visit);
     default: return undefined;
   }
 }

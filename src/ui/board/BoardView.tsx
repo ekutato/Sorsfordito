@@ -301,6 +301,7 @@ export function DiceButton({ onRoll, disabled }: { onRoll: () => number | undefi
       if (++n >= 12) {
         clearInterval(id);
         const v = onRoll();
+        play('land');
         setFace(v ?? null);
         setRolling(false);
       }

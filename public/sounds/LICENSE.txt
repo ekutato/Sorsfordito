@@ -1,0 +1,19 @@
+A játék hangjai - eredet és licenc
+==================================
+
+Minden hangfájl CC0 1.0 Universal (közkincs) licencű:
+https://creativecommons.org/publicdomain/zero/1.0/
+Szabadon használható, módosítható és terjeszthető, kereskedelmi célra is, feltüntetési kötelezettség nélkül.
+
+1) Kenney (Kenney Vleugels, kenney.nl) - CC0 1.0
+   - Casino Audio (https://kenney.nl/assets/casino-audio): roll1-3.mp3 (dieShuffle1-3, rövidítve), land1-3.mp3 (dieThrow1-3)
+   - RPG Audio (https://kenney.nl/assets/rpg-audio): coin1.mp3 (handleCoins), coin2.mp3 (handleCoins2)
+   Átalakítás: OGG → MP3 (mono, 96 kbps), hangerő-kiegyenlítés; a dobáshang 0,85 mp-re vágva, lecsengetve.
+
+2) UI SFX (uisfx 0.4.0, https://github.com/romainsimon/uisfx) - a hangfájlok CC0 1.0 (a csomag LICENSE-AUDIO fájlja szerint)
+   - organic: step.mp3 (progress-step), card.mp3 (swipe), coin-out.mp3 (drop)
+   - mechanical: tick.mp3 (focus)
+   - cinematic: success.mp3, warning.mp3 (error), round.mp3 (checkpoint), milestone.mp3 (level-up), game-end.mp3 (complete)
+   - dreamy: reaction.mp3
+
+Köszönet a szerzőknek: Kenney.nl, UI SFX.

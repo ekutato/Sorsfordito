@@ -1,11 +1,63 @@
-// Hangok és rezgés: a böngésző állítja elő (Web Audio), hangfájl nincs. Alapból némítva.
+// Hangok és rezgés: valódi (CC0) hangfájlok Web Audióval, tartalékként szintetizált hangok. Alapból némítva.
 // A hang sehol nem visz egyedül információt - a látható jelzések mindig megmaradnak.
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type Sfx =
-  | 'roll' | 'step' | 'coinIn' | 'coinOut' | 'card' | 'tick' | 'success' | 'warning'
+  | 'roll' | 'land' | 'step' | 'coinIn' | 'coinOut' | 'card' | 'tick' | 'success' | 'warning'
   | 'roundReady' | 'reaction' | 'milestone' | 'gameEnd';
+
+/**
+ * Valódi hangfájlok (CC0, public/sounds/LICENSE.txt). Hangonként több változat, véletlenszerűen váltakozva.
+ * Ha egy fájl nem töltődik be, a szintetizált hang szól helyette.
+ */
+const SAMPLES: Partial<Record<Sfx, string[]>> = {
+  roll: ['roll1', 'roll2', 'roll3'],
+  land: ['land1', 'land2', 'land3'],
+  step: ['step'],
+  coinIn: ['coin1', 'coin2'],
+  coinOut: ['coin-out'],
+  card: ['card'],
+  tick: ['tick'],
+  success: ['success'],
+  warning: ['warning'],
+  roundReady: ['round'],
+  reaction: ['reaction'],
+  milestone: ['milestone'],
+  gameEnd: ['game-end'],
+};
+const SAMPLE_GAIN: Partial<Record<Sfx, number>> = { step: 0.6, tick: 0.5, card: 0.8 };
+const buffers = new Map<string, AudioBuffer | null>();
+let loading: Promise<void> | null = null;
+
+function loadSamples() {
+  const c = ctx;
+  if (!c || loading) return;
+  const base = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/sounds/`;
+  const names = [...new Set(Object.values(SAMPLES).flat())] as string[];
+  loading = Promise.all(names.map(async (n) => {
+    try {
+      const r = await fetch(`${base}${n}.mp3`);
+      if (!r.ok) throw new Error(String(r.status));
+      buffers.set(n, await c.decodeAudioData(await r.arrayBuffer()));
+    } catch { buffers.set(n, null); }
+  })).then(() => undefined);
+}
+
+function playSample(name: Sfx): boolean {
+  const list = SAMPLES[name];
+  if (!list || !ctx || !master) return false;
+  const ready = list.map((n) => buffers.get(n)).filter((b): b is AudioBuffer => !!b);
+  if (!ready.length) return false;
+  const src = ctx.createBufferSource();
+  src.buffer = ready[Math.floor(Math.random() * ready.length)];
+  src.playbackRate.value = 0.96 + Math.random() * 0.08; // apró hangmagasság-eltérés, hogy ne legyen gépies
+  const g = ctx.createGain();
+  g.gain.value = (SAMPLE_GAIN[name] ?? 1) * 3; // a mesterhangerő 0,25 - a felvételek ehhez igazítva
+  src.connect(g).connect(master);
+  src.start();
+  return true;
+}
 
 interface SoundPrefs {
   sound: boolean;
@@ -48,6 +100,7 @@ function audio(): AudioContext | null {
 export function unlockAudio() {
   const c = audio();
   if (c && c.state === 'suspended') void c.resume().catch(() => {});
+  loadSamples();
 }
 
 if (typeof window !== 'undefined') {
@@ -82,6 +135,7 @@ function noise(start: number, dur: number, vol = 0.6, lowpass = 3000) {
 
 const RECIPES: Record<Sfx, () => void> = {
   roll: () => { for (let i = 0; i < 6; i++) noise(i * 0.06, 0.05, 0.5, 2200); },
+  land: () => { noise(0, 0.06, 0.6, 1500); tone(180, 0, 0.08, 'triangle', 0.4); },
   step: () => tone(520, 0, 0.07, 'triangle', 0.6, 380),
   coinIn: () => { tone(988, 0, 0.09, 'square', 0.25); tone(1319, 0.08, 0.18, 'square', 0.25); },
   coinOut: () => tone(330, 0, 0.18, 'triangle', 0.5, 220),
@@ -114,7 +168,8 @@ export function play(name: Sfx) {
   const c = audio();
   if (!c) return;
   if (c.state === 'suspended') void c.resume().catch(() => {});
-  try { RECIPES[name](); } catch { /* hang nélkül megy tovább */ }
+  loadSamples();
+  try { if (!playSample(name)) RECIPES[name](); } catch { /* hang nélkül megy tovább */ }
 }
 
 /** Fékező: ugyanabból a hangból legfeljebb egy `gapMs`-enként (pl. sok egymás utáni egyenlegváltozás) */

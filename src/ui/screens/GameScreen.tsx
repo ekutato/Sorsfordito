@@ -16,7 +16,7 @@ import type { LifeSituationId } from '@/types/game';
 import type { Investment } from '@/types/financial';
 import type { GameState } from '@/types/game';
 import { BOARD, FIELD_LABELS, FIELD_EXPLAIN, districtOf } from '@/data/board';
-import { cardForField, FIELD_HINTS } from '@/data/field-cards';
+import { cardForField, FIELD_HINTS, type SharedDeck } from '@/data/field-cards';
 import { rollBoard, resolveFieldCard, emptyBoard, continueBoard, acknowledgeOutcome } from '@/store/board-actions';
 import { BoardFull, BoardStrip, BoardLegend, DiceButton } from '@/ui/board/BoardView';
 import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
@@ -1054,12 +1054,20 @@ function formatGameDate(dateStr: string): string {
 
 // --- Táblás mód ---
 
+/** Asztali játékban a közös pakli adatai (a játékosszám az asztalról, élőben) */
+function sharedDeckOf(game: GameState): SharedDeck | undefined {
+  const t = game.config.table;
+  if (!t || t.deckSeed === undefined || t.slot === undefined) return undefined;
+  const players = useTableStore.getState().table?.players.length ?? game.config.playerCount;
+  return { seed: t.deckSeed, slot: t.slot, players };
+}
+
 function isBoardDone(game: GameState): boolean {
   if (game.board?.awaitingContinue || game.board?.awaitingOutcomeAck) return false;
   const b = game.board ?? emptyBoard();
   if (b.rolledRound !== game.currentRound) return false;
   const field = BOARD[b.position].type;
-  const card = cardForField(field, b.visits[field] ?? 0, game.gameId);
+  const card = cardForField(field, b.visits[field] ?? 0, game.gameId, sharedDeckOf(game));
   return !card || b.resolvedRound === game.currentRound;
 }
 
@@ -1081,7 +1089,7 @@ function BoardLayer() {
   const rolledNow = b.rolledRound === game.currentRound;
   const field = BOARD[b.position];
   const visit = b.visits[field.type] ?? 0;
-  const rawCard = rolledNow ? cardForField(field.type, visit, game.gameId) : undefined;
+  const rawCard = rolledNow ? cardForField(field.type, visit, game.gameId, sharedDeckOf(game)) : undefined;
   const card = rawCard ? fillDeep(rawCard) : undefined;
   const cardOpen = !!card && b.resolvedRound !== game.currentRound;
 

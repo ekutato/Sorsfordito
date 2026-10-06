@@ -60,7 +60,7 @@ export function useTableAutoStart() {
         useLiveData: true,
         startDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
         rules: table.config.rules,
-        table: { roomCode: table.roomCode },
+        table: { roomCode: table.roomCode, deckSeed: table.deckSeed, slot: me.slot },
       },
       me.profileId as CharacterPresetId,
       me.name,

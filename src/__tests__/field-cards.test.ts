@@ -97,3 +97,20 @@ describe('mezőkártyák keverése', () => {
     expect(cardForField('trap', 0, 'game-x')!.id).toBe(cardForField('trap', 0, 'game-x')!.id);
   });
 });
+
+describe('közös asztali pakli', () => {
+  const TYPES = [['trap', TRAP_CARDS], ['temptation', TEMPTATION_CARDS], ['recharge', RECHARGE_CARDS], ['encounter', ENCOUNTER_CARDS], ['office', OFFICE_CARDS]] as const;
+  it('amíg a pakli tart, minden (játékos, látogatás) más lapot kap', () => {
+    for (const n of [2, 4, 6, 10]) for (const [type, deck] of TYPES) {
+      const ids: string[] = [];
+      for (let v = 0; v * n < deck.length; v++) for (let s = 0; s < n && v * n + s < deck.length; s++) {
+        ids.push(cardForField(type, v, 'x', { seed: 42, slot: s, players: n })!.id);
+      }
+      expect(new Set(ids).size, `${type}, ${n} játékos`).toBe(ids.length);
+    }
+  });
+  it('ugyanaz az asztal ugyanazt osztja, más asztal másképp keveri', () => {
+    const a = cardForField('trap', 0, 'g1', { seed: 7, slot: 1, players: 4 })!.id;
+    expect(cardForField('trap', 0, 'g2', { seed: 7, slot: 1, players: 4 })!.id).toBe(a);
+  });
+});

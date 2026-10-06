@@ -73,6 +73,8 @@ export interface TablePlayer {
   report?: PlayerReport;
   /** Ha a játék indulása után csatlakozott: melyik asztali fordulóban (a saját tempójában játszik) */
   lateJoinRound?: number;
+  /** Hely a közös mezőkártya-pakliban (a csatlakozás sorrendje, nem változik) */
+  slot?: number;
 }
 
 export interface TableState {
@@ -87,6 +89,10 @@ export interface TableState {
   players: TablePlayer[];
   /** A forduló közös Sorsfordító kártyája (mindenki ugyanazt húzza) */
   sharedFateId?: string;
+  /** A közös mezőkártya-pakli keverése (nyilvános; a dobás seed-je titkos marad) */
+  deckSeed?: number;
+  /** A következő játékos helye a közös pakliban */
+  nextSlot?: number;
   log: Array<{ round: number; text: string }>;
 }
 
@@ -122,6 +128,7 @@ export function createTable(roomCode: string, hostId: string, hostName: string, 
   const base: TableState = {
     v: PROTOCOL_VERSION, roomCode, seed, rngCalls: 0, hostId,
     phase: 'lobby', config, round: 0, players: [], log: [],
+    deckSeed: secureSeed(), nextSlot: 0,
   };
   return reduceTable(base, { type: 'join', playerId: hostId, name: hostName, remote: false });
 }
@@ -169,13 +176,13 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       const late = s.phase === 'playing' || s.phase === 'paused';
       const name = a.name.trim().slice(0, 24) || `Játékos ${s.players.length + 1}`;
       const player: TablePlayer = {
-        id: a.playerId, name, color: '',
+        id: a.playerId, name, color: '', slot: s.nextSlot ?? s.players.length,
         // Közös karakteres lobby: az érkező is a host karakterét kapja
         ...(!late && s.config.sameProfile ? { profileId: s.players.find((x) => x.id === s.hostId)?.profileId } : {}),
         connected: true, remote: a.remote, position: 0, done: false,
         ...(late ? { lateJoinRound: s.round } : {}),
       };
-      return { ...s, players: [...s.players, player] };
+      return { ...s, players: [...s.players, player], nextSlot: (s.nextSlot ?? s.players.length) + 1 };
     }
     case 'leave':
       if (s.phase === 'lobby') return { ...s, players: s.players.filter((p) => p.id !== a.playerId) };
