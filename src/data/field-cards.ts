@@ -8,6 +8,7 @@
 import type { FieldType } from './board';
 import { LIVE_DATA } from './live';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
+import { EXTRA_TRAP_CARDS, EXTRA_TEMPTATION_CARDS, EXTRA_RECHARGE_CARDS, EXTRA_ENCOUNTER_CARDS, EXTRA_OFFICE_CARDS } from './field-cards-extra';
 import type { WellbeingKey } from '@/types/wellbeing';
 
 export interface FieldEffect {
@@ -121,6 +122,7 @@ export const TRAP_CARDS: FieldCard[] = [
     realStep: 'NAV-os ügyet csak a hivatalos felületen (ügyfélkapu, eSZJA) nézz meg, a címet kézzel beírva.',
     sourceUrl: 'https://www.penzcentrum.hu/tech/20260902/azonnal-torold-ha-ilyen-sms-t-kapsz-a-nav-tol-szazezres-csapdaval-fosztjak-ki-a-magyarokat-1204792',
   },
+  ...EXTRA_TRAP_CARDS,
 ];
 
 export const TEMPTATION_CARDS: FieldCard[] = [
@@ -154,6 +156,7 @@ export const TEMPTATION_CARDS: FieldCard[] = [
     ],
     realStep: 'Havonta egyszer nézd át a bankszámlakivonatot az ismétlődő terhelések miatt.',
   },
+  ...EXTRA_TEMPTATION_CARDS,
 ];
 
 export const RECHARGE_CARDS: FieldCard[] = [
@@ -174,6 +177,7 @@ export const RECHARGE_CARDS: FieldCard[] = [
     ],
     realStep: 'A pihenés is befektetés: a kiégés drágább, mint egy szabad hétvége.',
   },
+  ...EXTRA_RECHARGE_CARDS,
 ];
 
 export const ENCOUNTER_CARDS: FieldCard[] = [
@@ -194,6 +198,7 @@ export const ENCOUNTER_CARDS: FieldCard[] = [
     ],
     realStep: 'Közös befektetésnél előre, írásban rögzítsétek a hozzájárulást és a kiszállás feltételeit.',
   },
+  ...EXTRA_ENCOUNTER_CARDS,
 ];
 
 export const OFFICE_CARDS: FieldCard[] = [
@@ -210,6 +215,7 @@ export const OFFICE_CARDS: FieldCard[] = [
     ],
     realStep: 'Az SZJA-bevallás tervezetét az eSZJA felületen nézd át a határidő előtt.',
   },
+  ...EXTRA_OFFICE_CARDS,
 ];
 
 /** Piaci hír mező: a heti élő adatcsomag egy híre (saját megfogalmazás + forrás) */

@@ -113,4 +113,7 @@ describe('közös asztali pakli', () => {
     const a = cardForField('trap', 0, 'g1', { seed: 7, slot: 1, players: 4 })!.id;
     expect(cardForField('trap', 0, 'g2', { seed: 7, slot: 1, players: 4 })!.id).toBe(a);
   });
+  it('legalább 10 lap minden mezőtípusból (10 fős garancia)', () => {
+    for (const [type, deck] of TYPES) expect(deck.length, type).toBeGreaterThanOrEqual(10);
+  });
 });
