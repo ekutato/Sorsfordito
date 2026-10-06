@@ -81,7 +81,7 @@ export function LateJoin() {
         </p>
       </div>
       <CharacterPicker onPick={setProfile} />
-      <ConnectionBanner />
+      <ConnectionBanner details />
       <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
     </div>
   );
@@ -187,7 +187,7 @@ export function TableLobby() {
         <p className="text-base text-center text-[var(--color-text-muted)]">Várunk, hogy a szobát nyitó játékos elindítsa a játékot…</p>
       )}
 
-      <ConnectionBanner />
+      <ConnectionBanner details />
       <button onClick={leave} className="text-sm underline text-[var(--color-text-muted)]">Kilépek a szobából</button>
     </div>
   );

@@ -6,6 +6,8 @@ import { useTableStore, inviteLink } from '@/store/table-store';
 import { isCatchingUp } from '@/engine/table/state';
 import { formatHUF } from '@/engine/financial-calculator';
 import type { TableState } from '@/engine/table/state';
+import { useDiag, diagText } from '@/net/diag';
+import { wakeLockSupported, wakeLockEnabled, setWakeLockEnabled } from '@/net/wake-lock';
 
 const REACTIONS = ['👍 Szép!', '⏰ Gyerünk, várunk rád!', '🤔 Gondolkodom…', '😂', '🎉 Gratulálok!'];
 
@@ -42,7 +44,7 @@ export function TableBar() {
           <button key={r} onClick={() => react(r)} className="shrink-0 h-8 px-2.5 rounded-lg text-xs font-semibold bg-white/10">{r}</button>
         ))}
       </div>
-      <ConnectionBanner />
+      <ConnectionBanner details />
       <div className="fixed left-0 right-0 bottom-24 z-40 flex flex-col items-center gap-2 pointer-events-none px-4">
         <AnimatePresence>
           {reactions.map((r) => (
@@ -71,7 +73,7 @@ function InviteButton({ code }: { code: string }) {
 }
 
 /** Kapcsolat állapota: újracsatlakozás folyamatban / sikerült; kiesett játékosok */
-export function ConnectionBanner() {
+export function ConnectionBanner({ details = false }: { details?: boolean }) {
   const { status, attempt, error, justReconnected, reconnectNow, table, role } = useTableStore();
   const dropped = table?.players.filter((p) => !p.connected) ?? [];
   return (
@@ -92,12 +94,55 @@ export function ConnectionBanner() {
       {justReconnected && status === 'connected' && (
         <div role="status" className="rounded-lg px-3 py-1.5 text-sm font-semibold bg-emerald-500/20 text-emerald-200">Újra kapcsolódva ✓</div>
       )}
+      {(details || (status !== 'connected' && status !== 'idle')) && <ConnectionDetails />}
       {role === 'host' && dropped.length > 0 && status === 'connected' && (
         <p className="text-xs text-[var(--color-text-muted)]">
           Kiesett: {dropped.map((p) => p.name).join(', ')} - a forduló nélküle is továbbmehet; ha visszajön, a helyéről folytatja.
         </p>
       )}
     </>
+  );
+}
+
+const SIGNAL_LABEL: Record<string, string> = {
+  nincs: '-', kapcsolódik: 'kapcsolódik…', kapcsolódva: 'elérhető', leszakadt: 'leszakadt, visszakapcsolódás…', hiba: 'hiba',
+};
+
+/** Kapcsolat részletei: lépésenkénti napló, kimásolható hibabejelentéshez; képernyő ébren tartása */
+export function ConnectionDetails({ initiallyOpen = false }: { initiallyOpen?: boolean }) {
+  const { entries, signal, ice, turn } = useDiag();
+  const role = useTableStore((s) => s.role);
+  const [open, setOpen] = useState(initiallyOpen);
+  const [copied, setCopied] = useState(false);
+  const [awake, setAwake] = useState(() => wakeLockEnabled());
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(diagText()); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* */ }
+  };
+  return (
+    <div className="text-xs space-y-1.5">
+      <button onClick={() => setOpen((o) => !o)} className="underline text-[var(--color-text-muted)]" aria-expanded={open}>
+        {open ? 'Részletek elrejtése' : 'Kapcsolat részletei'}
+      </button>
+      {open && (
+        <div className="rounded-lg bg-black/30 p-2 space-y-1.5">
+          <p>{role === 'host' ? 'A szoba a szobaszerveren' : 'Szobaszerver'}: <b>{SIGNAL_LABEL[signal] ?? signal}</b> · Közvetlen kapcsolat: <b>{ice}</b> · TURN: <b>{turn ? 'van' : 'nincs'}</b></p>
+          <ol className="max-h-40 overflow-y-auto font-mono space-y-0.5">
+            {entries.slice(-20).map((e, i) => (
+              <li key={i}>{new Date(e.at).toLocaleTimeString('hu-HU')} {e.text}</li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap gap-3 items-center">
+            <button onClick={copy} className="underline">{copied ? 'Kimásolva ✓' : 'Napló másolása'}</button>
+            {wakeLockSupported() && (
+              <label className="inline-flex items-center gap-1.5">
+                <input type="checkbox" checked={awake} onChange={(e) => { setAwake(e.target.checked); setWakeLockEnabled(e.target.checked); }} />
+                Képernyő ébren tartása
+              </label>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -7,7 +7,9 @@ import { generateRoomCode, DEFAULT_CONFIG, type PlayerReport, type TableConfig, 
 import { startHostRoom, type HostRoom } from '@/net/host';
 import { joinRoom as joinClientRoom, getOrCreatePlayerId, type ClientRoom } from '@/net/client';
 import { isLocalNet } from '@/net/transport';
-import { backoffDelay, isStale, PING_INTERVAL_MS, CLIENT_DEAD_AFTER_MS, WAKE_CHECK_MS } from '@/net/heartbeat';
+import { backoffDelay, isStale, PING_INTERVAL_MS, CLIENT_DEAD_AFTER_MS, WAKE_CHECK_MS, CONNECT_TIMEOUT_MS, HOST_WATCH_MS, HOST_REOPEN_AFTER_MS } from '@/net/heartbeat';
+import { diag } from '@/net/diag';
+import { keepAwake, releaseAwake } from '@/net/wake-lock';
 
 export type TableRole = 'host' | 'client';
 type Status = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error';
@@ -61,7 +63,15 @@ let reactionSeq = 0;
 let retryTimer: ReturnType<typeof setTimeout> | undefined;
 let pingTimer: ReturnType<typeof setInterval> | undefined;
 let wakeTimer: ReturnType<typeof setTimeout> | undefined;
+let connectTimer: ReturnType<typeof setTimeout> | undefined;
+let hostWatch: ReturnType<typeof setInterval> | undefined;
+let hostDownSince = 0;
 let lastAlive = 0;
+/**
+ * Kapcsolat-generáció: minden új kísérlet és minden lebontás növeli. A lebontott (régi) peer
+ * késve érkező close/error eseményei így nem bontják le az épp felépülő új kapcsolatot.
+ */
+let gen = 0;
 let listenersOn = false;
 /** Szándékos kilépés után nem próbálkozunk újra */
 let stopped = false;
@@ -85,6 +95,10 @@ export const useTableStore = create<TableStore>()((set, get) => {
   };
 
   const teardown = () => {
+    gen++;
+    if (connectTimer) clearTimeout(connectTimer);
+    if (hostWatch) clearInterval(hostWatch);
+    connectTimer = undefined; hostWatch = undefined;
     try { host?.close(); } catch { /* már zárva */ }
     try { client?.close(); } catch { /* már zárva */ }
     host = null; client = null;
@@ -100,6 +114,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
     teardown();
     const attempt = get().attempt + 1;
     set({ status: 'reconnecting', attempt, error: msg ?? null });
+    diag(`Újrapróbálás (${attempt}.)${msg ? `: ${msg}` : ''}`);
     retryTimer = setTimeout(() => { retryTimer = undefined; void connect(); }, backoffDelay(attempt - 1));
   };
 
@@ -107,38 +122,58 @@ export const useTableStore = create<TableStore>()((set, get) => {
     if (!session || stopped) return;
     const { role, roomCode, name } = session;
     const playerId = getOrCreatePlayerId();
+    const myGen = ++gen;
+    const current = () => myGen === gen && !stopped;
     set({ role, roomCode, playerId, status: get().status === 'idle' ? 'connecting' : get().status });
+    // Ha adott időn belül nem jön állapot, a kísérletet elvetjük (a WebRTC néha se hibát, se nyitást nem ad)
+    if (connectTimer) clearTimeout(connectTimer);
+    connectTimer = setTimeout(() => {
+      if (current() && get().status !== 'connected') lost('A kapcsolat nem jött létre időben. Újrapróbálom…');
+    }, CONNECT_TIMEOUT_MS);
     try {
       if (role === 'host') {
         const fresh = freshNext;
         freshNext = false;
-        host = await startHostRoom(roomCode, playerId, name,
-          (s) => { set({ table: s }); markConnected(); },
+        const room = await startHostRoom(roomCode, playerId, name,
+          (s) => { if (!current()) return; set({ table: s }); markConnected(); },
           (e) => {
+            if (!current()) return;
             const m = e?.message ?? '';
             // A kód még foglalt a szerveren (előző peer): kicsit később újra
             if (/unavailable-id|is taken/i.test(m) || /network|server|socket|disconnect/i.test(m)) lost(friendlyError(e));
             else set({ error: friendlyError(e) });
           },
-          addReaction, fresh);
+          (from, text) => { if (current()) addReaction(from, text); }, fresh);
+        if (!current()) { try { room.close(); } catch { /* */ } return; }
+        host = room;
+        // Host-őr: ha a szoba 15 mp-ig nem érhető el a szobaszerveren, ugyanazzal a kóddal újranyitjuk
+        hostDownSince = 0;
+        hostWatch = setInterval(() => {
+          if (!current() || !host) return;
+          if (host.isAlive()) { hostDownSince = 0; return; }
+          if (!hostDownSince) { hostDownSince = Date.now(); return; }
+          if (Date.now() - hostDownSince > HOST_REOPEN_AFTER_MS) lost('A szoba újranyitása…');
+        }, HOST_WATCH_MS);
       } else {
-        client = await joinClientRoom(roomCode, name, true, {
-          state: (s) => { set({ table: s }); markConnected(); },
-          chat: addReaction,
-          alive: () => { lastAlive = Date.now(); },
-          error: (m) => lost(m),
-          closed: () => lost('A kapcsolat megszakadt. Újracsatlakozás…'),
+        const c = await joinClientRoom(roomCode, name, true, {
+          state: (s) => { if (!current()) return; set({ table: s }); markConnected(); },
+          chat: (from, text) => { if (current()) addReaction(from, text); },
+          alive: () => { if (current()) lastAlive = Date.now(); },
+          error: (m) => { if (current()) lost(friendlyError(new Error(m))); },
+          closed: () => { if (current()) lost('A kapcsolat megszakadt. Újracsatlakozás…'); },
         });
+        if (!current()) { try { c.close(); } catch { /* */ } return; }
+        client = c;
         lastAlive = Date.now();
         if (pingTimer) clearInterval(pingTimer);
         pingTimer = setInterval(() => {
-          if (!client) return;
+          if (!current() || !client) return;
           if (get().status === 'connected' && isStale(lastAlive, Date.now(), CLIENT_DEAD_AFTER_MS)) { lost('A kapcsolat elhallgatott. Újracsatlakozás…'); return; }
           client.ping();
         }, PING_INTERVAL_MS);
       }
     } catch (e) {
-      lost(friendlyError(e as Error));
+      if (current()) lost(friendlyError(e as Error));
     }
   };
 
@@ -146,6 +181,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
   const onWake = () => {
     if (!session || stopped) return;
     if (document.visibilityState === 'hidden') return;
+    keepAwake();
     if (host) {
       if (!host.isAlive()) lost('A szoba újranyitása…');
       return;
@@ -177,6 +213,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
     session = s;
     saveSession(s);
     ensureListeners();
+    keepAwake();
     if (retryTimer) { clearTimeout(retryTimer); retryTimer = undefined; }
     teardown();
     set({ status: 'connecting', error: null, attempt: 0 });
@@ -208,6 +245,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
 
     reconnectNow: () => {
       if (!session) return;
+      diag('Kézi újracsatlakozás');
       if (retryTimer) { clearTimeout(retryTimer); retryTimer = undefined; }
       teardown();
       set({ status: 'reconnecting' });
@@ -225,6 +263,7 @@ export const useTableStore = create<TableStore>()((set, get) => {
       session = null;
       if (retryTimer) { clearTimeout(retryTimer); retryTimer = undefined; }
       teardown();
+      releaseAwake();
       saveSession(null);
       set({ role: null, roomCode: null, table: null, status: 'idle', error: null, attempt: 0, reactions: [], entry: null });
     },

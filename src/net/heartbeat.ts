@@ -9,6 +9,13 @@ export const HOST_DROP_AFTER_MS = 30_000;
 /** Visszatéréskor (előtérbe kerülés) ennyi ideig várunk a ping válaszára */
 export const WAKE_CHECK_MS = 4_000;
 
+/** Ennyi idő alatt kell állapotnak érkeznie egy kapcsolódási kísérletből, különben újra */
+export const CONNECT_TIMEOUT_MS = 15_000;
+/** A host ilyen időközönként ellenőrzi, elérhető-e a szobája a szobaszerveren */
+export const HOST_WATCH_MS = 5_000;
+/** Ennyi elérhetetlenség után a host újranyitja a szobát (ugyanazzal a kóddal) */
+export const HOST_REOPEN_AFTER_MS = 15_000;
+
 /** Visszalépéses várakozás: 1, 2, 4, 8, majd 15 mp-enként */
 export function backoffDelay(attempt: number): number {
   return Math.min(15_000, 1000 * 2 ** Math.max(0, attempt));
