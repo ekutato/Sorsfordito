@@ -8,7 +8,7 @@
 **Típus:** Magyar pénzügyi tudatossági szimulációs játék
 **GDD:** v1.0 (2026. március) — `docs/Penzugyi_Sorsfordito_GDD_v1.md`
 **Fejlesztési terv (2026-10):** `docs/fejlesztesi-terv-2026-10.md` — többjátékos online táblajáték, heti élő adatok, csapdakártyák, jólléti index
-**Repo:** `ekutato/Sorsfordito` (GitHub). Deploy: a `out/` tartalma a `ekutato/nexai-hu` repó `sorsfordito/` mappájába kerül, a Netlify élesít.
+**Repo:** `ekutato/Sorsfordito` (GitHub). Deploy: a `out/` tartalma a `ekutato/nexai-hu` repó `sorsfordito/` mappájába kerül, a Netlify élesít. Fejlesztés: csomagonként új PR a nexai-hu-ba (előnézettel, a felhasználó hagyja jóvá); a heti adatfrissítés a `main` ágakon közvetlenül élesít.
 **Platform:** Mobile-first PWA (böngészőben, installálható)
 
 ### Tech Stack

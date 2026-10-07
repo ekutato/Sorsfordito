@@ -5,7 +5,7 @@ Minden hétfőn 06:47-kor (Europe/Budapest) egy Claude-rutin frissíti a játék
 ## Lépések
 
 1. **Repók:** `ekutato/Sorsfordito` (forrás) és `ekutato/nexai-hu` (élesítés: a `sorsfordito/` mappa, a Netlify innen élesít).
-   - **Ág:** amíg a ekutato/nexai-hu#1 nincs merge-ölve, mindkét repóban a `claude/amazing-goodall-iosnm8` ágon dolgozik (deploy preview). Utána mindkét repó alapértelmezett ágán, ez éles.
+   - **Ág:** az ekutato/nexai-hu#1 merge-ölve (2026-10-07), ezért mindkét repóban az alapértelmezett (`main`) ágon dolgozik. A heti adatfrissítés így közvetlenül élesít (a játékvezető döntése: automatikus élesítés + e-mail).
 2. **Új hét:** `node scripts/heti-set.mjs --het <ÉÉÉÉ-Www> <ÉÉÉÉ-HH-NN>`
 3. **Értékek:** minden kulcsot friss, elsődleges forrásból ellenőriz, és így ír be:
    `node scripts/heti-set.mjs <kulcs> <érték> <asOf> <true|false> "<forrás>" <url>`
