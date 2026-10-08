@@ -1083,7 +1083,9 @@ function offerContext(game: GameState): Pick<OfferContext, 'district' | 'decisio
 /** A kör lapja a lépett mezőn: mezőkártya, vagy a Tudás/Befektetés mező bónuszlapja */
 function roundCardFor(game: GameState, field: FieldType, visit: number) {
   const owned = game.players[game.activePlayerIndex]?.financialSheet.acquiredKnowledge ?? [];
-  return cardForField(field, visit, game.gameId, sharedDeckOf(game)) ?? bonusCardFor(field, visit, game.gameId, owned, BOARD[game.board?.position ?? 0]?.district);
+  const sheet = game.players[game.activePlayerIndex]?.financialSheet;
+  const ctx = sheet ? { preset: game.players[game.activePlayerIndex].lifeSituation, housing: sheet.expenses.housing, investments: sheet.investments.map((i) => i.optionId) } : undefined;
+  return cardForField(field, visit, game.gameId, sharedDeckOf(game), ctx) ?? bonusCardFor(field, visit, game.gameId, owned, BOARD[game.board?.position ?? 0]?.district);
 }
 
 /** A kör mezőbónusza (a tudás- és befektetési keretekhez) */

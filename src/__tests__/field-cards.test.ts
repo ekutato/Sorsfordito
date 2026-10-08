@@ -133,3 +133,15 @@ describe('előjel és szín iránya', () => {
     expect(signedEffect('food', -10_000, { durationMonths: 3 })).toBe('−10 000 Ft/hó (3 hónapig)');
   });
 });
+
+describe('mezőkártya: csak a helyzethez illő lap', () => {
+  it('a diákigazolvány-lap nem jön Petrának, a TBSZ-lap TBSZ nélkül nem jön', async () => {
+    const { cardForField } = await import('@/data/field-cards');
+    for (let v = 0; v < 30; v++) {
+      const c = cardForField('office', v, 'g1', undefined, { preset: 'inheritance', housing: 220_000, investments: [] })!;
+      expect(c.title).not.toMatch(/diákigazolvány|TBSZ-t|nyári munka diákként|átalányadó/);
+      const d = cardForField('office', v, 'g1', undefined, { preset: 'career_start', housing: 0, investments: [] })!;
+      expect(d.title).not.toMatch(/lakcímbejelentés/);
+    }
+  });
+});

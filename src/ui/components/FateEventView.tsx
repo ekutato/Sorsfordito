@@ -9,23 +9,19 @@ import { play } from '@/audio/sfx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF } from '@/engine/financial-calculator';
-import {
-  getScriptedFateEvents,
-  getFateEventForRound,
-  blendFateEvents,
-  convertPoolToFateEntries,
-  RENT_THRESHOLD,
-} from '@/data/decisions';
+import { RENT_THRESHOLD } from '@/data/decisions';
 import type { FateEventEntry } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
-import { TIME_SCALE_CONFIGS } from '@/types/game';
-import type { LifeSituationId } from '@/types/game';
 import type { PendingStoryline } from '@/types/financial';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
 import { adjustTopDebt } from '@/store/board-actions';
 import { EffectAmount } from '@/ui/components/Money';
+import { fateCardForRound } from '@/engine/fate-deck';
+import { withWellbeingFate } from '@/data/wellbeing-merge';
+import { FATE_MONTHS } from '@/data/fate-themes';
+import { BOARD, districtOf } from '@/data/board';
 
 type KnowledgeCheckPhase =
   | 'idle'           // Nincs tudáspróba, normál sorsfordító
@@ -55,24 +51,15 @@ export function FateEventView() {
 
   const player = game.players[game.activePlayerIndex];
 
-  // Az élethelyzethez tartozó sorsfordító események
-  // Ha van PreGameContext hír-esemény pool, összefésüljük a szkriptelt + hír-generált eseményeket
-  const lifeSituation = player.lifeSituation as LifeSituationId;
-  const fateEvents = useMemo(() => {
-    const scripted = getScriptedFateEvents(lifeSituation, game.config.timeScale);
-    const pool = game.preGameContext?.fateEventPool;
-    if (pool && pool.length > 0) {
-      const newsEntries = convertPoolToFateEntries(pool);
-      const totalRounds = TIME_SCALE_CONFIGS[game.config.timeScale].totalRounds;
-      return blendFateEvents(scripted, newsEntries, totalRounds);
-    }
-    return scripted;
-  }, [lifeSituation, game.config.timeScale, game.gameId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // A szövegekben a {{változók}} a heti élő adatokból kapják az értéküket
-  const rawFateEvent = useMemo(() => {
-    const e = getFateEventForRound(fateEvents, game.currentRound);
-    return e ? fillDeep(e) : undefined;
-  }, [fateEvents, game.currentRound]);
+  // A kör sorskártyája a dobásból (lépett negyed, Sorsfordító mező, naptár) - egyszer húzva, mentve
+  const setFateDraw = useGameStore((st) => st.setFateDraw);
+  const drawnCard = fateCardForRound(game);
+  const rawFateEvent = useMemo(
+    () => (drawnCard ? fillDeep(withWellbeingFate(drawnCard)) : undefined),
+    [drawnCard?.id], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => { if (drawnCard && game.fateDraws?.[game.currentRound] !== drawnCard.id) setFateDraw(game.currentRound, drawnCard.id); }, [drawnCard?.id, game.currentRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Feltétel-ellenőrzés: ha az eseménynek van `requires` mezője, ellenőrizzük
   const fateEvent = (() => {
@@ -709,7 +696,7 @@ export function FateEventView() {
         </motion.div>
 
         <span className={`text-xs ${config.badge} px-2 py-0.5 rounded-full`}>
-          Sorsfordító
+          Sorsfordító · {fateOrigin(game, fateEvent.id)}
         </span>
 
         {/* Hír-alapú esemény attribúció */}
@@ -954,4 +941,18 @@ function translateTarget(target: string): string {
     'wellbeing.egyensuly': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.egyensuly,
   };
   return labels[target] ?? target;
+}
+
+const MONTH_NAMES = ['január', 'február', 'március', 'április', 'május', 'június', 'július', 'augusztus', 'szeptember', 'október', 'november', 'december'];
+
+/** Honnan jött a lap: a hónap (naptári kártya), a saját történet (Sorsfordító mező) vagy a lépett negyed */
+function fateOrigin(game: NonNullable<ReturnType<typeof useGameStore.getState>['game']>, id: string): string {
+  const months = FATE_MONTHS[id.replace(/b$/, '')];
+  if (months) {
+    const m = Number(game.currentGameDate.split('-')[1]);
+    return MONTH_NAMES[(months.includes(m) ? m : months[0]) - 1];
+  }
+  const field = BOARD[game.board?.position ?? 0];
+  if (field?.type === 'fate') return 'a saját történeted';
+  return districtOf(field?.index ?? 0).label;
 }

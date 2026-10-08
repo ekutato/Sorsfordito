@@ -51,6 +51,29 @@ export interface FieldCard {
   /** Valós lépés a játékon kívül */
   realStep: string;
   sourceUrl?: string;
+  /** Csak akkor húzható, ha illik a játékos helyzetéhez (különben a pakli következő lapja jön) */
+  requires?: CardRequires;
+}
+
+export interface CardRequires {
+  /** Csak ezeknél a karaktereknél (pl. diák) */
+  presets?: string[];
+  /** Albérletben / saját lakásban él (elköltözött) */
+  rentsHome?: boolean;
+  /** Van ilyen befektetése vagy vagyontárgya */
+  hasInvestment?: string[];
+}
+
+/** A játékos helyzete a kártyák szűréséhez */
+export interface CardContext { preset: string; housing: number; investments: string[] }
+
+export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
+  const r = card.requires;
+  if (!r || !ctx) return true;
+  if (r.presets && !r.presets.includes(ctx.preset)) return false;
+  if (r.rentsHome && ctx.housing < 100_000) return false;
+  if (r.hasInvestment && !r.hasInvestment.some((id) => ctx.investments.includes(id))) return false;
+  return true;
 }
 
 export const TRAP_CARDS: FieldCard[] = [
@@ -249,16 +272,18 @@ export interface SharedDeck { seed: number; slot: number; players: number }
  * - Egyjátékos módban: a pakli játékonként (seed: a játék azonosítója) kevert, egy játékon belül nincs ismétlés.
  * - Seed nélkül a pakli eredeti sorrendje (tesztekhez).
  */
-export function cardForField(field: FieldType, visit: number, seed?: string, shared?: SharedDeck): FieldCard | undefined {
+export function cardForField(field: FieldType, visit: number, seed?: string, shared?: SharedDeck, ctx?: CardContext): FieldCard | undefined {
   const pick = (cards: FieldCard[]) => {
     if (!cards.length) return undefined;
-    if (shared) {
-      const deck = shuffle(cards, createRng(seedFromString(`asztal-${shared.seed}-${field}`)));
-      const n = Math.max(1, shared.players);
-      return deck[(visit * n + shared.slot) % deck.length];
+    const deck = shared ? shuffle(cards, createRng(seedFromString(`asztal-${shared.seed}-${field}`)))
+      : seed ? shuffle(cards, createRng(seedFromString(`${seed}-${field}`))) : cards;
+    const start = shared ? visit * Math.max(1, shared.players) + shared.slot : visit;
+    // A helyzethez nem illő lap kimarad: a pakli következő illő lapja jön
+    for (let k = 0; k < deck.length; k++) {
+      const c = deck[(start + k) % deck.length];
+      if (cardFits(c, ctx)) return c;
     }
-    const deck = seed ? shuffle(cards, createRng(seedFromString(`${seed}-${field}`))) : cards;
-    return deck[visit % deck.length];
+    return deck[start % deck.length];
   };
   switch (field) {
     case 'trap': return pick(TRAP_CARDS);

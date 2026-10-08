@@ -172,6 +172,9 @@ export interface GameState {
   /** Táblás mód (egyjátékos): bábu helyzete, dobás, mezőkártya */
   board?: SoloBoardState;
 
+  /** A körök húzott sorskártyái (kör → kártya), hogy újratöltéskor ne változzon és ne ismétlődjön */
+  fateDraws?: Record<number, string>;
+
   /** Asztali játékban: melyik fordulót jelentette késznek a játékos (a közös körzáráshoz) */
   tableDoneRound?: number;
 

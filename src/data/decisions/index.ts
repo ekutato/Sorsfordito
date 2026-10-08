@@ -736,7 +736,7 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
 // Ezek MÁS kérdések, mint a kártya-vásárláskori kvíz!
 // ============================================================================
 
-const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
+export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
   {
     id: 'fate-know-01',
     round: 0,
@@ -1280,6 +1280,22 @@ export function getDecisionForRound(
     (d) => d.availableAtRounds.includes(round) && !completedIds.includes(d.id)
       && !(d.requires?.rentsHome && housing !== undefined && housing < RENT_THRESHOLD)
   );
+}
+
+/**
+ * Döntés mezőn: ha a körnek nincs döntése, a következő esedékes (még meg nem hozott) döntés előrejön -
+ * a mező így értelmet kap, és a karakter életútja a dobással gyorsulhat.
+ */
+export function getDecisionForField(
+  decisions: DecisionCard[], round: number, completedIds: string[], housing: number | undefined, onDecisionField: boolean,
+): { decision?: DecisionCard; broughtForward: boolean } {
+  const now = getDecisionForRound(decisions, round, completedIds, housing);
+  if (now || !onDecisionField) return { decision: now, broughtForward: false };
+  const next = decisions
+    .filter((d) => !completedIds.includes(d.id) && d.availableAtRounds.some((r) => r > round)
+      && !(d.requires?.rentsHome && housing !== undefined && housing < RENT_THRESHOLD))
+    .sort((a, b) => Math.min(...a.availableAtRounds.filter((r) => r > round)) - Math.min(...b.availableAtRounds.filter((r) => r > round)))[0];
+  return { decision: next, broughtForward: !!next };
 }
 
 // --- Sorsfordító események registry ---

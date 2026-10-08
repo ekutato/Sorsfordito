@@ -213,6 +213,8 @@ interface GameStoreActions {
   processInvestmentReturns: () => void;
   processDebtPayments: () => void;
   takeFinancialSnapshot: () => void;
+  /** A kör sorskártyájának rögzítése */
+  setFateDraw: (round: number, id: string) => void;
 
   // Segédfüggvények
   getActivePlayer: () => PlayerState | undefined;
@@ -724,6 +726,9 @@ export const useGameStore = create<GameStore>()(
           }
         });
       },
+
+      setFateDraw: (round, id) =>
+        set((st) => (st.game && st.game.fateDraws?.[round] !== id ? { game: { ...st.game, fateDraws: { ...(st.game.fateDraws ?? {}), [round]: id } } } : st)),
 
       takeFinancialSnapshot: () =>
         set((state) => {

@@ -7,7 +7,8 @@ import { WellbeingReflection } from './WellbeingReflection';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF } from '@/engine/financial-calculator';
-import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
+import { getDecisionsFor, getDecisionForField } from '@/data/decisions';
+import { BOARD } from '@/data/board';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
 import { liveCurrentData } from '@/data/live';
@@ -48,7 +49,9 @@ export function DecisionView() {
     }
   }
 
-  const decision = getDecisionForRound(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing);
+  // Döntés mezőn a következő esedékes döntés előrejöhet
+  const onDecisionField = BOARD[game.board?.position ?? 0]?.type === 'decision';
+  const { decision, broughtForward } = getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField);
 
   if (!decision) {
     // Ha nincs dontes ehhez a korhoz, tovabblep
@@ -157,6 +160,7 @@ export function DecisionView() {
           <span className="text-xs bg-card-decision/20 text-card-decision px-2 py-0.5 rounded-full">
             {decision.category}
           </span>
+          {broughtForward && <span className="text-xs bg-sky-500/15 text-sky-300 px-2 py-0.5 rounded-full">Döntés mező: előrehozott döntés</span>}
         </div>
         <h3 className="font-display text-lg font-semibold mb-3">
           {replaceVars(decision.title)}
