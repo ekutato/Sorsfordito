@@ -6,12 +6,13 @@ import { liveVar } from '@/data/live/vars';
 import { WellbeingReflection } from './WellbeingReflection';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
-import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
+import { formatHUF } from '@/engine/financial-calculator';
 import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
 import { liveCurrentData } from '@/data/live';
-import { applyDecisionOption, affordableOptions, decisionCost } from '@/store/decision-finance';
+import { applyDecisionOption, affordableOptions, decisionCost, financeNotes } from '@/store/decision-finance';
+import { EffectAmount } from '@/ui/components/Money';
 
 const LIVE = liveCurrentData();
 
@@ -201,25 +202,12 @@ export function DecisionView() {
                     )}
                     {/* Penzugyi hatasok elozetese */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {option.financialEffects.map((effect, i) => {
-                        const isIncomeTarget = ['balance', 'salary'].includes(effect.target) || effect.target.startsWith('wellbeing.');
-                        const isGood = isIncomeTarget
-                          ? effect.amount >= 0
-                          : effect.amount <= 0;
-                        return (
-                          <span
-                            key={i}
-                            className={`text-[10px] px-1.5 py-0.5 rounded ${
-                              isGood
-                                ? 'bg-money-positive/10 text-money-positive'
-                                : 'bg-money-negative/10 text-money-negative'
-                            }`}
-                          >
-                            {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                            {!isIncomeTarget ? '/hó' : ''}
-                          </span>
-                        );
-                      })}
+                      {option.financialEffects.map((effect, i) => (
+                        <EffectAmount key={i} target={effect.target} amount={effect.amount} className="text-xs px-1.5 py-0.5 rounded bg-white/5" />
+                      ))}
+                      {financeNotes(option).map((n, i) => (
+                        <span key={`f${i}`} className={`text-xs px-1.5 py-0.5 rounded ${n.tone === 'bad' ? 'bg-money-negative/10 text-money-negative' : n.tone === 'good' ? 'bg-money-positive/10 text-money-positive' : 'bg-sky-500/10 text-sky-300'}`}>{n.text}</span>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -264,18 +252,7 @@ export function DecisionView() {
                     <span className="text-xs text-[var(--color-text-muted)]">
                       {effect.description || translateEffectTarget(effect.target)}
                     </span>
-                    <span className={`font-mono text-xs font-bold ${
-                      effect.amount >= 0
-                        ? effect.target === 'balance' || effect.target === 'salary' || effect.target.startsWith('wellbeing.')
-                          ? 'text-money-positive'
-                          : 'text-money-negative'
-                        : effect.target === 'balance' || effect.target === 'salary' || effect.target.startsWith('wellbeing.')
-                          ? 'text-money-negative'
-                          : 'text-money-positive'
-                    }`}>
-                      {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                      {!['balance'].includes(effect.target) && !effect.target.startsWith('wellbeing.') ? '/hó' : ''}
-                    </span>
+                    <EffectAmount target={effect.target} amount={effect.amount} className="text-xs font-bold" />
                   </div>
                 ))}
               </motion.div>

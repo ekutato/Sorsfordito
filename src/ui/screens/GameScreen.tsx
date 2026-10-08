@@ -37,6 +37,7 @@ import { useTableStore } from '@/store/table-store';
 import { displayColor } from '@/engine/table/state';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 import { planRoundIncome, planRoundExpenses } from '@/engine/round-money';
+import { MoneyDelta } from '@/ui/components/Money';
 
 
 export function GameScreen() {
@@ -215,7 +216,7 @@ function IncomeExpensePhase() {
     ? (game.eventLog ?? []).filter(
         (e) =>
           e.round === game.currentRound - 1 &&
-          (e.type === 'decision' || e.type === 'fate' || e.type === 'investment' || e.type === 'knowledge') &&
+          (e.type === 'decision' || e.type === 'fate' || e.type === 'investment' || e.type === 'knowledge' || e.type === 'field') &&
           e.financialImpact !== undefined &&
           e.financialImpact !== 0
       )
@@ -339,7 +340,7 @@ function IncomeExpensePhase() {
         )}
       </div>
       <p className="text-xs text-[var(--color-text-muted)] mb-3">
-        Egyenleg: <span className="font-mono font-semibold text-white">{formatHUF(sheet.balance)}</span>
+        Egyenleg: <span className={`font-mono font-semibold ${sheet.balance < 0 ? 'text-money-negative' : 'text-white'}`}>{formatHUF(sheet.balance)}</span>
       </p>
       {!canEditIncomeExpense && game.currentRound === 1 && (
         <p className="text-xs text-[var(--color-text-muted)] -mt-2 mb-3">
@@ -355,17 +356,12 @@ function IncomeExpensePhase() {
           </h4>
           {prevRoundEvents.map((evt, i) => {
             const amount = evt.financialImpact!;
-            const isPositive = amount > 0;
             return (
               <div key={i} className="flex items-center justify-between py-1 border-b border-white/5 last:border-0">
                 <span className="text-xs text-[var(--color-text-muted)] flex-1 pr-2">
                   {evt.description}
                 </span>
-                <span className={`font-mono text-xs font-semibold whitespace-nowrap ${
-                  isPositive ? 'text-money-positive' : 'text-money-negative'
-                }`}>
-                  {isPositive ? '+' : ''}{formatHUF(amount)}
-                </span>
+                <MoneyDelta amount={amount} className="text-xs font-semibold whitespace-nowrap" />
               </div>
             );
           })}
@@ -649,7 +645,7 @@ function InvestPhase() {
         📈 Befektetési lehetőség
       </h3>
       <p className="text-xs text-[var(--color-text-muted)] mb-3">
-        Egyenleg: <span className="font-mono font-semibold text-white">{formatHUF(balance)}</span>
+        Egyenleg: <span className={`font-mono font-semibold ${balance < 0 ? 'text-money-negative' : 'text-white'}`}>{formatHUF(balance)}</span>
       </p>
 
       {/* Sikeres vásárlás visszajelzés */}
@@ -736,8 +732,9 @@ function InvestPhase() {
                           </button>
                         )}
                       </div>
-                      <span className={`text-xs font-mono ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
-                        {formatHUF(inv.entryPrice)}
+                      <span className="text-xs font-mono text-right">
+                        <span className="text-white">Ár: {formatHUF(inv.entryPrice)}</span>
+                        {!canAfford && <span className="block text-money-negative">nincs fedezet</span>}
                       </span>
                     </div>
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -856,8 +853,9 @@ function InvestPhase() {
                   >
                     <div className="flex justify-between items-start">
                       <span className="font-semibold text-sm"><GlossaryText text={card.name} /></span>
-                      <span className={`text-xs font-mono ${card.price === 0 ? 'text-green-400' : canAfford ? 'text-green-400' : 'text-red-400'}`}>
-                        {card.price === 0 ? 'INGYENES' : formatHUF(card.price)}
+                      <span className="text-xs font-mono text-right">
+                        <span className={card.price === 0 ? 'text-money-positive' : 'text-white'}>{card.price === 0 ? 'INGYENES' : `Ár: ${formatHUF(card.price)}`}</span>
+                        {card.price > 0 && !canAfford && <span className="block text-money-negative">nincs fedezet</span>}
                       </span>
                     </div>
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">

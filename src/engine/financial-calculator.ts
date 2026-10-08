@@ -212,8 +212,10 @@ export function calculateFinancialIQ(params: {
  */
 export function formatHUF(amount: HUF): string {
   // Teljes, szóközzel tagolt összeg (pl. "2 000 000 Ft"); a tagoló nem törhető szóköz
-  const sign = amount < 0 ? '-' : '';
-  const digits = Math.round(Math.abs(amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+  // Kerekítés az előjel előtt (nincs "-0 Ft"); valódi mínuszjel
+  const rounded = Math.round(amount);
+  const sign = rounded < 0 ? '\u2212' : '';
+  const digits = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
   return `${sign}${digits}\u00A0Ft`;
 }
 

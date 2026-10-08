@@ -8,7 +8,7 @@ import { ScrollTarget } from './ScrollTarget';
 import { play } from '@/audio/sfx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
-import { formatHUF, formatEffectAmount } from '@/engine/financial-calculator';
+import { formatHUF } from '@/engine/financial-calculator';
 import {
   getScriptedFateEvents,
   getFateEventForRound,
@@ -25,6 +25,7 @@ import type { PendingStoryline } from '@/types/financial';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
 import { adjustTopDebt } from '@/store/board-actions';
+import { EffectAmount } from '@/ui/components/Money';
 
 type KnowledgeCheckPhase =
   | 'idle'           // Nincs tudáspróba, normál sorsfordító
@@ -187,11 +188,7 @@ export function FateEventView() {
                   <span className="text-xs text-[var(--color-text-muted)]">
                     {translateTarget(effect.target)}
                   </span>
-                  <span className={`font-mono text-sm font-bold ${
-                    resolution.isPositive ? 'text-money-positive' : 'text-money-negative'
-                  }`}>
-                    {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                  </span>
+                  <EffectAmount target={effect.target} amount={effect.amount} className="text-sm font-bold" />
                 </div>
               ))}
             </div>
@@ -490,9 +487,7 @@ export function FateEventView() {
                         <span className="text-xs text-[var(--color-text-muted)]">
                           {translateTarget(effect.target)}
                         </span>
-                        <span className="font-mono text-sm font-bold text-money-negative">
-                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                        </span>
+                        <EffectAmount target={effect.target} amount={effect.amount} className="text-sm font-bold" />
                       </div>
                     ))}
                   </div>
@@ -616,9 +611,7 @@ export function FateEventView() {
                         <span className="text-xs text-green-300/80">
                           {translateTarget(effect.target)}
                         </span>
-                        <span className="font-mono text-sm font-bold text-green-400">
-                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                        </span>
+                        <EffectAmount target={effect.target} amount={effect.amount} className="text-sm font-bold" />
                       </div>
                     ))}
                   </div>
@@ -633,11 +626,7 @@ export function FateEventView() {
                         <span className="text-xs text-[var(--color-text-muted)]">
                           {translateTarget(effect.target)}
                         </span>
-                        <span className={`font-mono text-xs font-bold ${
-                          effect.amount >= 0 ? 'text-money-positive' : 'text-money-negative'
-                        }`}>
-                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                        </span>
+                        <EffectAmount target={effect.target} amount={effect.amount} className="text-xs font-bold" />
                       </div>
                     ))}
                   </div>
@@ -679,9 +668,7 @@ export function FateEventView() {
                         <span className="text-xs text-[var(--color-text-muted)]">
                           {translateTarget(effect.target)}
                         </span>
-                        <span className="font-mono text-xs font-bold text-money-negative">
-                          {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                        </span>
+                        <EffectAmount target={effect.target} amount={effect.amount} className="text-xs font-bold" />
                       </div>
                     ))}
                   </div>
@@ -762,11 +749,7 @@ export function FateEventView() {
                   <span className="text-xs text-[var(--color-text-muted)]">
                     {translateTarget(effect.target)}
                   </span>
-                  <span className={`font-mono text-sm font-bold ${
-                    isGood ? 'text-money-positive' : 'text-money-negative'
-                  }`}>
-                    {effect.amount >= 0 ? '+' : ''}{formatEffectAmount(effect.target, effect.amount)}
-                  </span>
+                  <EffectAmount target={effect.target} amount={effect.amount} className="text-sm font-bold" />
                 </div>
               );
             })}
@@ -797,14 +780,16 @@ export function FateEventView() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm text-white">{option.label}</span>
-                    {hasImpact && (
-                      <span className={`font-mono text-xs font-bold ${
-                        balanceImpact > 0 ? 'text-money-positive' : 'text-money-negative'
-                      }`}>
-                        {balanceImpact > 0 ? '+' : ''}{formatHUF(balanceImpact)}
-                      </span>
-                    )}
                   </div>
+                  {option.effects.length > 0 && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                      {option.effects.map((e, j) => (
+                        <span key={j} className="text-xs text-[var(--color-text-muted)]">
+                          {translateTarget(e.target)}: <EffectAmount target={e.target} amount={e.amount} className="font-bold" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -955,14 +940,14 @@ function getStorylineResolution(storyline: PendingStoryline): {
 function translateTarget(target: string): string {
   const labels: Record<string, string> = {
     balance: 'Egyenleg',
-    salary: 'Fizetés/hó',
-    housing: 'Lakhatás/hó',
-    utilities: 'Rezsi/hó',
-    food: 'Élelmiszer/hó',
-    transport: 'Közlekedés/hó',
-    loanPayments: 'Törlesztő/hó',
-    other: 'Egyéb kiadás/hó',
-    passive: 'Passzív jövedelem/hó',
+    salary: 'Fizetés',
+    housing: 'Lakhatás',
+    utilities: 'Rezsi',
+    food: 'Élelmiszer',
+    transport: 'Közlekedés',
+    loanPayments: 'Törlesztő',
+    other: 'Egyéb kiadás',
+    passive: 'Passzív jövedelem',
     oneTime: 'Egyszeri bevétel',
     'wellbeing.eletero': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.eletero,
     'wellbeing.egeszseg': RULESETS[DEFAULT_RULESET_ID].labels.wellbeing.egeszseg,

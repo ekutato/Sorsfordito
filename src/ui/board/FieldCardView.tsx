@@ -11,6 +11,7 @@ import { FIELD_STYLE } from './fieldStyle';
 import { WellbeingReflection } from '@/ui/components/WellbeingReflection';
 import type { SubjectiveWellbeing } from '@/data/wellbeing-effects';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
+import { effectDirection, signedEffect } from '@/engine/money-sign';
 
 interface Props {
   card: FieldCard;
@@ -32,8 +33,6 @@ const TIMEOUT_OPTION: FieldOption = {
   outcome: 'Nem döntöttél időben: a hívó letette, a pénzed megmaradt, de a nyugtalanság veled marad. A sürgetés maga is vészjel - legközelebb nyugodtan szakítsd meg, és nézz utána.',
 };
 
-const isGood = (target: string, amount: number) =>
-  target === 'balance' || target === 'salary' || target.startsWith('wellbeing.') ? amount >= 0 : amount <= 0;
 
 /** Mezőkártya: csapda, kísértés, feltöltődés, találkozás, hivatal, piaci hír */
 export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_SECONDS, onChoose }: Props) {
@@ -116,7 +115,7 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
                 <span className="block font-medium">{o.label}</span>
                 {(o.effects.some((e) => !e.target.startsWith('knowledge:')) || o.reflection) && card.field !== 'trap' && (
                   <span className="flex flex-wrap gap-1.5 mt-2">
-                    {o.effects.filter((e) => !e.target.startsWith('knowledge:')).map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} />)}
+                    {o.effects.filter((e) => !e.target.startsWith('knowledge:')).map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} durationMonths={o.durationMonths} />)}
                     {o.reflection && (
                       <span className="text-sm font-semibold px-2 py-0.5 rounded-md" style={{ background: '#E6F0FA', color: '#1D4F7A' }}>
                         Jóllét: te mérlegeled
@@ -143,12 +142,13 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
   );
 }
 
-function EffectChip({ target, amount, big }: { target: string; amount: number; big?: boolean }) {
-  const good = isGood(target, amount);
+function EffectChip({ target, amount, big, durationMonths }: { target: string; amount: number; big?: boolean; durationMonths?: number }) {
+  const dir = effectDirection(target, amount);
+  const good = dir !== 'bad';
   return (
     <span className={big ? 'text-base font-bold px-3 py-1.5 rounded-lg' : 'text-sm font-semibold px-2 py-0.5 rounded-md'}
       style={{ background: good ? '#EAF5EE' : '#FBEAE7', color: good ? '#1F7A4D' : '#A8332A' }}>
-      {amount >= 0 ? '+' : ''}{formatEffectAmount(target, amount)}
+      {signedEffect(target, amount, { durationMonths })}
     </span>
   );
 }

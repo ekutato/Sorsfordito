@@ -6,6 +6,7 @@ import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
 import { useGameStore } from '@/store/game-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { WellbeingStrip, WellbeingMini } from './WellbeingStrip';
+import { signedHUF } from '@/engine/money-sign';
 
 interface Props {
   sheet: FinancialSheet;
@@ -82,7 +83,7 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
             {isMultiMonth ? `📈 Bevétel/kör (${months} hó)` : '📈 Bevétel/hó'}
           </span>
           <span className="font-mono text-sm font-semibold text-money-positive">
-            {formatHUF(isMultiMonth ? computed.totalIncome * months : computed.totalIncome)}
+            +{formatHUF(isMultiMonth ? computed.totalIncome * months : computed.totalIncome)}
           </span>
           {isMultiMonth && (
             <span className="text-[10px] text-money-positive/60 block mt-0.5">
@@ -95,11 +96,11 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
             {isMultiMonth ? `📉 Kiadás/kör (${months} hó)` : '📉 Kiadás/hó'}
           </span>
           <span className="font-mono text-sm font-semibold text-money-negative">
-            {formatHUF(isMultiMonth ? computed.totalExpenses * months : computed.totalExpenses)}
+            {formatHUF(-(isMultiMonth ? computed.totalExpenses * months : computed.totalExpenses))}
           </span>
           {isMultiMonth && (
             <span className="text-[10px] text-money-negative/60 block mt-0.5">
-              {formatHUF(computed.totalExpenses)}/hó
+              {formatHUF(-computed.totalExpenses)}/hó
             </span>
           )}
         </div>
@@ -109,7 +110,7 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
       <div className="grid grid-cols-3 gap-2 text-center">
         <MiniStat
           label={isMultiMonth ? `Szabad/kör` : 'Szabad/hó'}
-          value={formatHUF(isMultiMonth ? computed.freeCashflow * months : computed.freeCashflow)}
+          value={signedHUF(isMultiMonth ? computed.freeCashflow * months : computed.freeCashflow)}
           color={getAmountColor(computed.freeCashflow)}
           subLabel={isMultiMonth ? `${formatHUF(computed.freeCashflow)}/hó` : undefined}
         />
@@ -118,11 +119,9 @@ export function FinancialDashboard({ sheet, compact = false }: Props) {
           value={formatHUF(computed.netWorth)}
           color={getAmountColor(computed.netWorth)}
           subLabel={
-            computed.totalDebt > 0
-              ? `${formatHUF(balance)} egyenleg − ${formatHUF(computed.totalDebt)} adósság`
-              : sheet.investments.length > 0
-                ? `${formatHUF(balance)} + ${sheet.investments.length} befektetés`
-                : undefined
+            computed.totalDebt > 0 || sheet.investments.length > 0
+              ? `${formatHUF(balance)} egyenleg${computed.investmentValue > 0 ? ` + ${formatHUF(computed.investmentValue)} befektetés` : ''}${computed.totalDebt > 0 ? ` \u2212 ${formatHUF(computed.totalDebt)} adósság` : ''}`
+              : undefined
           }
         />
         <MiniStat

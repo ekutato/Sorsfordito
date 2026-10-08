@@ -3,7 +3,8 @@
 import { useGameStore } from './game-store';
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { monthlyInvestmentIncome, investmentTarget } from '@/engine/investment-income';
-import { makeDebt } from '@/engine/loans';
+import { makeDebt, resolveLoan } from '@/engine/loans';
+import { formatHUF } from '@/engine/financial-calculator';
 import { TIME_SCALE_CONFIGS, type DecisionCard, type DecisionOption } from '@/types/game';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { adjustTopDebt, scheduleEffect } from './board-actions';
@@ -143,4 +144,20 @@ export function affordableOptions(options: DecisionOption[], balance: number): S
   if (ok.length) return new Set(ok.map((o) => o.id));
   const cheapest = [...options].sort((a, b) => decisionCost(a) - decisionCost(b))[0];
   return new Set(cheapest ? [cheapest.id] : []);
+}
+
+/** A döntés pénzügyi szerkezete röviden (előnézethez): befektetés, hitel, előtörlesztés, vagyontárgy */
+export function financeNotes(option: DecisionOption): Array<{ text: string; tone: 'info' | 'bad' | 'good' }> {
+  const out: Array<{ text: string; tone: 'info' | 'bad' | 'good' }> = [];
+  for (const i of option.invests ?? []) {
+    out.push({ text: `Befektetés: ${INVESTMENT_OPTIONS.find((o) => o.id === i.optionId)?.name ?? i.optionId}, ${formatHUF(i.amount)}`, tone: 'info' });
+  }
+  if (option.takesLoan) {
+    const l = resolveLoan(option.takesLoan);
+    out.push({ text: `Hitel: ${formatHUF(l.principal)}, ${l.ratePct.toLocaleString('hu-HU')}%, törlesztő ${formatHUF(l.monthlyPayment)}/hó`, tone: 'bad' });
+  }
+  if (option.acquiresAsset) out.push({ text: `Vagyontárgy: ${option.acquiresAsset.name}`, tone: 'info' });
+  if (option.paysOffLoan) out.push({ text: option.paysOffLoan.amount ? `Előtörlesztés: ${formatHUF(option.paysOffLoan.amount)}` : 'Végtörlesztés: a hitel megszűnik', tone: 'good' });
+  if (option.adjustsLoan) out.push({ text: `Hitelkiváltás: törlesztő ${option.adjustsLoan.paymentDelta < 0 ? '\u2212' : '+'}${formatHUF(Math.abs(option.adjustsLoan.paymentDelta))}/hó`, tone: 'good' });
+  return out;
 }

@@ -264,7 +264,7 @@ export function EpilogueScreen() {
       {/* Pénz: befektetések nélkül és befektetésekkel, egymás mellett */}
       <div className="game-card">
         <h3 className="font-display text-lg font-semibold mb-3">💼 Mit hoztak a befektetéseid?</h3>
-        <EndMoneyComparison sheet={sheet} />
+        <EndMoneyComparison game={game} />
       </div>
 
       {/* Penzugyi osszesites */}
@@ -296,7 +296,7 @@ export function EpilogueScreen() {
           />
           <StatRow
             label="Havi kiadás"
-            value={formatHUF(sheet.computed.totalExpenses)}
+            value={formatHUF(-sheet.computed.totalExpenses)}
             isPositive={false}
           />
           <StatRow

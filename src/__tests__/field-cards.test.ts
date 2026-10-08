@@ -83,7 +83,8 @@ describe('formatHUF', () => {
   it('teljes, szóközzel tagolt magyar alak', async () => {
     const { formatHUF } = await import('@/engine/financial-calculator');
     expect(formatHUF(2_000_000)).toBe('2 000 000 Ft');
-    expect(formatHUF(-150_000)).toBe('-150 000 Ft');
+    expect(formatHUF(-150_000)).toBe('−150 000 Ft');
+    expect(formatHUF(-0.4)).toBe('0 Ft');
     expect(formatHUF(950)).toBe('950 Ft');
   });
 });
@@ -115,5 +116,20 @@ describe('közös asztali pakli', () => {
   });
   it('legalább 10 lap minden mezőtípusból (10 fős garancia)', () => {
     for (const [type, deck] of TYPES) expect(deck.length, type).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe('előjel és szín iránya', () => {
+  it('a kiadás növekedése rossz, a bevétel növekedése jó; havi tételnél /hó', async () => {
+    const { effectDirection, signedEffect } = await import('@/engine/money-sign');
+    expect(effectDirection('housing', 20_000)).toBe('bad');
+    expect(effectDirection('loanPayments', -5_000)).toBe('good');
+    expect(effectDirection('balance', -1)).toBe('bad');
+    expect(effectDirection('salary', 50_000)).toBe('good');
+    expect(effectDirection('passive', 0)).toBe('neutral');
+    expect(effectDirection('wellbeing.egeszseg', -1)).toBe('bad');
+    expect(signedEffect('salary', 50_000)).toBe('+50 000 Ft/hó');
+    expect(signedEffect('balance', -1_000)).toBe('−1 000 Ft');
+    expect(signedEffect('food', -10_000, { durationMonths: 3 })).toBe('−10 000 Ft/hó (3 hónapig)');
   });
 });

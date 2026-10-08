@@ -5,7 +5,8 @@ import { useGameStore } from '@/store/game-store';
 import { useTableStore } from '@/store/table-store';
 import { isCatchingUp } from '@/engine/table/state';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
-import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
+import { formatHUF } from '@/engine/financial-calculator';
+import { MoneyDelta } from '@/ui/components/Money';
 import { BalanceHighlight, InvestmentTable } from './MoneyOverview';
 
 export function RoundSummaryView() {
@@ -64,8 +65,8 @@ export function RoundSummaryView() {
           {formatGameDate(game.currentGameDate)}
         </p>
 
-        <div className={`money-display text-2xl mt-3 ${getAmountColor(totalImpact)}`}>
-          {totalImpact >= 0 ? '+' : ''}{formatHUF(totalImpact)}
+        <div className="money-display text-2xl mt-3">
+          <MoneyDelta amount={totalImpact} />
         </div>
         <span className="text-xs text-[var(--color-text-muted)]">
           Összesített hatás
@@ -111,9 +112,7 @@ export function RoundSummaryView() {
                 </span>
               </div>
               {event.financialImpact !== undefined && event.financialImpact !== 0 && (
-                <span className={`font-mono text-xs font-semibold ${getAmountColor(event.financialImpact)}`}>
-                  {event.financialImpact >= 0 ? '+' : ''}{formatHUF(event.financialImpact)}
-                </span>
+                <MoneyDelta amount={event.financialImpact} className="text-xs font-semibold" />
               )}
             </motion.div>
           ))}

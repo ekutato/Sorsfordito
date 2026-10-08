@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useGameStore } from '@/store/game-store';
 import { rollBoard, resolveFieldCard, acknowledgeOutcome } from '@/store/board-actions';
 import { applyDecisionOption } from '@/store/decision-finance';
+import { endSummary } from '@/engine/end-summary';
 import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
 import { cardForField, canAfford } from '@/data/field-cards';
 import { BOARD } from '@/data/board';
@@ -45,6 +46,12 @@ function playGame(preset: LifeSituationId, timeScale: TimeScale, pick: number) {
     st.takeFinancialSnapshot();
     st.advanceRound();
   }
+  // A játék végi kimutatás egyezik: kezdő tőke + tételek = egyenleg; egyenleg + befektetés + vagyontárgy − tartozás = nettó vagyon
+  const sum = endSummary(useGameStore.getState().game!);
+  const cash = sum.startBalance + sum.cashLines.reduce((a, l) => a + l.amount, 0);
+  if (Math.round(cash) !== Math.round(sum.balance)) problems.push(`${preset}/${timeScale} végső kimutatás: ${cash} ≠ ${sum.balance}`);
+  const nw = sum.balance + sum.investmentsValue + sum.assets.reduce((a, x) => a + x.value, 0) - sum.debts.reduce((a, d) => a + d.remaining, 0);
+  if (Math.round(nw) !== Math.round(sum.netWorth)) problems.push(`${preset}/${timeScale} végső nettó vagyon: ${nw} ≠ ${sum.netWorth}`);
   const log = useGameStore.getState().game!.eventLog;
   stats.decisions += log.filter((e) => e.type === 'decision' && e.details?.decisionCardId).length;
   stats.field += log.filter((e) => e.type === 'field').length;
