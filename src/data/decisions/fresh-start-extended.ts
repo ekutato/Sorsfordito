@@ -24,6 +24,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
 
   {
     id: 'fs-ext-01',
+    requires: { chose: ['fs-d01-a'] },
     category: 'Pályaválasztás',
     title: 'Egyetem befejezése',
     situation:

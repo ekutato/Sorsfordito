@@ -140,7 +140,7 @@ describe('Pályakezdő lakhatási döntés: nincs dupla költség', () => {
   });
 
   it('albérletes döntés otthon lakónak nem jön; a kiadás nem mehet 0 alá', () => {
-    const fake = [{ id: 'x', availableAtRounds: [3], requires: { rentsHome: true } }, { id: 'y', availableAtRounds: [3] }] as never;
+    const fake = [{ id: 'x', availableAtRounds: [3], options: [{ id: 'x-a' }], requires: { rentsHome: true } }, { id: 'y', availableAtRounds: [3], options: [{ id: 'y-a' }] }] as never;
     expect(getDecisionForRound(fake, 3, [], 40_000)!.id).toBe('y');
     expect(getDecisionForRound(fake, 3, [], 260_000)!.id).toBe('x');
     useGameStore.getState().startNewGame({ timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'career_start', 'Teszt');

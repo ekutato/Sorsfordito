@@ -272,6 +272,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
     options: [
       {
         id: 'fs-d05-a',
+        requires: { chose: ['fs-d01-a', 'fs-d01-b'] },
         label: 'Kollégiumba költözöl',
         description:
           'Kollégiumi díj: ~25-40 000 Ft/hó (egyetemistáknak olcsó). ' +
@@ -465,7 +466,7 @@ export const FRESH_START_SCRIPTED_FATE_EVENTS = [
     type: 'negative' as const, effects: [{ target: 'balance', amount: -35_000 }],
   },
   {
-    id: 'fate-fs-03', round: 3, title: 'Ösztöndíj-bónusz',
+    id: 'fate-fs-03', round: 3, requires: { chose: ['fs-d01-a', 'fs-d01-b'] }, title: 'Ösztöndíj-bónusz',
     description: 'Kiemelkedő félév! Extra tanulmányi jutalom: +40 000 Ft.',
     type: 'positive' as const, effects: [{ target: 'balance', amount: 40_000 }],
   },

@@ -17,6 +17,7 @@ import { DANI_EXTENDED_DECISIONS } from './dani-extended';
 import { FRESH_START_EXTENDED_DECISIONS } from './fresh-start-extended';
 import { INHERITANCE_EXTENDED_DECISIONS } from './inheritance-extended';
 import { liveConditionHolds, type LiveCondition } from '@/data/live/vars';
+import { isEmployed } from '@/engine/employment';
 
 // Re-export az egyedi fájlokból
 export { DANI_DECISIONS_SPRINT, DANI_SCRIPTED_FATE_EVENTS } from './dani-sprint';
@@ -100,6 +101,7 @@ function mapFateEventsToScale(
 export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
   {
     id: 'gen-career-review',
+    requires: { employed: true },
     category: 'Karrier',
     title: 'Karrierváltás?',
     situation:
@@ -1274,16 +1276,29 @@ export function getDecisionsFor(
 export const RENT_THRESHOLD = 100_000;
 
 /** A játékos helyzete a döntések szűréséhez: korábbi választások, fennálló tartozások */
-export interface DecisionContext { chosen?: string[]; debtTypes?: string[] }
+export interface DecisionContext { chosen?: string[]; debtTypes?: string[]; salary?: number }
+
+/** Választható-e az opció a játékos ágán (pl. kollégium csak tanulónak) */
+export function optionFits(o: DecisionCard['options'][number], ctx?: DecisionContext): boolean {
+  const c = o.requires?.chose;
+  return !c || !ctx?.chosen || c.some((id) => ctx.chosen!.includes(id));
+}
+
+/** A döntés játékosra illő opciói */
+export function fittingOptions(d: DecisionCard, ctx?: DecisionContext): DecisionCard['options'] {
+  return d.options.filter((o) => optionFits(o, ctx));
+}
 
 /** Illik-e a döntés a játékos ágához és helyzetéhez */
 export function decisionFits(d: DecisionCard, housing?: number, ctx?: DecisionContext): boolean {
+  if (fittingOptions(d, ctx).length === 0) return false;
   const r = d.requires;
   if (!r) return true;
   if (r.rentsHome && housing !== undefined && housing < RENT_THRESHOLD) return false;
   if (r.livesHome && housing !== undefined && housing >= RENT_THRESHOLD) return false;
   if (r.chose && ctx?.chosen && !r.chose.some((id) => ctx.chosen!.includes(id))) return false;
   if (r.hasDebtType && ctx?.debtTypes && !ctx.debtTypes.includes(r.hasDebtType)) return false;
+  if (r.employed && ctx?.salary !== undefined && !isEmployed(ctx.salary)) return false;
   return true;
 }
 
@@ -1341,6 +1356,8 @@ export type FateEventEntry = {
     hasSalary?: boolean;
     /** Munkaviszonya van (munkáltatói juttatás, munkahelyi helyzet) - engine/employment.ts */
     employed?: boolean;
+    /** Csak akkor, ha korábban ezek egyikét választotta (ág, pl. tanul) */
+    chose?: string[];
     /** Játékosnak van magas közlekedési kiadása (autó-proxy: transport >= 25000) */
     hasHighTransport?: boolean;
     /** Albérletben lakik (lakhatási kiadás >= 100 000 Ft/hó; otthon lakva csak hozzájárulás van) */

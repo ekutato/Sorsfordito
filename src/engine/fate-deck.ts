@@ -31,12 +31,14 @@ export interface DrawInput {
   drawn: string[];
   sheet: Pick<FinancialSheet, 'income' | 'expenses' | 'acquiredKnowledge'>;
   seed: string;
+  /** Korábban választott döntési opciók (ág szerinti szűréshez) */
+  chosen?: string[];
 }
 
 /** A feltételes párok közös kulcsa (fate-dani-02 és fate-dani-02b ugyanaz a kártya) */
 export const groupKey = (e: Pick<FateEventEntry, 'id'>) => e.id.replace(/b$/, '');
 
-function fits(e: FateEventEntry, sheet: DrawInput['sheet']): boolean {
+function fits(e: FateEventEntry, sheet: DrawInput['sheet'], chosen?: string[]): boolean {
   // A hatásból adódó feltétel: lakbér csak albérlőt, fizetés csak keresőt érint
   const rents = sheet.expenses.housing >= RENT_THRESHOLD_FATE;
   if (!rents && e.effects.some((x) => x.target === 'housing' && x.amount > 0)) return false;
@@ -45,6 +47,7 @@ function fits(e: FateEventEntry, sheet: DrawInput['sheet']): boolean {
   if (!r) return true;
   if (r.hasSalary && sheet.income.salary <= 0) return false;
   if (r.employed && !isEmployed(sheet.income.salary)) return false;
+  if (r.chose && !(chosen ?? []).some((id) => r.chose!.includes(id))) return false;
   if (r.hasHighTransport && sheet.expenses.transport < 25_000) return false;
   if (r.rentsHome && sheet.expenses.housing < RENT_THRESHOLD_FATE) return false;
   return true;
@@ -63,7 +66,7 @@ function groups(list: FateEventEntry[]): FateEventEntry[] {
 
 export function drawFateCard(i: DrawInput): FateEventEntry | undefined {
   const drawn = new Set(i.drawn.map((d) => d.replace(/b$/, '')));
-  const ok = (e: FateEventEntry) => !drawn.has(groupKey(e)) && fits(e, i.sheet);
+  const ok = (e: FateEventEntry) => !drawn.has(groupKey(e)) && fits(e, i.sheet, i.chosen);
   const scripted = groups(i.pool.scripted).filter(ok).sort((a, b) => a.round - b.round);
   const owned = new Set(i.sheet.acquiredKnowledge);
   const quiz = groups(i.pool.knowledge).filter(ok)
@@ -125,5 +128,6 @@ export function fateCardForRound(game: GameState): FateEventEntry | undefined {
     pool, months: roundMonths(game.config.startDate, game.currentRound, ts.monthsPerRound),
     district: field?.district, onFateField: field?.type === 'fate', drawn,
     sheet: game.players[game.activePlayerIndex].financialSheet, seed: game.gameId,
+    chosen: game.eventLog.map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x),
   });
 }

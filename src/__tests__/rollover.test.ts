@@ -5,7 +5,7 @@ import { useGameStore } from '@/store/game-store';
 import { rollBoard, resolveFieldCard, acknowledgeOutcome } from '@/store/board-actions';
 import { applyDecisionOption } from '@/store/decision-finance';
 import { endSummary } from '@/engine/end-summary';
-import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
+import { getDecisionsFor, getDecisionForRound, fittingOptions } from '@/data/decisions';
 import { cardForField, canAfford } from '@/data/field-cards';
 import { BOARD } from '@/data/board';
 import { DEFAULT_RULES, TIME_SCALE_CONFIGS, type LifeSituationId, type TimeScale } from '@/types/game';
@@ -36,7 +36,10 @@ function playGame(preset: LifeSituationId, timeScale: TimeScale, pick: number) {
     const done = useGameStore.getState().game!.eventLog.map((e) => e.details?.decisionCardId).filter(Boolean) as string[];
     const chosen = useGameStore.getState().game!.eventLog.map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x);
     const d = getDecisionForRound(decisions, r, done, sheetOf().expenses.housing, { chosen, debtTypes: sheetOf().debts.map((x) => x.type) });
-    if (d) applyDecisionOption(d, d.options[(r + pick) % d.options.length]);
+    if (d) {
+      const opts = fittingOptions(d, { chosen, debtTypes: sheetOf().debts.map((x) => x.type) });
+      applyDecisionOption(d, opts[(r + pick) % opts.length]);
+    }
     const after = sheetOf().balance;
     const logged = roundImpact(r);
     if (Math.round(after - before) !== Math.round(logged)) problems.push(`${preset}/${timeScale} ${r}. kör: egyenleg ${after - before}, napló ${logged}`);
@@ -164,4 +167,42 @@ describe('döntési ágak: a döntés a korábbi választáshoz és a helyzethez
     expect(getDecisionForRound(d, 3, ['inh-d01'], 220_000, { chosen: ['inh-d01-a'], debtTypes: [] })?.id).not.toBe('inh-d02');
     expect(getDecisionForRound(d, 3, ['inh-d01'], 220_000, { chosen: ['inh-d01-b'], debtTypes: ['personal_loan'] })?.id).toBe('inh-d02');
   });
+});
+
+describe('Zsófi ágai: szakma és munka mellett nincs egyetemi tartalom', () => {
+  for (const first of ['fs-d01-b', 'fs-d01-c']) {
+    for (const ts of ['sprint', 'marathon'] as TimeScale[]) {
+      it(`${first} / ${ts}`, async () => {
+        const { drawFateCard, fatePoolFor } = await import('@/engine/fate-deck');
+        useGameStore.getState().resetGame();
+        useGameStore.getState().startNewGame({ timeScale: ts, mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'fresh_start', 'Teszt');
+        const decisions = getDecisionsFor('fresh_start', ts);
+        const seen: string[] = []; const fateIds: string[] = []; const drawn: string[] = [];
+        const districts = ['munkahely', 'bankutca', 'tozsde', 'piacter', 'hivatal', 'kozossegi-ter'] as const;
+        for (let r = 1; r <= TIME_SCALE_CONFIGS[ts].totalRounds; r++) {
+          const log = useGameStore.getState().game!.eventLog;
+          const chosen = log.map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x);
+          const done = log.map((e) => e.details?.decisionCardId as string | undefined).filter((x): x is string => !!x);
+          const ctx = { chosen, debtTypes: sheetOf().debts.map((x) => x.type), salary: sheetOf().income.salary };
+          const d = getDecisionForRound(decisions, r, done, sheetOf().expenses.housing, ctx);
+          if (d) {
+            const opts = fittingOptions(d, ctx);
+            seen.push(d.id, d.title, d.situation, ...opts.map((o) => `${o.label} ${o.description}`));
+            applyDecisionOption(d, d.options.find((o) => o.id === first) ?? opts[opts.length - 1]);
+          }
+          const g = useGameStore.getState().game!;
+          const e = drawFateCard({ pool: fatePoolFor(g), months: [((r + 8) % 12) + 1], district: districts[r % 6], onFateField: r % 4 === 0, drawn, sheet: sheetOf(), seed: 'zs', chosen });
+          if (e) { drawn.push(e.id); fateIds.push(e.id); seen.push(e.title, e.description); }
+          useGameStore.getState().advanceRound();
+        }
+        const text = seen.join(' | ');
+        const bad = first === 'fs-d01-c' ? /egyetemista vagy|Egyetem befejezése|Kollégiumba költözöl/i : /egyetemista vagy|Egyetem befejezése/i;
+        expect(text).not.toMatch(/hónapja dolgozol a jelenlegi munkádban/);
+        expect(text.match(bad)?.[0], text.slice(Math.max(0, (text.search(bad)) - 200), text.search(bad) + 60)).toBeUndefined();
+        expect(seen).not.toContain('fs-d03');
+        expect(seen).not.toContain('fs-ext-01');
+        if (first === 'fs-d01-c') expect(fateIds).not.toContain('fate-fs-03');
+      });
+    }
+  }
 });

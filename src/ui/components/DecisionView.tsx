@@ -7,7 +7,7 @@ import { WellbeingReflection } from './WellbeingReflection';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { formatHUF } from '@/engine/financial-calculator';
-import { getDecisionsFor, getDecisionForField } from '@/data/decisions';
+import { getDecisionsFor, getDecisionForField, fittingOptions } from '@/data/decisions';
 import { BOARD } from '@/data/board';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
@@ -51,6 +51,12 @@ export function DecisionView() {
     }
   }
 
+  // A játékos ága és helyzete: korábbi választások, fennálló tartozások
+  const decisionCtx = {
+    chosen: (game.eventLog ?? []).map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x),
+    debtTypes: player.financialSheet.debts.map((d) => d.type),
+    salary: player.financialSheet.income.salary,
+  };
   // Körönként egy döntés: ha ebben a körben már döntöttél, az marad a képernyőn (a "Tudtad?" panellel)
   const decidedNow = (game.eventLog ?? []).find((e) => e.type === 'decision' && e.round === game.currentRound && e.details?.decisionCardId);
   const decidedCard = decidedNow ? decisions.find((d) => d.id === decidedNow.details!.decisionCardId) : undefined;
@@ -58,10 +64,7 @@ export function DecisionView() {
   const onDecisionField = BOARD[game.board?.position ?? 0]?.type === 'decision';
   const found = decidedCard
     ? { decision: decidedCard, broughtForward: !decidedCard.availableAtRounds.includes(game.currentRound) }
-    : getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField, {
-        chosen: (game.eventLog ?? []).map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x),
-        debtTypes: player.financialSheet.debts.map((d) => d.type),
-      });
+    : getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField, decisionCtx);
   const { decision, broughtForward } = found;
   // Újratöltés után is a meghozott döntés látszik (nem lehet kétszer dönteni)
   const chosenId = selectedOptionId ?? (decidedNow?.details?.optionId as string | undefined) ?? null;
@@ -145,7 +148,9 @@ export function DecisionView() {
   };
 
   const situationText = replaceVars(decision.situation);
-  const affordable = affordableOptions(decision.options, player.financialSheet.balance);
+  // Csak az ágadhoz illő opciók látszanak (pl. kollégium csak tanulónak)
+  const shownOptions = fittingOptions(decision, decisionCtx);
+  const affordable = affordableOptions(shownOptions, player.financialSheet.balance);
 
   const handleSelect = (option: DecisionOption) => {
     if (decidedNow || chosenId) return; // körönként egy döntés
@@ -187,7 +192,7 @@ export function DecisionView() {
         {!chosenId && (
           <div className="space-y-2 border-t border-white/10 pt-3">
             <p className="text-xs text-brand-400 font-semibold mb-1">Válassz:</p>
-            {decision.options.map((option, index) => {
+            {shownOptions.map((option, index) => {
               const can = affordable.has(option.id);
               const cost = decisionCost(option);
               return (

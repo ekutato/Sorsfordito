@@ -295,6 +295,8 @@ export interface DecisionCard {
     chose?: string[];
     /** Csak ha van ilyen típusú tartozása */
     hasDebtType?: string;
+    /** Munkaviszonya van (engine/employment.ts) */
+    employed?: boolean;
   };
   availableAtRounds: number[];
 
@@ -340,6 +342,9 @@ export interface DecisionOption {
 
   /** Hitel módosítása (pl. kiváltás: alacsonyabb törlesztő) */
   adjustsLoan?: { type?: DebtType; paymentDelta: HUF; ratePct?: number };
+
+  /** Csak akkor választható, ha korábban ezek egyikét választotta (pl. kollégium: tanuló) */
+  requires?: { chose?: string[] };
 
   /** Tartós vagyontárgy (lakás, autó, üzletrész): a nettó vagyonban szerepel */
   acquiresAsset?: {
