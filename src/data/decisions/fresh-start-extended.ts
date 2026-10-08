@@ -185,11 +185,12 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
           'Önerő: ~500 000 Ft, havi törlesztő: ~100 000 Ft. Saját lakás – de hosszú elköteleződés.',
         financialEffects: [
           { target: 'balance', amount: -500_000, description: 'Önerő (CSOK Plusz)' },
-          { target: 'loanPayments', amount: 100_000, description: 'Lakáshitel törlesztő (CSOK Plusz)' },
         ],
         didYouKnow:
           'A CSOK Plusz 2024-től elérhető: max 3% kamat, 1 gyermeknél 15M, 2-nél 30M, 3-nál 50M Ft hitel. ' +
           '2. gyerektől 10M Ft tartozáselengedés! Feltétel: házasság, nő max 40 év, 2 év TB.',
+        takesLoan: { name: 'CSOK Plusz lakáshitel', type: 'mortgage', principal: 15_000_000, monthlyPayment: 100_000, ratePct: 3 },
+        acquiresAsset: { id: 'lakas', name: 'Saját lakás (vételár)', value: 500_000, plusLoanPrincipal: true },
       },
       {
         id: 'fs-ext-03-c',

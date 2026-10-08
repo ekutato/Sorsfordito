@@ -37,15 +37,12 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Igénybe veszed a Babaváró hitelt (max 11M Ft, 0% kamat, ha 5 éven belül gyerek születik). ' +
           'GYED alatt (első 2 év) a fizetésed 70%-át kapod, utána GYES (nyugdíjminimum). A támogatás óriási.',
-        financialEffects: [
-          { target: 'balance', amount: 11_000_000, description: 'Babaváró hitel folyósítás (0% kamat feltételekkel)' },
-          { target: 'loanPayments', amount: 0, description: 'Babaváró törlesztő (0% ha 5 éven belül gyerek)' },
-          { target: 'salary', amount: -126_000, description: 'GYED alatti jövedelemcsökkenés (420K → ~294K GYED, átmeneti)' },
-        ],
+        financialEffects: [],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 294_000, durationRounds: 4, description: 'GYED ellátás (fizetés 70%-a, felső határral)' },
+          { target: 'salary', monthlyAmount: -126_000, durationRounds: -1, durationMonths: 24, description: 'GYED alatti jövedelemcsökkenés (420K → ~294K GYED, 2 évig)' },
         ],
         didYouKnow: 'GYED (első 2 év): a korábbi fizetésed 70%-a, legfeljebb a minimálbér ({{min_wage}} Ft) kétszeresének 70%-a (bruttó). GYES (2 éves kor után, 3 éves korig): a nyugdíjminimum, 28 500 Ft/hó. A Babaváró feltétele: házasság, nő max 40 év, 3 év TB jogviszony.',
+        takesLoan: { name: 'Babaváró kölcsön (szüneteltetett törlesztés)', type: 'baby_loan', principal: 11_000_000, monthlyPayment: 0, ratePct: 0, disburse: true },
       },
       {
         id: 'inh-ext-01-b',
@@ -111,7 +108,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -500_000, description: 'Ingatlan rendberakása bérbeadáshoz' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 130_000, durationRounds: -1, description: 'Hosszú távú bérleti díj bevétel' },
+          { target: 'passive', monthlyAmount: 130_000, durationRounds: -1, description: 'Hosszú távú bérleti díj bevétel' },
         ],
         didYouKnow: 'A bérbeadásból származó jövedelemre 15% SZJA-t kell fizetni. Választhatsz tételes költségelszámolást (amortizáció, javítás) vagy 10%-os átalány költséghányadot.',
       },
@@ -125,7 +122,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -6_000_000, description: 'Apartmanház építés/fejlesztés' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 250_000, durationRounds: -1, description: 'Apartmanház bérleti díj bevétel (3 lakás)' },
+          { target: 'passive', monthlyAmount: 250_000, durationRounds: -1, description: 'Apartmanház bérleti díj bevétel (3 lakás)' },
         ],
         didYouKnow: 'Több lakás bérbeadása esetén az adóhatóság megítélheti, hogy rendszeres gazdasági tevékenységet végzel – ilyenkor egyéni vállalkozói regisztráció szükséges.',
       },
@@ -158,10 +155,10 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           'Biztonságra játszol: különböző lejáratú magyar államkötvények (kötvénylétra) + PMÁP. ' +
           'Kiszámítható hozam, alacsony kockázat. 1.5M Ft átcsoportosítás.',
         financialEffects: [
-          { target: 'balance', amount: -1_500_000, description: 'Konzervatív portfólió átrendezés' },
         ],
         unlocksInvestment: ['inv-bond-ladder', 'inv-pmap'],
         didYouKnow: 'A kötvénylétra stratégia lényege: különböző lejáratú kötvényeket veszel (1, 3, 5 év), így mindig van, ami lejár, és újra befektetheted az aktuális kamaton.',
+        invests: [{ optionId: 'inv-bond-ladder', amount: 750_000 }, { optionId: 'inv-pmap', amount: 750_000 }],
       },
       {
         id: 'inh-ext-03-b',
@@ -170,10 +167,10 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           'A meglévő mix jól működik, de bővíted osztalékfizető részvényekkel. ' +
           '500 000 Ft új befektetés. Negyedéves osztalék = mini passzív jövedelem.',
         financialEffects: [
-          { target: 'balance', amount: -500_000, description: 'Osztalékrészvény vásárlás' },
         ],
         unlocksInvestment: ['inv-dividend-stock'],
         didYouKnow: 'A rendszeres portfólió-újrasúlyozás (rebalancing) évi 0.5-1%-kal javíthatja a hozamot. Ha egy eszköz aránya eltér a célsúlytól 5%-nál többel, ideje átrendezni.',
+        invests: [{ optionId: 'inv-dividend-stock', amount: 500_000 }],
       },
       {
         id: 'inh-ext-03-c',
@@ -182,10 +179,10 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           'A magyar piac kicsi és koncentrált. Globális ETF-ek (S&P 500, MSCI World) + ' +
           'EUR megtakarítás: 1M Ft. Védelem a forint gyengülés ellen.',
         financialEffects: [
-          { target: 'balance', amount: -1_000_000, description: 'Nemzetközi portfólió diverzifikáció' },
         ],
         unlocksInvestment: ['inv-tbsz-etf', 'inv-forex-eur'],
         didYouKnow: 'A devizadiverzifikáció fontos: a forint hosszú távon inkább gyengült az euróhoz képest (most {{eur_huf}} Ft/EUR), de évről évre mindkét irányba mozoghat. EUR vagy USD eszközök természetes védelmet adnak.',
+        invests: [{ optionId: 'inv-tbsz-etf', amount: 500_000 }, { optionId: 'inv-forex-eur', amount: 500_000 }],
       },
     ],
     characterPresets: ['inheritance'],
@@ -243,7 +240,7 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'salary', amount: -150_000, description: 'Részmunkaidő miatti fizetéscsökkenés' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 80_000, durationRounds: -1, description: 'Aktív befektetéskezelés hozama' },
+          { target: 'passive', monthlyAmount: 80_000, durationRounds: -1, description: 'Aktív befektetéskezelés hozama' },
         ],
         didYouKnow: 'A 4 napos munkahét kísérletei világszerte pozitív eredményeket mutattak: a termelékenység nem csökkent, a kiégés viszont jelentősen mérséklődött (2022-es brit kísérlet).',
       },

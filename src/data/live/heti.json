@@ -267,6 +267,18 @@
       "source": "MNB kamatstatisztika, 2026. augusztus: áruhitelek átlagos THM-je - autóhitel-közelítésként, játékvezetői döntés (2026.10.06.)",
       "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf"
     },
+    "bank.mortgageThm": {
+      "value": 7.27,
+      "unit": "% THM",
+      "asOf": "2026-08",
+      "verified": true,
+      "source": "MNB kamatstatisztika, 2026. augusztus: lakáscélú hitelek átlagos hitelköltség-mutatója (THM)",
+      "url": "https://statisztika.mnb.hu/sw/static/file/Kamat_HU_202608.pdf",
+      "elozo": {
+        "value": 7.54,
+        "asOf": "2026-07"
+      }
+    },
     "diakhitel.dh1Rate": {
       "value": 8.18,
       "unit": "%/év",

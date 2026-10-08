@@ -5,7 +5,7 @@ import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { formatHUF } from '@/engine/financial-calculator';
 import type { FinancialSheet } from '@/types/financial';
 
-const nameOf = (id: string) => INVESTMENT_OPTIONS.find((o) => o.id === id)?.name ?? id;
+const nameOf = (id: string, assetName?: string) => assetName ?? INVESTMENT_OPTIONS.find((o) => o.id === id)?.name ?? id;
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '-' : ''}${formatHUF(Math.abs(n))}`;
 
 /** Kiemelt egyenlegkártya: honnan hová jutottál ebben a hónapban */
@@ -42,7 +42,7 @@ export function InvestmentTable({ sheet, round, monthsInRound, title = 'Befektet
           return (
             <li key={r.optionId} className="rounded-lg bg-white/5 px-3 py-2 text-sm">
               <div className="flex justify-between gap-2">
-                <b>{nameOf(r.optionId)}</b>
+                <b>{nameOf(r.optionId, r.assetName)}</b>
                 <span className="font-mono">{formatHUF(r.currentValue)}</span>
               </div>
               <div className="flex justify-between gap-2 text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -102,7 +102,7 @@ export function EndMoneyComparison({ sheet }: { sheet: FinancialSheet }) {
             <li className="text-[var(--color-text-muted)]">Egyenleg: {formatHUF(sheet.balance)}</li>
             {inv.map((r) => (
               <li key={r.optionId}>
-                <b>{nameOf(r.optionId)}</b>: {formatHUF(r.purchasePrice)} → {formatHUF(r.currentValue)}
+                <b>{nameOf(r.optionId, r.assetName)}</b>: {formatHUF(r.purchasePrice)} → {formatHUF(r.currentValue)}
                 {(r.totalIncomeGenerated ?? 0) > 0 && <span className="text-emerald-300"> + hozam {formatHUF(r.totalIncomeGenerated ?? 0)}</span>}
               </li>
             ))}

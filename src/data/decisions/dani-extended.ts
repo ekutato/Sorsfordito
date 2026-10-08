@@ -63,10 +63,10 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
           'Nem rohansz lakást venni. Ehelyett 300 000 Ft-ot TBSZ számlára teszel ETF-be. ' +
           '5 év múlva adómentes hozam, és addigra többet is tudsz önerőre adni.',
         financialEffects: [
-          { target: 'balance', amount: -300_000, description: 'TBSZ ETF befektetés' },
         ],
         unlocksInvestment: ['inv-tbsz-etf'],
         didYouKnow: 'Egy globális részvény ETF (pl. MSCI World) átlagosan 8-10% éves hozamot hozott az elmúlt 20 évben. TBSZ-en tartva 5 év után adómentes!',
+        invests: [{ optionId: 'inv-tbsz-etf', amount: 300_000 }],
       },
     ],
     characterPresets: ['career_start'],
@@ -214,7 +214,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
           { target: 'balance', amount: -200_000, description: 'Automatizálási eszközök és szoftverek' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 80_000, durationRounds: -1, description: 'Automatizált mellékbevétel' },
+          { target: 'passive', monthlyAmount: 80_000, durationRounds: -1, description: 'Automatizált mellékbevétel' },
         ],
         didYouKnow: 'Az alkalmazotti munkaszerződésed tartalmazhat versenytilalmi vagy mellékállás-tilalmi záradékot. Mindig ellenőrizd, mielőtt mellékállást indítasz!',
       },
@@ -257,22 +257,23 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
           'Éves TBSZ kereted maximális kihasználása: –1 000 000 Ft befektetés ' +
           'ETF-be és osztalékfizető részvényekbe. 5 év után adómentes hozam.',
         financialEffects: [
-          { target: 'balance', amount: -1_000_000, description: 'TBSZ befektetés (ETF + osztalékrészvény)' },
         ],
         unlocksInvestment: ['inv-tbsz-etf', 'inv-dividend-stock'],
         didYouKnow: 'A TBSZ-re csak a nyitás évében fizethetsz be (felső határ nincs, minimum 25 000 Ft). 5 év lejárat után a teljes hozam adómentes — szemben a normál 15% SZJA-val!',
+        invests: [{ optionId: 'inv-tbsz-etf', amount: 600_000 }, { optionId: 'inv-dividend-stock', amount: 400_000 }],
       },
       {
         id: 'dani-ext-05-b',
         label: 'Ingatlan befektetés',
         description:
-          'Befektetési célú kis lakás vásárlás önerejéhez: –2 000 000 Ft. ' +
-          'A többi hitelből. Kiadásból havi bevétel, de kötött a tőke.',
+          'Félreteszel 2 000 000 Ft-ot egy befektetési célú kis lakás önerejére. ' +
+          'A vásárlás és a kiadás később jön; addig a pénz kötve van, és nem kamatozik.',
         financialEffects: [
           { target: 'balance', amount: -2_000_000, description: 'Befektetési ingatlan önerő' },
         ],
         unlocksInvestment: ['inv-rental-apartment'],
         didYouKnow: 'Befektetési célú ingatlannál számolj a rejtett költségekkel: felújítás, közös költség, biztosítás, adó (15% SZJA a bérleti díjra), üres hónapok. A nettó hozam általában 4-6% évente.',
+        acquiresAsset: { id: 'onero', name: 'Önerő befektetési lakásra (elkülönítve)', value: 2_000_000 },
       },
       {
         id: 'dani-ext-05-c',
@@ -281,10 +282,10 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
           'Magas kockázatú portfólió: –800 000 Ft, fele kriptóba, fele egyedi részvényekbe. ' +
           'Nagy nyereség VAGY nagy veszteség lehetősége.',
         financialEffects: [
-          { target: 'balance', amount: -800_000, description: 'Agresszív befektetés (kripto + részvény)' },
         ],
         unlocksInvestment: ['inv-crypto', 'inv-stock-hu'],
         didYouKnow: 'A „befektetési piramis" elve: az alapja a biztonságos eszközök (állampapír, bankbetét), középen a mérsékelt kockázatú (ETF, ingatlan), és csak a csúcsán a magas kockázatú (kripto, egyedi részvény). Soha ne tedd az egészet a csúcsba!',
+        invests: [{ optionId: 'inv-crypto', amount: 400_000 }, { optionId: 'inv-stock-hu', amount: 400_000 }],
       },
     ],
     characterPresets: ['career_start'],

@@ -24,6 +24,7 @@ import type { LifeSituationId } from '@/types/game';
 import type { PendingStoryline } from '@/types/financial';
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
+import { adjustTopDebt } from '@/store/board-actions';
 
 type KnowledgeCheckPhase =
   | 'idle'           // Nincs tudáspróba, normál sorsfordító
@@ -125,7 +126,9 @@ export function FateEventView() {
           modifyIncome(pid, 'salary', effect.amount);
         } else if (isWellbeingTarget(effect.target)) {
           modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
-        } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
+        } else if (effect.target === 'loanPayments') {
+          adjustTopDebt(effect.amount);
+        } else if (['housing', 'food', 'utilities', 'transport', 'other'].includes(effect.target)) {
           modifyExpenses(pid, effect.target as any, effect.amount);
         }
       }
@@ -260,7 +263,9 @@ export function FateEventView() {
         modifyIncome(pid, 'salary', effect.amount);
       } else if (isWellbeingTarget(effect.target)) {
         modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
-      } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
+      } else if (effect.target === 'loanPayments') {
+          adjustTopDebt(effect.amount);
+        } else if (['housing', 'food', 'utilities', 'transport', 'other'].includes(effect.target)) {
         modifyExpenses(pid, effect.target as any, effect.amount);
       }
     }
@@ -349,7 +354,9 @@ export function FateEventView() {
         modifyIncome(pid, 'salary', effect.amount);
       } else if (isWellbeingTarget(effect.target)) {
         modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
-      } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
+      } else if (effect.target === 'loanPayments') {
+          adjustTopDebt(effect.amount);
+        } else if (['housing', 'food', 'utilities', 'transport', 'other'].includes(effect.target)) {
         modifyExpenses(pid, effect.target as any, effect.amount);
       }
     }
@@ -363,7 +370,9 @@ export function FateEventView() {
           modifyIncome(pid, 'salary', effect.amount);
         } else if (isWellbeingTarget(effect.target)) {
           modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
-        } else if (['housing', 'food', 'loanPayments', 'utilities', 'transport', 'other'].includes(effect.target)) {
+        } else if (effect.target === 'loanPayments') {
+          adjustTopDebt(effect.amount);
+        } else if (['housing', 'food', 'utilities', 'transport', 'other'].includes(effect.target)) {
           modifyExpenses(pid, effect.target as any, effect.amount);
         }
       }

@@ -21,7 +21,7 @@ Minden hétfőn 06:47-kor (Europe/Budapest) egy Claude-rutin frissíti a játék
    | `realEstate.*` | KSH-ingatlan.com lakbérindex, KSH lakásárak |
    | `stockMarket.*` | BÉT záróérték |
    | `metals.*` | arany és ezüst azonnali árfolyam (például gold-api.com, Swissquote) |
-   | `bank.*` | MNB kamatstatisztika (havi PDF); a `bank.carLoanThm` a játékvezető döntése szerint az áruhitelek átlagos THM-je (autóhitel-közelítés) |
+   | `bank.*` | MNB kamatstatisztika (havi PDF); a `bank.carLoanThm` a játékvezető döntése szerint az áruhitelek átlagos THM-je (autóhitel-közelítés); a `bank.mortgageThm` a lakáscélú hitelek átlagos hitelköltség-mutatója |
    | `diakhitel.dh1Rate` | diakhitel.hu |
    | `crypto.*` | CoinGecko |
 

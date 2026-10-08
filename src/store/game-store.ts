@@ -29,12 +29,12 @@ import type {
 } from '@/types/financial';
 import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
-import { amortizeDebts, applyInflation } from '@/engine/financial-calculator';
-import { round25, netAfterTurning25 } from '@/data/tax-2026';
+import { amortizeDebts } from '@/engine/financial-calculator';
 import { revalue } from '@/engine/investment-value';
 import { sanitizeCustomProfile } from '@/engine/custom-profile';
+import { annuityMonths } from '@/engine/loans';
+import { planRoundIncome, planRoundExpenses, RAISE_PERCENT } from '@/engine/round-money';
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
-import { LIVE_ECONOMIC_DATA } from '@/data/live';
 import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
 import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
 
@@ -191,8 +191,11 @@ interface GameStoreActions {
   modifyWellbeing: (playerId: string, key: WellbeingKey, delta: number) => void;
   addInvestment: (playerId: string, investment: Investment) => void;
   removeInvestment: (playerId: string, investmentOptionId: string) => void;
-  addDebt: (playerId: string, debt: Debt) => void;
+  /** disburse: a hitelösszeg a számlára érkezik (lakás/autó vásárlásnál nem) */
+  addDebt: (playerId: string, debt: Debt, disburse?: boolean) => void;
   payDebt: (playerId: string, debtId: string, amount: HUF) => void;
+  /** Törlesztőrészlet módosítása (pl. hitelkiváltás) */
+  adjustDebtPayment: (playerId: string, debtId: string, paymentDelta: HUF, ratePct?: number) => void;
   addKnowledge: (playerId: string, knowledgeId: string) => void;
   addStoryline: (playerId: string, storyline: PendingStoryline) => void;
   resolveStoryline: (playerId: string, storylineId: string) => void;
@@ -387,14 +390,14 @@ export const useGameStore = create<GameStore>()(
           return { game: { ...state.game, players } };
         }),
 
-      addDebt: (playerId, debt) =>
+      addDebt: (playerId, debt, disburse = true) =>
         set((state) => {
           if (!state.game) return state;
           const players = state.game.players.map((p) => {
             if (p.playerId !== playerId) return p;
             const newSheet = {
               ...p.financialSheet,
-              balance: p.financialSheet.balance + debt.originalAmount,
+              balance: p.financialSheet.balance + (disburse ? debt.originalAmount : 0),
               debts: [...p.financialSheet.debts, debt],
               expenses: {
                 ...p.financialSheet.expenses,
@@ -412,20 +415,47 @@ export const useGameStore = create<GameStore>()(
           if (!state.game) return state;
           const players = state.game.players.map((p) => {
             if (p.playerId !== playerId) return p;
+            const target = p.financialSheet.debts.find((d) => d.id === debtId);
+            if (!target) return p;
+            // Legfeljebb a fennálló tartozás fizethető vissza
+            const paid = Math.min(amount, target.remainingAmount);
             const newDebts = p.financialSheet.debts.map((d) => {
               if (d.id !== debtId) return d;
-              const newRemaining = Math.max(0, d.remainingAmount - amount);
-              return { ...d, remainingAmount: newRemaining };
+              const newRemaining = d.remainingAmount - paid;
+              // Előtörlesztés után a részlet marad, a futamidő rövidül
+              return { ...d, remainingAmount: newRemaining, remainingMonths: annuityMonths(newRemaining, d.isInterestFree ? 0 : d.interestRate, d.monthlyPayment) || d.remainingMonths };
             }).filter((d) => d.remainingAmount > 0);
 
             const newSheet = {
               ...p.financialSheet,
-              balance: p.financialSheet.balance - amount,
+              balance: p.financialSheet.balance - paid,
               debts: newDebts,
               expenses: {
                 ...p.financialSheet.expenses,
                 loanPayments: newDebts.reduce((sum, d) => sum + d.monthlyPayment, 0),
               },
+            };
+            newSheet.computed = computeFinancials(newSheet);
+            return { ...p, financialSheet: newSheet };
+          });
+          return { game: { ...state.game, players } };
+        }),
+
+      adjustDebtPayment: (playerId, debtId, paymentDelta, ratePct) =>
+        set((state) => {
+          if (!state.game) return state;
+          const players = state.game.players.map((p) => {
+            if (p.playerId !== playerId) return p;
+            const debts = p.financialSheet.debts.map((d) => {
+              if (d.id !== debtId) return d;
+              const monthlyPayment = Math.max(0, d.monthlyPayment + paymentDelta);
+              const interestRate = ratePct ?? d.interestRate;
+              return { ...d, monthlyPayment, interestRate, isInterestFree: interestRate === 0, remainingMonths: annuityMonths(d.remainingAmount, interestRate, monthlyPayment) || d.remainingMonths };
+            });
+            const newSheet = {
+              ...p.financialSheet,
+              debts,
+              expenses: { ...p.financialSheet.expenses, loanPayments: debts.reduce((sum, d) => sum + d.monthlyPayment, 0) },
             };
             newSheet.computed = computeFinancials(newSheet);
             return { ...p, financialSheet: newSheet };
@@ -522,22 +552,16 @@ export const useGameStore = create<GameStore>()(
         const monthsInRound = tsConfig.monthsPerRound;
         const round = state.game.currentRound;
 
-        // Karrierprogresszió: marathon/ultra módban, évi ~5% emelés
-        // A roundsPerYear kiszámítja hány kör = 1 év az adott időskálában
-        // Marathon: 12/3 = 4 kör/év, Ultra: 12/6 = 2 kör/év
-        const roundsPerYear = Math.round(12 / monthsInRound);
-        if (tsConfig.applyCareerProgression && currentSalary > 0 && round > 1 && round % roundsPerYear === 0) {
-          const raisePercent = 0.05; // 5% éves emelés (MO átlag: 5-10%)
-          const raiseAmount = Math.round(currentSalary * raisePercent);
-          if (raiseAmount > 0) {
-            currentSalary += raiseAmount;
-            state.modifyIncome(player.playerId, 'salary', raiseAmount);
-            state.logEvent({
-              type: 'income',
-              description: `Éves fizetésemelés: +${raiseAmount.toLocaleString('hu-HU')} Ft/hó (+5%)`,
-              financialImpact: 0,
-            });
-          }
+        // A kör terve (ugyanez az előnézet is): éves emelés, 25. születésnap
+        const plan = planRoundIncome(state.game);
+        if (plan.raise > 0) {
+          currentSalary += plan.raise;
+          state.modifyIncome(player.playerId, 'salary', plan.raise);
+          state.logEvent({
+            type: 'income',
+            description: `Éves fizetésemelés: +${plan.raise.toLocaleString('hu-HU')} Ft/hó (+${RAISE_PERCENT * 100}%)`,
+            financialImpact: 0,
+          });
         }
 
         // Befektetések értékváltozása a kör hónapjaiban (valós havi mozgásokból); az e körben vettek még nem
@@ -569,20 +593,18 @@ export const useGameStore = create<GameStore>()(
         }) } } : st);
 
         // 25. születésnap: a következő hónaptól a bérből SZJA-t is vonnak (ugyanaz a bruttó, kisebb nettó)
-        const preset = CHARACTER_PRESETS[player.lifeSituation as CharacterPresetId];
-        const age = state.game.config.customProfile?.age ?? preset?.age ?? 99;
-        if (preset?.nextBirthdayInMonths && currentSalary > 0 && !player.financialSheet.youthTaxEnded
-          && round25(age, preset.nextBirthdayInMonths, monthsInRound, tsConfig.totalRounds) === round) {
-          const after = netAfterTurning25(currentSalary);
-          const delta = after - currentSalary;
+        if (plan.birthdayDelta !== 0) {
+          const delta = plan.birthdayDelta;
+          const before = currentSalary;
           state.modifyIncome(player.playerId, 'salary', delta);
-          currentSalary = after;
+          currentSalary += delta;
           set((st) => st.game ? { game: { ...st.game, players: st.game.players.map((p) => p.playerId === player.playerId
             ? { ...p, financialSheet: { ...p.financialSheet, youthTaxEnded: true } } : p) } } : st);
           state.logEvent({
             type: 'income',
-            description: `🎂 Betöltötted a 25. évet: megszűnt a fiatalok SZJA-mentessége, a bérjegyzékeden már 15% SZJA is szerepel. Nettó: ${(currentSalary - delta).toLocaleString('hu-HU')} → ${after.toLocaleString('hu-HU')} Ft/hó (${delta.toLocaleString('hu-HU')} Ft)`,
-            financialImpact: delta * monthsInRound,
+            description: `🎂 Betöltötted a 25. évet: megszűnt a fiatalok SZJA-mentessége, a bérjegyzékeden már 15% SZJA is szerepel. Nettó: ${before.toLocaleString('hu-HU')} → ${currentSalary.toLocaleString('hu-HU')} Ft/hó (−${Math.abs(delta).toLocaleString('hu-HU')} Ft/hó)`,
+            // A bevétel-bejegyzés már a csökkent nettót tartalmazza: itt nincs külön egyenleghatás
+            financialImpact: 0,
           });
         }
 
@@ -604,11 +626,9 @@ export const useGameStore = create<GameStore>()(
         const tsConfig = TIME_SCALE_CONFIGS[state.game.config.timeScale];
         const monthsInRound = tsConfig.monthsPerRound;
         // Infláció (Maraton/Ultra): évente egyszer, a teljes éves ütemmel (a törlesztő fix, nem drágul)
-        const roundsPerYear = Math.round(12 / monthsInRound);
-        const round = state.game.currentRound;
-        if (tsConfig.applyInflation && round > 1 && (round - 1) % roundsPerYear === 0) {
-          const rate = LIVE_ECONOMIC_DATA.ksh.annualInflation;
-          const inflated = applyInflation(player.financialSheet.expenses, rate, 12);
+        const plan = planRoundExpenses(state.game);
+        if (plan.inflated) {
+          const inflated = plan.inflated;
           set((st) => {
             if (!st.game) return st;
             const players = st.game.players.map((p) => {
@@ -619,7 +639,7 @@ export const useGameStore = create<GameStore>()(
             });
             return { game: { ...st.game, players } };
           });
-          state.logEvent({ type: 'expense', description: `Eltelt egy év: a kiadásaid az éves inflációval (${rate.toLocaleString('hu-HU')}%) drágultak`, financialImpact: 0 });
+          state.logEvent({ type: 'expense', description: `Eltelt egy év: a kiadásaid az éves inflációval (${plan.inflationRate.toLocaleString('hu-HU')}%) drágultak`, financialImpact: 0 });
           player = get().game!.players[get().game!.activePlayerIndex];
         }
         const totalExpenses = player.financialSheet.computed.totalExpenses;
@@ -644,8 +664,10 @@ export const useGameStore = create<GameStore>()(
           return { game: { ...st.game, players } };
         });
         for (const d of am.paidOff) {
-          state.logEvent({ type: 'expense', description: `Visszafizetve: ${d.name} - a havi törlesztő (${d.monthlyPayment.toLocaleString('hu-HU')} Ft) megszűnik`, financialImpact: am.refund });
+          state.logEvent({ type: 'expense', description: `Visszafizetve: ${d.name} - a havi törlesztő (${d.monthlyPayment.toLocaleString('hu-HU')} Ft) megszűnik`, financialImpact: 0 });
         }
+        // A lejárat hónapjában túlfizetett törlesztő egyszer, összesítve jön vissza
+        if (am.refund > 0) state.logEvent({ type: 'expense', description: 'Túlfizetett törlesztő visszajár (a hitel lejárt)', financialImpact: am.refund });
         state.logEvent({
           type: 'expense',
           description: monthsInRound > 1

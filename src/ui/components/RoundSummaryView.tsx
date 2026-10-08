@@ -103,7 +103,8 @@ export function RoundSummaryView() {
                      :
                    event.type === 'investment' ? '📈' :
                    event.type === 'knowledge' ? '📚' :
-                   event.type === 'crisis' ? '⚠️' : '📌'}
+                   event.type === 'crisis' ? '⚠️' :
+                   event.type === 'field' ? '🎲' : '📌'}
                 </span>
                 <span className="text-xs text-[var(--color-text-muted)]">
                   {event.description}

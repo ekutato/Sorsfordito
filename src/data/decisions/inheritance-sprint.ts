@@ -42,11 +42,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Kifizeted az 1 800 000 Ft személyi kölcsönt. Marad 3.2M Ft, ' +
           'és megszűnik a havi 42 000 Ft-os törlesztés. Nincs több kamat!',
         financialEffects: [
-          { target: 'balance', amount: -1_800_000, description: 'Személyi kölcsön végtörlesztés' },
-          { target: 'loanPayments', amount: -42_000, description: 'Nincs több törlesztőrészlet!' },
         ],
         nextDecisionId: 'inh-d03',
         didYouKnow: 'Ha 12.5%-os kamatú hiteled van, az előtörlesztés „garantált 12.5%-os hozam". Nincs olyan befektetés, ami ezt kockázat nélkül hozza!',
+        paysOffLoan: { type: 'personal_loan' },
       },
       {
         id: 'inh-d01-b',
@@ -55,11 +54,11 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Az 5M Ft-ot diverzifikáltan befekteted: PMÁP + ETF + kripto mix. ' +
           'Ha a hozam > 12.5% → nyertél. De a kockázat is nagyobb.',
         financialEffects: [
-          { target: 'balance', amount: -4_500_000, description: 'Diverzifikált befektetés' },
         ],
         unlocksInvestment: ['inv-pmap', 'inv-tbsz-etf', 'inv-crypto'],
         nextDecisionId: 'inh-d03',
         didYouKnow: 'A „hozamvadász" stratégia kockázatos: ha a befektetés bukik, a hitel kamata tovább fut. A matematika ritkán veri a biztonságot.',
+        invests: [{ optionId: 'inv-pmap', amount: 2_000_000 }, { optionId: 'inv-tbsz-etf', amount: 2_000_000 }, { optionId: 'inv-crypto', amount: 500_000 }],
       },
       {
         id: 'inh-d01-c',
@@ -99,11 +98,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Kifizeted a maradék ~1.6M Ft-ot. Szabad vagy! ' +
           'A felszabaduló 42 000 Ft/hó megy megtakarításra.',
         financialEffects: [
-          { target: 'balance', amount: -1_600_000, description: 'Személyi kölcsön végtörlesztés' },
-          { target: 'loanPayments', amount: -42_000, description: 'Törlesztő megszűnt' },
         ],
         nextDecisionId: 'inh-d04',
         didYouKnow: 'Az előtörlesztési díj max 1% a visszafizetett összegnek. 1.6M Ft-nál ez max 16 000 Ft – megéri, ha 12.5%-os kamatot spórolsz.',
+        paysOffLoan: { type: 'personal_loan' },
       },
       {
         id: 'inh-d02-b',
@@ -122,11 +120,11 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Banki személyi kölcsön 12.5% → kiváltod 8%-os lakáscélúra (ha van fedezet). ' +
           'Havi törlesztő csökken: 42 000 → 32 000 Ft. De újabb hitelszerződés kell.',
         financialEffects: [
-          { target: 'loanPayments', amount: -10_000, description: 'Olcsóbb törlesztőrészlet' },
           { target: 'balance', amount: -50_000, description: 'Hitelkiváltási díjak' },
         ],
         nextDecisionId: 'inh-d04',
         didYouKnow: 'A hitelkiváltás (refinanszírozás) legális és okos lépés – HA az új kamat legalább 2%-kal alacsonyabb. A díjakat számold bele!',
+        adjustsLoan: { type: 'personal_loan', paymentDelta: -10_000, ratePct: 8 },
       },
     ],
     characterPresets: ['inheritance'],
@@ -179,11 +177,11 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'balance', amount: -4_000_000, description: 'Mobilház telepítés + berendezés' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 65_000, durationRounds: -1, description: 'Vendégház bevétel (vidéki átlag, szezonális)' },
         ],
-        unlocksInvestment: ['inv-room-rental'],
+        unlocksInvestment: ['inv-room-rent'],
         unlocksKnowledge: ['know-business'],
         didYouKnow: 'A NTAK (Nemzeti Turisztikai Adatszolgáltató Központ) regisztráció kötelező szálláskiadáshoz. Online intézheted: info.ntak.hu',
+        acquiresAsset: { id: 'mobilhaz', name: 'Mobilház a telken (vendégház)', value: 4_000_000, monthlyIncome: 65_000 },
       },
     ],
     characterPresets: ['inheritance'],
@@ -213,10 +211,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Biztonságos, kiszámítható. PMÁP: most {{pmap_yield}}%/év, lekötött betét: átlagosan {{deposit_rate}}% körül. ' +
           'Nem fog a szomszéd irigykedni, de éjjel nyugodtan alszol.',
         financialEffects: [
-          { target: 'balance', amount: -1_000_000, description: 'Konzervatív portfólió befektetés' },
         ],
         unlocksInvestment: ['inv-pmap', 'inv-bank-deposit'],
         didYouKnow: 'A konzervatív portfólió nem „unalmas" – hanem kockázatarányos. Warren Buffett #1 szabálya: „Ne veszíts pénzt." #2: „Lásd #1."',
+        invests: [{ optionId: 'inv-bank-deposit', amount: 300_000 }, { optionId: 'inv-pmap', amount: 700_000 }],
       },
       {
         id: 'inh-d04-b',
@@ -225,11 +223,11 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'TBSZ-számlán: magyar részvények + globális ETF. Várható hozam: 8-12%/év. ' +
           'Kockázat: közepes. 5 éves távlatban a TBSZ adómentes!',
         financialEffects: [
-          { target: 'balance', amount: -1_500_000, description: 'Kiegyensúlyozott portfólió' },
         ],
-        unlocksInvestment: ['inv-pmap', 'inv-tbsz-etf', 'inv-hu-stock'],
+        unlocksInvestment: ['inv-pmap', 'inv-tbsz-etf', 'inv-stock-hu'],
         unlocksKnowledge: ['know-tbsz'],
         didYouKnow: 'A TBSZ (Tartós Befektetési Számla) 5 év után 0% adó a hozamra! Ez a magyar befektetők „titkos fegyvere".',
+        invests: [{ optionId: 'inv-stock-hu', amount: 300_000 }, { optionId: 'inv-tbsz-etf', amount: 600_000 }, { optionId: 'inv-pmap', amount: 600_000 }],
       },
       {
         id: 'inh-d04-c',
@@ -238,10 +236,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Magas potenciál, magas kockázat. A kripto extrém volatilis, ' +
           'a részvénypiac ingadozó – de 5-10 éves távon történelmileg a legjobb hozam.',
         financialEffects: [
-          { target: 'balance', amount: -2_000_000, description: 'Agresszív portfólió' },
         ],
-        unlocksInvestment: ['inv-crypto', 'inv-tbsz-etf', 'inv-hu-stock'],
+        unlocksInvestment: ['inv-crypto', 'inv-tbsz-etf', 'inv-stock-hu'],
         didYouKnow: 'A kriptodeviza nyereségre 15% SZJA-t kell fizetni Magyarországon. Ha TBSZ-en tartanád – a kripto sajnos NEM tehető TBSZ-re!',
+        invests: [{ optionId: 'inv-crypto', amount: 600_000 }, { optionId: 'inv-stock-hu', amount: 600_000 }, { optionId: 'inv-tbsz-etf', amount: 800_000 }],
       },
     ],
     characterPresets: ['inheritance'],
@@ -274,8 +272,9 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'salary', monthlyAmount: 80_000, durationRounds: -1, description: 'Vállalkozás profit (átlag, ha beindul)' },
         ],
         unlocksKnowledge: ['know-business'],
-        unlocksInvestment: ['inv-online-business'],
+        unlocksInvestment: ['inv-online-biz'],
         didYouKnow: 'Társas vállalkozásnál MINDIG legyen írásos társasági szerződés (Kft. esetén kötelező). A szóbeli megállapodás = recept a katasztrófára.',
+        acquiresAsset: { id: 'uzletresz', name: 'Üzletrész (kávézó-társulás)', value: 2_500_000 },
       },
       {
         id: 'inh-d05-b',
@@ -299,10 +298,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'A pénzed dolgozik helyetted: PMÁP, ETF, ingatlan. ' +
           'Nincs extra munka, nincs extra kockázat. Lassú, de biztos vagyonépítés.',
         financialEffects: [
-          { target: 'balance', amount: -500_000, description: 'Extra befektetés (PMÁP/ETF)' },
         ],
         unlocksInvestment: ['inv-pmap', 'inv-tbsz-etf'],
         didYouKnow: 'A passzív befektetés (index ETF) történelmileg évi 7-10%-ot hoz. A legtöbb aktív alapkezelő nem veri ezt hosszú távon!',
+        invests: [{ optionId: 'inv-pmap', amount: 250_000 }, { optionId: 'inv-tbsz-etf', amount: 250_000 }],
       },
     ],
     characterPresets: ['inheritance'],
@@ -336,10 +335,11 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
         financialEffects: [
           { target: 'balance', amount: -3_000_000, description: 'Lakásvásárlás önerő + díjak' },
           { target: 'housing', amount: -220_000, description: 'Albérlet megszűnik' },
-          { target: 'loanPayments', amount: 120_000, description: 'Lakáshitel törlesztő' },
           { target: 'utilities', amount: 10_000, description: 'Nagyobb rezsi (saját lakás)' },
         ],
         didYouKnow: 'A CSOK Plusz (2024-től) akár 50M Ft kedvezményes hitelt is jelent családosoknak. A támogatás feltétele: gyermekvállalás.',
+        takesLoan: { name: 'Lakáshitel', type: 'mortgage', monthlyPayment: 120_000, months: 240, rateKey: 'bank.mortgageThm' },
+        acquiresAsset: { id: 'lakas', name: 'Saját lakás (vételár)', value: 3_000_000, plusLoanPrincipal: true },
       },
       {
         id: 'inh-d06-b',
@@ -348,10 +348,10 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           'Céled: a befektetéseid hozama fedezze a kiadásaid egy részét. ' +
           'Diverzifikált portfólió + ingatlan kiadás = mini „pénzügyi függetlenség".',
         financialEffects: [
-          { target: 'balance', amount: -1_000_000, description: 'Extra befektetés (portfólió bővítés)' },
         ],
         unlocksInvestment: ['inv-pmap', 'inv-tbsz-etf', 'inv-gold'],
         didYouKnow: 'A „4% szabály" (FIRE mozgalom): ha a befektetéseid évi hozama 4%, és annyit veszel ki, a tőkéd „örökké" elég. 25× éves kiadás = cél.',
+        invests: [{ optionId: 'inv-pmap', amount: 400_000 }, { optionId: 'inv-tbsz-etf', amount: 400_000 }, { optionId: 'inv-gold', amount: 200_000 }],
       },
       {
         id: 'inh-d06-c',
@@ -364,7 +364,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
           { target: 'balance', amount: -100_000, description: 'Képzési költség' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 550_000, durationRounds: 3, description: 'Új munkahelyi fizetés (3 hónap múlva indul)' },
+          { target: 'salary', monthlyAmount: 550_000, durationRounds: -1, startAfterMonths: 3, description: 'Új munkahelyi fizetés (3 hónap múlva indul)' },
         ],
         unlocksKnowledge: ['know-tax'],
         didYouKnow: 'A felmondási idő alatt is jár a fizetés (30-90 nap). Ha te mondasz fel, az utolsó napig dolgoznod kell, hacsak nem egyeztek meg másként.',

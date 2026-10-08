@@ -342,14 +342,13 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         id: 'gen-debt-a',
         label: 'Extra előtörlesztés',
         description:
-          'Egyszeri +100 000 Ft-ot ráteszel. Gyorsabban szabadulsz.',
+          'Egyszeri 100 000 Ft-ot ráteszel a legdrágább hitelre. A részlet marad, a futamidő rövidül.',
         financialEffects: [
-          { target: 'balance', amount: -100_000, description: 'Egyszeri extra törlesztés' },
-          { target: 'loanPayments', amount: -5_000, description: 'Csökkentett havi törlesztő' },
         ],
         didYouKnow:
           'Az előtörlesztés „garantált hozam": ha a hiteled kamata 8%, az előtörlesztéssel 8%-ot „keresed". ' +
           'Nincs befektetés, ami ezt kockázat nélkül hozza.',
+        paysOffLoan: { amount: 100_000 },
       },
       {
         id: 'gen-debt-b',
@@ -358,11 +357,11 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
           'Olcsóbb hitelt keresel a meglévő helyett. Ha 2%-kal jobb a THM, megéri.',
         financialEffects: [
           { target: 'balance', amount: -50_000, description: 'Hitelkiváltási díjak' },
-          { target: 'loanPayments', amount: -8_000, description: 'Alacsonyabb havi törlesztő' },
         ],
         didYouKnow:
           'A hitelkiváltásnál számold bele az előtörlesztési díjat és az új hitel induló költségeit is. ' +
           'Mindig a THM-et hasonlítsd, ne csak a kamatot!',
+        adjustsLoan: { paymentDelta: -8_000 },
       },
       {
         id: 'gen-debt-c',
@@ -443,11 +442,12 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         financialEffects: [
           { target: 'balance', amount: -2_000_000, description: 'Lakásvásárlás önerő' },
           { target: 'housing', amount: -100_000, description: 'Albérlet helyett saját' },
-          { target: 'loanPayments', amount: 110_000, description: 'Lakáshitel törlesztő' },
         ],
         didYouKnow:
           'Budapesten a használt lakások átlagos négyzetméterára most {{sqm_bp}} Ft - egy 50 m²-es lakás ennek ötvenszerese. ' +
           'A CSOK Plusz-szal akár 3% kamattal is hitelezhetnek.',
+        takesLoan: { name: 'Lakáshitel', type: 'mortgage', monthlyPayment: 110_000, months: 240, rateKey: 'bank.mortgageThm' },
+        acquiresAsset: { id: 'lakas', name: 'Saját lakás (vételár)', value: 2_000_000, plusLoanPrincipal: true },
       },
       {
         id: 'gen-house-b',

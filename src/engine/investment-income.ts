@@ -26,8 +26,9 @@ export function investmentTarget(option: Pick<InvestmentOption, 'id'>): IncomeTa
 
 /** Havi összeg (Ft), amelyet a befektetés a célpontjára ad (utilities esetén ennyivel csökken a rezsi) */
 export function monthlyInvestmentIncome(option: Pick<InvestmentOption, 'id' | 'entryPrice' | 'monthlyPassiveIncome' | 'dynamicDataKey'>): number {
-  if (option.dynamicDataKey === 'akk.pmapYield') {
-    const y = live('akk.pmapYield');
+  // Állampapír: a heti hozamból, adómentesen
+  if (option.dynamicDataKey === 'akk.pmapYield' || option.dynamicDataKey === 'akk.mapPlusYield') {
+    const y = live(option.dynamicDataKey);
     if (y !== undefined) return Math.round((option.entryPrice * y) / 100 / 12);
   }
   if (option.id === 'inv-bank-deposit') {

@@ -40,6 +40,27 @@ function recordRoll(value: number) {
   } catch {}
 }
 
+/**
+ * A törlesztőt érintő hatás: a legdrágább hitel részlete változik (a havi kiadás a hitelekből adódik).
+ * Hitel nélkül nincs mit módosítani.
+ */
+export function adjustTopDebt(delta: number) {
+  const s = useGameStore.getState();
+  const p = s.game?.players[s.game.activePlayerIndex];
+  if (!p) return;
+  const d = [...p.financialSheet.debts].sort((a, b) => b.interestRate - a.interestRate)[0];
+  if (d) s.adjustDebtPayment(p.playerId, d.id, delta);
+}
+
+/** Hatás ütemezése egy későbbi kör elejére (késleltetett béremelés, lejáró ellátás) */
+export function scheduleEffect(atRound: number, target: string, amount: number, label: string) {
+  useGameStore.setState((st) => {
+    if (!st.game) return st;
+    const board = st.game.board ?? emptyBoard();
+    return { game: { ...st.game, board: { ...board, reverts: [...board.reverts, { atRound, target, amount, label }] } } };
+  });
+}
+
 export function emptyBoard(): SoloBoardState {
   return { position: 0, visits: {}, reverts: [] };
 }
@@ -48,8 +69,14 @@ function applyEffect(target: string, amount: number, description: string) {
   const s = useGameStore.getState();
   const pid = s.game?.players[s.game.activePlayerIndex]?.playerId;
   if (!pid) return;
-  if (target === 'balance') s.modifyBalance(pid, amount, description);
+  if (target === 'balance') {
+    s.modifyBalance(pid, amount, description);
+    // A mezőkártya pénzhatása is a kör naplójába kerül (a kör összegzése így kiadja az egyenlegváltozást)
+    s.logEvent({ type: 'field', description, financialImpact: amount });
+  }
   else if (target === 'salary') s.modifyIncome(pid, 'salary', amount);
+  else if (target === 'passive') s.modifyIncome(pid, 'passive', amount);
+  else if (target === 'loanPayments') adjustTopDebt(amount);
   else if ((EXPENSE_KEYS as readonly string[]).includes(target)) s.modifyExpenses(pid, target as keyof Expenses, amount);
   else if (isWellbeingTarget(target)) s.modifyWellbeing(pid, wellbeingKeyOf(target), amount);
   else if (target.startsWith(KNOWLEDGE_TARGET)) {
@@ -72,7 +99,12 @@ export function rollBoard(manual?: { value: number; source: Exclude<DiceRollSour
   if (board.rolledRound === game.currentRound) return board.lastRoll;
 
   const due = board.reverts.filter((r) => r.atRound <= game.currentRound);
-  for (const r of due) applyEffect(r.target, r.amount, 'Lejárt időleges kiadás');
+  for (const r of due) {
+    applyEffect(r.target, r.amount, r.label ?? 'Lejárt időleges kiadás');
+    if (r.target !== 'balance' && r.label) {
+      useGameStore.getState().logEvent({ type: 'income', description: `${r.label} (${r.amount > 0 ? '+' : '−'}${Math.abs(r.amount).toLocaleString('hu-HU')} Ft/hó)`, financialImpact: 0 });
+    }
+  }
 
   if (manual && !(Number.isInteger(manual.value) && manual.value >= 1 && manual.value <= 6)) return;
   const roll = manual ? manual.value : secureDieRoll();
@@ -112,7 +144,7 @@ export function resolveFieldCard(fieldType: string, option?: FieldOption, card?:
 
   const reverts = [...board.reverts];
   if (option) {
-    for (const e of option.effects) applyEffect(e.target, e.amount, option.label);
+    for (const e of option.effects) applyEffect(e.target, e.amount, card ? `${card.title}: ${option.label}` : option.label);
     if (option.durationMonths) {
       const months = TIME_SCALE_CONFIGS[game.config.timeScale].monthsPerRound;
       const rounds = Math.max(1, Math.ceil(option.durationMonths / months));

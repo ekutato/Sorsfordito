@@ -11,19 +11,13 @@ import { getDecisionsFor, getDecisionForRound } from '@/data/decisions';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
 import { liveCurrentData } from '@/data/live';
-import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
+import { applyDecisionOption, affordableOptions, decisionCost } from '@/store/decision-finance';
 
 const LIVE = liveCurrentData();
 
 export function DecisionView() {
   const game = useGameStore((s) => s.game);
   const setPhase = useGameStore((s) => s.setPhase);
-  const modifyBalance = useGameStore((s) => s.modifyBalance);
-  const modifyExpenses = useGameStore((s) => s.modifyExpenses);
-  const modifyIncome = useGameStore((s) => s.modifyIncome);
-  const modifyWellbeing = useGameStore((s) => s.modifyWellbeing);
-  const logEvent = useGameStore((s) => s.logEvent);
-  const addKnowledge = useGameStore((s) => s.addKnowledge);
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showDidYouKnow, setShowDidYouKnow] = useState(false);
@@ -134,72 +128,12 @@ export function DecisionView() {
   };
 
   const situationText = replaceVars(decision.situation);
+  const affordable = affordableOptions(decision.options, player.financialSheet.balance);
 
   const handleSelect = (option: DecisionOption) => {
     setSelectedOptionId(option.id);
-
-    // Penzugyi hatasok alkalmazasa
-    for (const effect of option.financialEffects) {
-      const pid = player.playerId;
-      switch (effect.target) {
-        case 'balance':
-          modifyBalance(pid, effect.amount, effect.description);
-          break;
-        case 'salary':
-          modifyIncome(pid, 'salary', effect.amount);
-          break;
-        case 'housing':
-        case 'utilities':
-        case 'food':
-        case 'transport':
-        case 'loanPayments':
-        case 'other':
-          modifyExpenses(pid, effect.target, effect.amount);
-          break;
-        default:
-          if (isWellbeingTarget(effect.target)) {
-            modifyWellbeing(pid, wellbeingKeyOf(effect.target), effect.amount);
-          }
-          break;
-      }
-    }
-
-    // Tartós hatások (ongoingEffects) alkalmazása
-    if (option.ongoingEffects && option.ongoingEffects.length > 0) {
-      const pid = player.playerId;
-      for (const oe of option.ongoingEffects) {
-        if (oe.target === 'salary') {
-          modifyIncome(pid, 'salary', oe.monthlyAmount);
-        } else if (oe.target === 'debt_reduction') {
-          modifyExpenses(pid, 'loanPayments', -oe.monthlyAmount);
-        } else if (['housing', 'utilities', 'food', 'transport', 'loanPayments', 'other'].includes(oe.target)) {
-          modifyExpenses(pid, oe.target as any, oe.monthlyAmount);
-        }
-
-        logEvent({
-          type: 'income',
-          description: `Tartós hatás: ${oe.description} (${oe.monthlyAmount > 0 ? '+' : ''}${oe.monthlyAmount.toLocaleString('hu-HU')} Ft/hó)`,
-          financialImpact: 0,
-        });
-      }
-    }
-
-    // Tudas kartyak feloldasa
-    if (option.unlocksKnowledge) {
-      for (const kid of option.unlocksKnowledge) {
-        addKnowledge(player.playerId, kid);
-      }
-    }
-
-    // Log — a decisionCardId-t mentjük, hogy ne ismétlődjön
-    logEvent({
-      type: 'decision',
-      description: `${decision.title}: ${option.label}`,
-      financialImpact: option.financialEffects
-        .filter((e) => e.target === 'balance')
-        .reduce((sum, e) => sum + e.amount, 0),
-      details: { decisionCardId: decision.id, optionId: option.id },
-    });
+    // Hatások, tartós hatások, befektetés/hitel, tudás és napló - egy helyen (store/decision-finance)
+    applyDecisionOption(decision, option);
 
     // Mutasd a "Tudtad?" panelt; személyes mérlegelésnél a játékos maga lép tovább
     if (option.didYouKnow) {
@@ -234,14 +168,19 @@ export function DecisionView() {
         {!selectedOptionId && (
           <div className="space-y-2 border-t border-white/10 pt-3">
             <p className="text-xs text-brand-400 font-semibold mb-1">Válassz:</p>
-            {decision.options.map((option, index) => (
+            {decision.options.map((option, index) => {
+              const can = affordable.has(option.id);
+              const cost = decisionCost(option);
+              return (
               <motion.button
                 key={option.id}
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.15 }}
-                onClick={() => handleSelect(option)}
-                className="decision-button w-full text-left"
+                onClick={() => can && handleSelect(option)}
+                disabled={!can}
+                aria-disabled={!can}
+                className={`decision-button w-full text-left ${can ? '' : 'opacity-50 cursor-not-allowed'}`}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-lg font-bold text-brand-400 mt-0.5">
@@ -284,8 +223,10 @@ export function DecisionView() {
                     </div>
                   </div>
                 </div>
+                {!can && <p className="mt-2 text-xs font-semibold text-money-negative">Nincs rá fedezeted: {formatHUF(cost)} kellene, az egyenleged {formatHUF(player.financialSheet.balance)}.</p>}
               </motion.button>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

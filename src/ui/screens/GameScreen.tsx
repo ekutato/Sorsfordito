@@ -36,6 +36,7 @@ import { TableBar } from '@/ui/table/TableBar';
 import { useTableStore } from '@/store/table-store';
 import { displayColor } from '@/engine/table/state';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
+import { planRoundIncome, planRoundExpenses } from '@/engine/round-money';
 
 
 export function GameScreen() {
@@ -290,31 +291,35 @@ function IncomeExpensePhase() {
     }
   };
 
-  // Bevétel tételek
+  // A kör terve: pontosan ezt könyveli a játék (éves emelés, 25. születésnap, infláció, lejáró hitel)
+  const incomePlan = planRoundIncome(game);
+  const expensePlan = planRoundExpenses(game);
   const incomeItems = [
-    { label: 'Munkabér (nettó)', amount: sheet.income.salary },
-    { label: 'Passzív jövedelem', amount: sheet.income.passive },
+    {
+      label: incomePlan.raise > 0 ? 'Munkabér (nettó, +5% éves emeléssel)' : incomePlan.birthdayDelta !== 0 ? 'Munkabér (nettó, 25 évesen már SZJA-val)' : 'Munkabér (nettó)',
+      amount: incomePlan.salary,
+    },
+    { label: 'Passzív jövedelem', amount: incomePlan.passive },
   ].filter((item) => item.amount > 0);
+  const totalIncome = incomePlan.salary + incomePlan.passive;
 
-  const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0);
-
-  // Kiadás tételek
+  const ex = expensePlan.expenses;
   const expenseItems = [
-    { label: 'Lakhatás', amount: sheet.expenses.housing },
-    { label: 'Rezsi', amount: sheet.expenses.utilities },
-    { label: 'Élelmiszer', amount: sheet.expenses.food },
-    { label: 'Közlekedés', amount: sheet.expenses.transport },
-    { label: 'Hiteltörlesztés', amount: sheet.expenses.loanPayments },
-    { label: 'Egyéb', amount: sheet.expenses.other },
+    { label: 'Lakhatás', amount: ex.housing },
+    { label: 'Rezsi', amount: ex.utilities },
+    { label: 'Élelmiszer', amount: ex.food },
+    { label: 'Közlekedés', amount: ex.transport },
+    { label: 'Hiteltörlesztés', amount: ex.loanPayments },
+    { label: 'Egyéb', amount: ex.other },
   ].filter((item) => item.amount > 0);
-
-  const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
+  const totalExpenses = expensePlan.monthly;
 
   const items = isIncome ? incomeItems : expenseItems;
   // A kör ennyi hónapot fed le (Maraton: 3, Ultra: 6) - a levonás és az előnézet ugyanezzel számol
   const monthsInRound = TIME_SCALE_CONFIGS[game.config.timeScale].monthsPerRound;
   const monthly = isIncome ? totalIncome : totalExpenses;
   const total = monthly * monthsInRound;
+  const refund = isIncome ? 0 : expensePlan.refund;
 
   return (
     <div className={`game-card ${isIncome ? 'border-money-positive/30 border' : 'border-money-negative/30 border'}`}>
@@ -453,9 +458,12 @@ function IncomeExpensePhase() {
       {/* Új egyenleg előnézet */}
       {!isEditing && (
         <>
+          {refund > 0 && (
+            <p className="text-center text-xs text-money-positive mb-1">Lejár egy hitel: a túlfizetett részlet visszajár, +{formatHUF(refund)}</p>
+          )}
           <div className="text-center text-xs text-[var(--color-text-muted)] mb-3">
             Új egyenleg: <span className="font-mono font-semibold text-white">
-              {formatHUF(isIncome ? sheet.balance + total : sheet.balance - total)}
+              {formatHUF(isIncome ? sheet.balance + total : sheet.balance - total + refund)}
             </span>
           </div>
 

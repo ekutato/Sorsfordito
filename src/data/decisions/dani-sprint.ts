@@ -172,14 +172,12 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           'Van 3 200 000 Ft DH2 tartozásod. Hamarosan indul a törlesztés (~30 000 Ft/hó). ' +
           'Félreteszel havonta extra 20 000 Ft-ot az előtörlesztésre is.',
         financialEffects: [
-          { target: 'loanPayments', amount: 30_000, description: 'DH2 havi törlesztő' },
-          { target: 'other', amount: -20_000, description: 'Extra előtörlesztés (havi)' },
         ],
         ongoingEffects: [
-          { target: 'debt_reduction', monthlyAmount: 20_000, durationRounds: -1, description: 'Extra diákhitel-törlesztés' },
         ],
         nextDecisionId: 'dani-d05',
         didYouKnow: 'A DH2 kamatmentes az EGÉSZ futamidő alatt — tanulmányok alatt ÉS után is! Ez Magyarország legjobb kölcsöne. A DH1 viszont kamatozó hitel (jelenleg {{dh1_rate}}% kamattal). Ne keverd össze őket!',
+        takesLoan: { name: 'Diákhitel2 (extra törlesztéssel)', type: 'student_loan', principal: 3_200_000, monthlyPayment: 50_000, ratePct: 0 },
       },
       {
         id: 'dani-d03-b',
@@ -188,11 +186,11 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           'Van 3 200 000 Ft DH2 tartozásod. Csak a kötelező 30 000 Ft/hó-t fizeted. ' +
           'A megmaradó pénzt PMÁP-ba teszed (most {{pmap_yield}}% éves kamat).',
         financialEffects: [
-          { target: 'loanPayments', amount: 30_000, description: 'DH2 havi törlesztő' },
         ],
         nextDecisionId: 'dani-d05',
         unlocksInvestment: ['inv-pmap'],
         didYouKnow: 'Mivel a DH2 0%-os, matematikailag jobban jársz, ha a pénzt biztonságosan, kamatozóan tartod (pl. PMÁP, most {{pmap_yield}}%). A „jó adósság" iskolapéldája.',
+        takesLoan: { name: 'Diákhitel2', type: 'student_loan', principal: 3_200_000, monthlyPayment: 30_000, ratePct: 0 },
       },
       {
         id: 'dani-d03-c',
@@ -232,10 +230,10 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           'Prémium Magyar Állampapír: most {{pmap_yield}}% éves kamat, az állam garantálja. ' +
           'Minimum 10 000 Ft-tól, webkincstár.hu-n 15 perc alatt megvehető.',
         financialEffects: [
-          { target: 'balance', amount: -100_000, description: 'PMÁP vásárlás' },
         ],
         unlocksInvestment: ['inv-pmap'],
         didYouKnow: 'A PMÁP kamata minden évben az előző évi átlagos inflációhoz igazodik (plusz egy kis prémium), és évente egyszer fizet kamatot. Ha az infláció lassul, a következő évi kamat is kisebb lesz.',
+        invests: [{ optionId: 'inv-pmap', amount: 100_000 }],
       },
       {
         id: 'dani-d04-b',
@@ -244,10 +242,10 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           'Veszel 50 000 Ft értékű Bitcoint. Lehet +100% is, de -50% is. ' +
           'A volatilitás extrém – bírod az idegekkel?',
         financialEffects: [
-          { target: 'balance', amount: -50_000, description: 'Bitcoin vásárlás' },
         ],
         unlocksInvestment: ['inv-crypto'],
         didYouKnow: 'A Bitcoin ára 2021-ben +60%-ot ment, 2022-ben -65%-ot esett, 2023-ban +155%-ot emelkedett. Ez a volatilitás.',
+        invests: [{ optionId: 'inv-crypto', amount: 50_000 }],
       },
       {
         id: 'dani-d04-c',
@@ -306,13 +304,13 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
           'Esti OKJ-képzés: –150 000 Ft (egyszeri). 6 hónap tanulás, utána ' +
           '+50 000 Ft/hó tartós béremelkedés. Rövid távon fáj, hosszú távon megéri.',
         financialEffects: [
-          { target: 'balance', amount: -150_000, description: 'OKJ képzés tandíja' },
         ],
         ongoingEffects: [
-          { target: 'salary', monthlyAmount: 50_000, durationRounds: -1, description: 'Béremelkedés a képzés után (6 hónap múlva)' },
+          { target: 'salary', monthlyAmount: 50_000, durationRounds: -1, startAfterMonths: 6, description: 'Béremelkedés a képzés után (6 hónap múlva)' },
         ],
         unlocksInvestment: ['inv-professional-cert'],
         didYouKnow: 'Képzési díjra a Diákhitel Központ kötött felhasználású, kamatmentes hitele (DH2) is szóba jöhet - a feltételeket mindig a hivatalos oldalon ellenőrizd!',
+        invests: [{ optionId: 'inv-professional-cert', amount: 150_000 }],
       },
     ],
     characterPresets: ['career_start'],

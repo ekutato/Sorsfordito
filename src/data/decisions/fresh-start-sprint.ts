@@ -230,10 +230,10 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Minimum 10 000 Ft-tól vásárolható, webkincstár.hu-n. ' +
           'Most átlagosan {{map_plus_yield}}% éves kamat (az infláció {{inflation}}%). 5 éves futamidő, de lejárat előtt is visszaváltható.',
         financialEffects: [
-          { target: 'balance', amount: -50_000, description: 'MÁP Plusz vásárlás' },
         ],
         unlocksInvestment: ['inv-pmap'],
         didYouKnow: 'A WebKincstárban online nyithatsz számlát. A lakossági állampapírok kamata SZJA- és szochomentes, így ugyanakkora kamatnál többet kapsz kézhez, mint egy bankbetétnél.',
+        invests: [{ optionId: 'inv-map-plus', amount: 50_000 }],
       },
       {
         id: 'fs-d04-c',
@@ -242,10 +242,10 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Banki lekötött betét: most átlagosan {{deposit_rate}}% körül, akciósan ennél több is lehet. ' +
           'Kicsit jobb, mint a folyószámla, de a kamatból 28% adót (15% SZJA + 13% szocho) levonnak.',
         financialEffects: [
-          { target: 'balance', amount: -30_000, description: 'Betét lekötés' },
         ],
         unlocksInvestment: ['inv-bank-deposit'],
         didYouKnow: 'Az OBA (Országos Betétbiztosítási Alap) 100 000 EUR-ig védi a bankbetétedet. Ez most kb. {{oba_huf}} Ft – szóval a te megtakarításod biztonságban van.',
+        invests: [{ optionId: 'inv-bank-deposit', amount: 30_000 }],
       },
     ],
     characterPresets: ['fresh_start'],
@@ -345,17 +345,17 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Egy használt autó valós havi költsége átlagosan 80-120 000 Ft ' +
           '(üzemanyag + biztosítás + szerviz + adó + parkolás + értékcsökkenés). ' +
           'A KGFB kötelező, a CASCO opcionális de ajánlott.',
+        acquiresAsset: { id: 'auto', name: 'Használt autó (vételár)', value: 1_200_000 },
       },
       {
         id: 'fs-d05b-b',
         label: 'Autóhitelre veszel újat',
         description:
           'Új belépő kategóriás kisautó, 5 500 000 Ft. Önerő: 500 000 Ft, hitel: 5 000 000 Ft, ' +
-          '5 évre, a THM-et a bank egyedileg adja. Havi törlesztő: ~110 000 Ft. ' +
+          '5 évre, a THM-et a bank egyedileg adja. A havi törlesztő a mostani átlagos THM-mel ({{car_loan_thm}}%) számolódik. ' +
           'A banknak CASCO biztosítás kötelező (évi ~120 000 Ft).',
         financialEffects: [
           { target: 'balance', amount: -500_000, description: 'Autóhitel önerő' },
-          { target: 'loanPayments', amount: 110_000, description: 'Autóhitel törlesztő (5 év)' },
           { target: 'transport', amount: -15_000, description: 'BKK bérlet megszűnik' },
           { target: 'other', amount: 55_000, description: 'Fenntartás (KGFB + CASCO + benzin + szerviz)' },
         ],
@@ -363,6 +363,8 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'A THM (Teljes Hiteldíj Mutató) tartalmazza az összes költséget: kamat + díjak. ' +
           'Autóhitelnél MINDIG a THM-et hasonlítsd, ne a kamatot! ' +
           'Hiteles autónál a bank kötelezővé teszi a CASCO-t – ez évi 80-300 000 Ft extra.',
+        takesLoan: { name: 'Autóhitel', type: 'car_loan', principal: 5_000_000, months: 60, rateKey: 'bank.carLoanThm' },
+        acquiresAsset: { id: 'auto', name: 'Új autó (vételár)', value: 500_000, plusLoanPrincipal: true },
       },
       {
         id: 'fs-d05b-c',
@@ -419,11 +421,10 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Nyelvvizsga: ~50 000 Ft. Jogosítvány: ~250 000 Ft. ' +
           'Hosszú távú befektetés: a nyelvvizsga +10-15% bérelőnyt jelent.',
         financialEffects: [
-          { target: 'balance', amount: -150_000, description: 'Képzési költség' },
         ],
-        unlocksKnowledge: ['know-language'],
-        unlocksInvestment: ['inv-professional-cert'],
+        unlocksInvestment: ['inv-language'],
         didYouKnow: 'A KSH adatai szerint egy nyelvvizsga átlagosan 10-15%-kal emeli a fizetést. Két nyelv? +25%. A befektetés megtérül 1-2 éven belül!',
+        invests: [{ optionId: 'inv-language', amount: 150_000 }],
       },
       {
         id: 'fs-d06-c',

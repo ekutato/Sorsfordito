@@ -231,6 +231,9 @@ export interface Investment {
   /** Hová hat: passzív jövedelem, fizetés vagy rezsi (csökkentés) */
   incomeTarget?: 'passive' | 'salary' | 'utilities';
 
+  /** Tartós vagyontárgy neve (lakás, autó, üzletrész) - nem a piaci kínálatból */
+  assetName?: string;
+
   /** Az utolsó értékváltozás (Ft), oka és köre - a havi kimutatáshoz */
   lastChange?: HUF;
   lastReason?: string;
@@ -245,7 +248,9 @@ export type DebtType =
   | 'mortgage'         // Lakashitel
   | 'credit_card'      // Hitelkartya
   | 'family_loan'      // Csaladi kolcson
-  | 'business_loan';   // Vallalkozasi hitel
+  | 'business_loan'    // Vallalkozasi hitel
+  | 'car_loan'         // Autohitel
+  | 'baby_loan';       // Babavaro
 
 export interface Debt {
   id: string;

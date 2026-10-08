@@ -3,7 +3,7 @@
 // A jatek allapota, korok, dontesek, sorsforditok
 // ============================================================================
 
-import type { FinancialSheet, HUF, Percentage } from './financial';
+import type { DebtType, FinancialSheet, HUF, Percentage } from './financial';
 import type { WellbeingTarget } from './wellbeing';
 
 // --- Jatek allapot ---
@@ -318,8 +318,47 @@ export interface DecisionOption {
   /** Tudas kartya feloldasa */
   unlocksKnowledge?: string[];
 
+  /** Valódi befektetés a döntésből (a portfólióba kerül, az összeg az egyenlegből megy) */
+  invests?: Array<{ optionId: string; amount: HUF }>;
+
+  /** Hitelfelvétel valódi tartozásként (a törlesztő a tartozásból jön, lejáratkor megszűnik) */
+  takesLoan?: LoanSpec;
+
+  /** Hitel előtörlesztése (amount nélkül: teljes végtörlesztés) */
+  paysOffLoan?: { type?: DebtType; amount?: HUF };
+
+  /** Hitel módosítása (pl. kiváltás: alacsonyabb törlesztő) */
+  adjustsLoan?: { type?: DebtType; paymentDelta: HUF; ratePct?: number };
+
+  /** Tartós vagyontárgy (lakás, autó, üzletrész): a nettó vagyonban szerepel */
+  acquiresAsset?: {
+    id: string; name: string; value: HUF;
+    /** Az érték a hitel tőkéjével nő (önerő + hitel = vételár) */
+    plusLoanPrincipal?: boolean;
+    /** Havi passzív bevétel (pl. kiadás) */
+    monthlyIncome?: HUF;
+  };
+
   /** Rovid „Tudtad?" szoveg (valos tudasblokk) */
   didYouKnow?: string;
+}
+
+/**
+ * Hitel a döntésből. A három közül kettő megadása elég (a harmadik annuitással számolódik):
+ * tőke (principal), havi törlesztő (monthlyPayment), futamidő (months). A kamat fix vagy a heti csomagból (rateKey).
+ */
+export interface LoanSpec {
+  name: string;
+  type: DebtType;
+  principal?: HUF;
+  monthlyPayment?: HUF;
+  months?: number;
+  /** Éves kamat / THM (%) */
+  ratePct?: number;
+  /** Heti élő adat kulcsa (pl. 'bank.mortgageThm') - elsőbbséget élvez a ratePct-vel szemben */
+  rateKey?: string;
+  /** A hitelösszeg a számlára érkezik (személyi kölcsön, Babaváró); lakás/autó esetén az eladóhoz megy */
+  disburse?: boolean;
 }
 
 export interface FinancialEffect {
@@ -361,6 +400,10 @@ export interface OngoingEffect {
 
   /** Hany kor mulva lep eletbe (opcionalis) */
   startAfterRounds?: number;
+  /** Késleltetés hónapban (a kör hosszához igazítva) */
+  startAfterMonths?: number;
+  /** Időtartam hónapban (a kör hosszához igazítva; a durationRounds helyett) */
+  durationMonths?: number;
 }
 
 // --- Sorsfordito esemenyek ---
@@ -523,7 +566,7 @@ export interface GameEvent {
   /** Idopont */
   gameDate: string;
   /** Esemeny tipusa */
-  type: 'income' | 'expense' | 'decision' | 'investment' | 'fate' | 'crisis' | 'knowledge';
+  type: 'income' | 'expense' | 'decision' | 'investment' | 'fate' | 'crisis' | 'knowledge' | 'field';
   /** Leiras */
   description: string;
   /** Penzugyi hatas (ha volt) */
@@ -570,5 +613,6 @@ export interface SoloBoardState {
   /** Az eredménylap nyitva, amíg a játékos a "Tovább" gombra nem nyom */
   awaitingOutcomeAck?: boolean;
   /** Időleges kiadás-hatások visszaállítása (pl. részletfizetés vége) */
-  reverts: Array<{ atRound: number; target: string; amount: number }>;
+  /** Ütemezett hatások (lejáró időleges kiadás, késleltetett béremelés, lejáró ellátás) - a kör elején */
+  reverts: Array<{ atRound: number; target: string; amount: number; label?: string }>;
 }

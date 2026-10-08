@@ -39,6 +39,32 @@ export const INVESTMENT_OPTIONS_RAW: InvestmentOption[] = [
   },
 
   {
+    id: 'inv-map-plus',
+    name: 'Magyar Állampapír Plusz (MÁP Plusz)',
+    category: 'securities',
+    description:
+      'Ötéves lakossági állampapír lépcsőzetesen emelkedő kamattal (most átlagosan {{map_plus_yield}}% évente). ' +
+      'Évente fizet kamatot, a kamat adómentes; a futamidő előtt visszaváltható, díj ellenében.',
+    entryPrice: 50_000,
+    monthlyPassiveIncome: 0, // A heti hozamból számolódik
+    scores: {
+      returnPotential: 45,
+      liquidity: 55,
+      safety: 95,
+      inflationResistance: 55,
+      returnSpeed: 50,
+      accessibility: 90,
+      volatility: 5,
+    },
+    realWorldSource: 'https://www.akk.hu',
+    realWorldInfo:
+      'Kincstári számlán (WebKincstár) vagy bankfiókban vásárolható. Akkor jó választás, ha a pénzre 5 évig biztosan nincs szükséged.',
+    isDynamic: true,
+    dynamicDataKey: 'akk.mapPlusYield',
+    tier: 'free',
+  },
+
+  {
     id: 'inv-tbsz-etf',
     name: 'TBSZ + ETF portfólió',
     category: 'securities',

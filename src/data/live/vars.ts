@@ -44,6 +44,7 @@ export const LIVE_VAR_DEFS: Record<string, VarDef> = {
   deposit_rate: { key: 'bank.depositRate', fmt: 'dec', label: 'Átlagos lakossági betéti kamat' },
   personal_loan_thm: { key: 'bank.personalLoanThm', fmt: 'dec', label: 'Személyi kölcsön átlagos THM-je' },
   car_loan_thm: { key: 'bank.carLoanThm', fmt: 'dec', label: 'Autóhitel átlagos THM-je' },
+  mortgage_thm: { key: 'bank.mortgageThm', fmt: 'dec', label: 'Lakáshitel átlagos THM-je' },
   dh1_rate: { key: 'diakhitel.dh1Rate', fmt: 'dec', label: 'Diákhitel1 kamata' },
   btc_huf: { key: 'crypto.btcHuf', fmt: 'int', label: 'Bitcoin (Ft)' },
   eth_huf: { key: 'crypto.ethHuf', fmt: 'int', label: 'Ether (Ft)' },
