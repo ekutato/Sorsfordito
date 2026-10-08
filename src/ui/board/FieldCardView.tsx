@@ -110,7 +110,7 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
             ))}
             {!hasKnowledge && flags.length < allFlags.length && (
               <p className="text-sm" style={{ color: '#6B5D43' }}>
-                Még {allFlags.length - flags.length} vészjel maradt rejtve.{knowledgeName ? ` A(z) „${knowledgeName}” tudáskártyával mindet látnád, és a hívó sem tudna sürgetni.` : ''}
+                Még {allFlags.length - flags.length} vészjel maradt rejtve.{knowledgeName ? ` ${/^[aáeéiíoóöőuúüű]/i.test(knowledgeName) ? 'Az' : 'A'} „${knowledgeName}” tudáskártyával mindet látnád, és a hívó sem tudna sürgetni.` : ''}
               </p>
             )}
           </div>
@@ -219,23 +219,60 @@ export function FieldOutcomeView({ result, outcome, onContinue }: OutcomeProps) 
  * Kártyafelfordítás: előbb a hátlap jön fel nagyban (mező színe és jele), koppintásra vagy kis idő után
  * megfordul, és csak ekkor jelenik meg az előlap (a csapdaóra is ekkor indul).
  */
-export function CardFlip({ field, district, children }: { field: FieldType; district: string; children: React.ReactNode }) {
+/** Keverés → húzás → hátlap → felfordítás. Csökkentett mozgásnál azonnal az előlap. */
+export function CardFlip({ field, district, children, deck, sharedSeat }: {
+  field: FieldType; district: string; children: React.ReactNode;
+  /** A pakli állapota: új keverésnél teljes keverés, egyébként emelés */
+  deck?: { size: number; index: number; newPass: boolean };
+  /** Asztali játék: a játékos helye a közös pakliban */
+  sharedSeat?: { slot: number; players: number };
+}) {
   const st = FIELD_STYLE[field] ?? FIELD_STYLE.office;
   const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [flipped, setFlipped] = useState(!!reduce);
+  const [stage, setStage] = useState<'shuffle' | 'back' | 'front'>(reduce ? 'front' : 'shuffle');
+  const full = deck?.newPass ?? true;
   useEffect(() => {
-    if (flipped) return;
-    play('card');
-    const t = setTimeout(() => setFlipped(true), 1300);
-    return () => clearTimeout(t);
-  }, [flipped]);
-  if (flipped) return <>{children}</>;
+    if (stage === 'shuffle') {
+      // Keverés hanggal: teljes keverésnél háromszor, emelésnél egyszer
+      const sounds = (full ? [0, 260, 520] : [0]).map((ms) => setTimeout(() => play('card'), ms));
+      const t = setTimeout(() => setStage('back'), full ? 950 : 520);
+      return () => { sounds.forEach(clearTimeout); clearTimeout(t); };
+    }
+    if (stage === 'back') {
+      const t = setTimeout(() => setStage('front'), 1300);
+      return () => clearTimeout(t);
+    }
+  }, [stage, full]);
+  if (stage === 'front') return <>{children}</>;
+  const back = `repeating-linear-gradient(45deg, ${st.color} 0 18px, rgba(255,255,255,.12) 18px 36px)`;
+  if (stage === 'shuffle') {
+    return (
+      <div className="w-full aspect-[3/4] max-h-[60vh] flex flex-col items-center justify-center gap-4" aria-label={`${FIELD_LABELS[field]} pakli keverése`}>
+        <div className="relative w-36 h-48">
+          {[0, 1, 2, 3, 4].map((k) => (
+            <motion.div key={k} className="absolute inset-0 rounded-2xl shadow-xl border-2 border-white/40"
+              style={{ background: back, zIndex: k }}
+              initial={{ x: 0, y: -k * 2, rotate: 0 }}
+              animate={full
+                ? { x: [0, k % 2 ? 70 : -70, 0, k % 2 ? -40 : 40, 0], rotate: [0, k % 2 ? 12 : -12, 0, k % 2 ? -6 : 6, 0], y: [-k * 2, -k * 2 - 10, -k * 2, -k * 2 - 6, -k * 2] }
+                : { y: k === 4 ? [-8, -40, -8] : -k * 2, rotate: k === 4 ? [0, -4, 0] : 0 }}
+              transition={{ duration: full ? 0.9 : 0.5, ease: 'easeInOut', delay: full ? k * 0.03 : 0 }} />
+          ))}
+        </div>
+        <span className="text-sm font-semibold text-[var(--color-text-muted)]">
+          {full ? 'Keverés…' : 'Húzás a pakliból…'}
+          {deck ? ` · ${deck.size} lapos pakli, ebből még ${deck.size - deck.index} lap vár` : ''}
+        </span>
+        {sharedSeat && <span className="text-xs text-[var(--color-text-muted)]">Közös asztali pakli: minden körben {[1, 5].includes(sharedSeat.slot + 1) ? 'az' : 'a'} {sharedSeat.slot + 1}. helyről húzol ({sharedSeat.players} játékos), így nem kaphatod ugyanazt a lapot, mint a többiek.</span>}
+      </div>
+    );
+  }
   return (
-    <motion.button type="button" onClick={() => setFlipped(true)} aria-label={`${FIELD_LABELS[field]} kártya - koppints a felfordításhoz`}
+    <motion.button type="button" onClick={() => setStage('front')} aria-label={`${FIELD_LABELS[field]} kártya - koppints a felfordításhoz`}
       className="w-full aspect-[3/4] max-h-[60vh] rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl"
-      style={{ background: `repeating-linear-gradient(45deg, ${st.color} 0 18px, rgba(255,255,255,.12) 18px 36px)`, color: st.ink, transformPerspective: 900 }}
-      initial={{ scale: 0.55, y: 40, opacity: 0, rotateY: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
-      exit={{ rotateY: 90 }} transition={{ type: 'spring', stiffness: 160, damping: 18 }}>
+      style={{ background: back, color: st.ink, transformPerspective: 900 }}
+      initial={{ scale: 0.4, y: -60, opacity: 0.6 }} animate={{ scale: 1, y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 160, damping: 18 }}>
       <span className="w-28 h-28 rounded-full flex items-center justify-center text-6xl font-black" style={{ background: 'rgba(255,255,255,.9)', color: '#0E1525' }}>{st.glyph}</span>
       <span className="text-2xl font-extrabold uppercase tracking-wide drop-shadow">{FIELD_LABELS[field]}</span>
       <span className="text-base font-semibold opacity-90">{district}</span>

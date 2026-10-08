@@ -50,7 +50,7 @@ export function WellbeingReflection({ reflection, onDone }: { reflection: Subjec
             {CHOICES.map((c) => (
               <button key={c.delta} onClick={() => setAnswers((a) => ({ ...a, [k]: c.delta }))} aria-pressed={answers[k] === c.delta}
                 className={`h-11 rounded-lg text-sm font-bold border ${c.style} ${answers[k] === c.delta ? 'ring-2 ring-amber-400' : 'opacity-80'}`}>
-                {c.label} {c.delta > 0 ? '+1' : c.delta < 0 ? '-1' : '0'}
+                {c.label} {c.delta > 0 ? '+1' : c.delta < 0 ? '\u22121' : '0'}
               </button>
             ))}
           </div>

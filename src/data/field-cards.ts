@@ -297,6 +297,16 @@ export function cardForField(field: FieldType, visit: number, seed?: string, sha
   }
 }
 
+/** A húzás helye a pakliban (a keverés megjelenítéséhez): pakliméret, hányadik lap, új keverés-e */
+export function cardDrawInfo(field: FieldType, visit: number, shared?: SharedDeck): { size: number; index: number; newPass: boolean } | undefined {
+  const size = { trap: TRAP_CARDS.length, temptation: TEMPTATION_CARDS.length, recharge: RECHARGE_CARDS.length, encounter: ENCOUNTER_CARDS.length, office: OFFICE_CARDS.length }[field as string];
+  if (!size) return undefined;
+  const n = shared ? Math.max(1, shared.players) : 1;
+  const at = (v: number) => v * n + (shared?.slot ?? 0);
+  const pass = (v: number) => Math.floor(at(v) / size);
+  return { size, index: at(visit) % size, newPass: visit === 0 || pass(visit) !== pass(visit - 1) };
+}
+
 /** A kör meglévő tartalmát kiemelő mezők rövid magyarázata */
 export const FIELD_HINTS: Partial<Record<FieldType, string>> = {
   payday: 'Fizetésnap: megérkezik a havi bevétel.',

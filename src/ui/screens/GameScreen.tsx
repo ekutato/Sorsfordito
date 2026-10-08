@@ -39,6 +39,7 @@ import { getDecisionsFor } from '@/data/decisions';
 import { planRoundIncome, planRoundExpenses } from '@/engine/round-money';
 import { MoneyDelta } from '@/ui/components/Money';
 import { drawOffers, type OfferContext } from '@/engine/offers';
+import { cardDrawInfo } from '@/data/field-cards';
 import { LEVEL_LABEL, levelOf, knowledgeEffects } from '@/data/knowledge-tree';
 
 
@@ -436,7 +437,7 @@ function IncomeExpensePhase() {
               <span className={`font-mono text-sm font-semibold ${
                 isIncome ? 'text-money-positive' : 'text-money-negative'
               }`}>
-                {isIncome ? '+' : '-'}{formatHUF(item.amount)}
+                {isIncome ? '+' : '\u2212'}{formatHUF(item.amount)}
               </span>
             </div>
           ))}
@@ -447,7 +448,7 @@ function IncomeExpensePhase() {
             <span className={`font-mono text-base font-bold ${
               isIncome ? 'text-money-positive' : 'text-money-negative'
             }`}>
-              {isIncome ? '+' : '-'}{formatHUF(total)}
+              {isIncome ? '+' : '\u2212'}{formatHUF(total)}
             </span>
           </div>
         </div>
@@ -752,7 +753,7 @@ function InvestPhase() {
                         if (m <= 0) return 'Árfolyam alapú hozam (havi jövedelmet nem ad)';
                         const t = investmentTarget(inv);
                         return t === 'salary' ? `+${formatHUF(m)}/hó a fizetésedhez`
-                          : t === 'utilities' ? `-${formatHUF(m)}/hó rezsi`
+                          : t === 'utilities' ? `+${formatHUF(m)}/hó (ennyivel kisebb a rezsi)`
                           : `+${formatHUF(m)}/hó passzív jövedelem${inv.id === 'inv-bank-deposit' ? ' (28% kamatadó után)' : ''}`;
                       })()}
                       {' · '}
@@ -1150,7 +1151,9 @@ function BoardLayer() {
       <section className="space-y-3">
         {expanded ? <BoardFull others={others} pawnColor={myColor} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip pawnColor={myColor} position={b.position} onExpand={() => setExpanded(true)} />}
         {b.lastRoll ? <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]"><DieFace value={b.lastRoll} size={28} /> Dobtál: <b>{b.lastRoll}</b> · {FIELD_LABELS[field.type]}, {districtOf(field.index).label}</p> : null}
-        <CardFlip key={`flip-${game.currentRound}-${card.id}`} field={card.field} district={districtOf(field.index).label}>
+        <CardFlip key={`flip-${game.currentRound}-${card.id}`} field={card.field} district={districtOf(field.index).label}
+          deck={cardDrawInfo(field.type, b.visits[field.type] ?? 0, sharedDeckOf(game))}
+          sharedSeat={sharedDeckOf(game) ? { slot: sharedDeckOf(game)!.slot, players: sharedDeckOf(game)!.players } : undefined}>
           <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
             onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
         </CardFlip>

@@ -88,35 +88,43 @@ export function EndMoneyComparison({ game }: { game: GameState }) {
   const pct = (n: number) => (s.startBalance > 0 ? ` (${n >= 0 ? '+' : '\u2212'}${Math.abs(Math.round((n / s.startBalance) * 100)).toLocaleString('hu-HU')}%)` : '');
   const withInvesting = s.withoutInvesting + s.investmentResult;
   const wb = computeIndices(sheet, RULESETS[DEFAULT_RULESET_ID]).wellbeing;
+  // Keskeny lapon a felirat és az összeg külön sorban (nem lóg ki)
   const row = (label: string, amount: number, key?: string) => (
-    <li key={key ?? label} className="flex justify-between gap-2"><span className="text-[var(--color-text-muted)]">{label}</span><MoneyDelta amount={amount} /></li>
+    <li key={key ?? label}><span className="block text-[var(--color-text-muted)] leading-tight">{label}</span><span className="block text-right whitespace-nowrap"><MoneyDelta amount={amount} /></span></li>
+  );
+  const total = (label: string, amount: number) => (
+    <p className="mt-2 pt-2 border-t border-white/10"><b className="block">{label}</b><b className="block text-right font-mono whitespace-nowrap">{formatHUF(amount)}</b></p>
+  );
+  const growth = (amount: number) => (
+    <p><span className="block">Növekmény</span><span className="block text-right whitespace-nowrap"><MoneyDelta amount={amount} />{pct(amount)}</span></p>
   );
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-2xl p-3 border border-white/15 bg-white/5 text-xs">
+        <div className="rounded-2xl p-2.5 border border-white/15 bg-white/5 text-xs min-w-0">
           <p className="font-semibold text-[var(--color-text-muted)]">Befektetések nélkül</p>
           <ul className="mt-2 space-y-1">
-            <li className="flex justify-between gap-2"><span>Kezdő tőke</span><span className="font-mono">{formatHUF(s.startBalance)}</span></li>
+            <li><span className="block">Kezdő tőke</span><span className="block text-right font-mono whitespace-nowrap">{formatHUF(s.startBalance)}</span></li>
             {s.cashLines.filter((l) => l.key !== 'invested').map((l) => row(l.label, l.key === 'income' ? l.amount - s.investmentIncome : l.amount, l.key))}
           </ul>
-          <p className="mt-2 pt-2 border-t border-white/10 flex justify-between"><b>Ennyi lenne</b><b className="font-mono">{formatHUF(s.withoutInvesting)}</b></p>
-          <p className="flex justify-between"><span>Növekmény</span><span><MoneyDelta amount={s.growthWithout} />{pct(s.growthWithout)}</span></p>
+          {total('Ennyi lenne', s.withoutInvesting)}
+          {growth(s.growthWithout)}
         </div>
-        <div className="rounded-2xl p-3 border-2 text-xs" style={{ borderColor: '#25865A', background: 'rgba(37,134,90,.10)' }}>
+        <div className="rounded-2xl p-2.5 border-2 text-xs min-w-0" style={{ borderColor: '#25865A', background: 'rgba(37,134,90,.10)' }}>
           <p className="font-semibold text-[var(--color-text-muted)]">Befektetésekkel</p>
           <ul className="mt-2 space-y-1.5">
-            <li className="flex justify-between gap-2"><span>Befektetések nélkül</span><span className="font-mono">{formatHUF(s.withoutInvesting)}</span></li>
+            <li><span className="block">Befektetések nélkül</span><span className="block text-right font-mono whitespace-nowrap">{formatHUF(s.withoutInvesting)}</span></li>
             {s.investments.map((l, i) => (
               <li key={i}>
-                <span className="flex justify-between gap-2"><b>{l.name}</b><MoneyDelta amount={l.result} /></span>
+                <b className="block leading-tight">{l.name}</b>
+                <span className="block text-right whitespace-nowrap"><MoneyDelta amount={l.result} /></span>
                 <span className="block text-[var(--color-text-muted)]">{formatHUF(l.invested)} → {formatHUF(l.value)}{l.income > 0 ? ` + hozam ${formatHUF(l.income)}` : ''} · {l.round}. kör</span>
               </li>
             ))}
             {!s.investments.length && <li className="text-[var(--color-text-muted)]">Nem fektettél be.</li>}
           </ul>
-          <p className="mt-2 pt-2 border-t border-white/10 flex justify-between"><b>Összesen</b><b className="font-mono">{formatHUF(withInvesting)}</b></p>
-          <p className="flex justify-between"><span>Növekmény</span><span><MoneyDelta amount={withInvesting - s.startBalance} />{pct(withInvesting - s.startBalance)}</span></p>
+          {total('Összesen', withInvesting)}
+          {growth(withInvesting - s.startBalance)}
         </div>
       </div>
       <div className="rounded-xl bg-white/5 p-3 text-sm space-y-1">

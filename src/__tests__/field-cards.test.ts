@@ -130,7 +130,8 @@ describe('előjel és szín iránya', () => {
     expect(effectDirection('wellbeing.egeszseg', -1)).toBe('bad');
     expect(signedEffect('salary', 50_000)).toBe('+50 000 Ft/hó');
     expect(signedEffect('balance', -1_000)).toBe('−1 000 Ft');
-    expect(signedEffect('food', -10_000, { durationMonths: 3 })).toBe('−10 000 Ft/hó (3 hónapig)');
+    expect(signedEffect('food', -10_000, { durationMonths: 3 })).toBe('+10 000 Ft/hó (3 hónapig)');
+    expect(signedEffect('housing', 220_000)).toBe('−220 000 Ft/hó');
   });
 });
 
@@ -143,5 +144,17 @@ describe('mezőkártya: csak a helyzethez illő lap', () => {
       const d = cardForField('office', v, 'g1', undefined, { preset: 'career_start', housing: 0, investments: [] })!;
       expect(d.title).not.toMatch(/lakcímbejelentés/);
     }
+  });
+});
+
+describe('pakli állapota a keveréshez', () => {
+  it('új keverés az első húzáskor és a pakli végén', async () => {
+    const { cardDrawInfo, TRAP_CARDS } = await import('@/data/field-cards');
+    const n = TRAP_CARDS.length;
+    expect(cardDrawInfo('trap', 0)?.newPass).toBe(true);
+    expect(cardDrawInfo('trap', 1)?.newPass).toBe(false);
+    expect(cardDrawInfo('trap', n)?.newPass).toBe(true);
+    expect(cardDrawInfo('trap', 2, { seed: 1, slot: 1, players: 4 })).toEqual({ size: n, index: (2 * 4 + 1) % n, newPass: Math.floor(9 / n) !== Math.floor(5 / n) });
+    expect(cardDrawInfo('knowledge', 0)).toBeUndefined();
   });
 });

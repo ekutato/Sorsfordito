@@ -49,9 +49,17 @@ export function DecisionView() {
     }
   }
 
+  // Körönként egy döntés: ha ebben a körben már döntöttél, az marad a képernyőn (a "Tudtad?" panellel)
+  const decidedNow = (game.eventLog ?? []).find((e) => e.type === 'decision' && e.round === game.currentRound && e.details?.decisionCardId);
+  const decidedCard = decidedNow ? decisions.find((d) => d.id === decidedNow.details!.decisionCardId) : undefined;
   // Döntés mezőn a következő esedékes döntés előrejöhet
   const onDecisionField = BOARD[game.board?.position ?? 0]?.type === 'decision';
-  const { decision, broughtForward } = getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField);
+  const found = decidedCard
+    ? { decision: decidedCard, broughtForward: !decidedCard.availableAtRounds.includes(game.currentRound) }
+    : getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField);
+  const { decision, broughtForward } = found;
+  // Újratöltés után is a meghozott döntés látszik (nem lehet kétszer dönteni)
+  const chosenId = selectedOptionId ?? (decidedNow?.details?.optionId as string | undefined) ?? null;
 
   if (!decision) {
     // Ha nincs dontes ehhez a korhoz, tovabblep
@@ -135,6 +143,7 @@ export function DecisionView() {
   const affordable = affordableOptions(decision.options, player.financialSheet.balance);
 
   const handleSelect = (option: DecisionOption) => {
+    if (decidedNow || chosenId) return; // körönként egy döntés
     setSelectedOptionId(option.id);
     // Hatások, tartós hatások, befektetés/hitel, tudás és napló - egy helyen (store/decision-finance)
     applyDecisionOption(decision, option);
@@ -170,7 +179,7 @@ export function DecisionView() {
         </p>
 
         {/* Valasztasi lehetosegek — a kártyán belül */}
-        {!selectedOptionId && (
+        {!chosenId && (
           <div className="space-y-2 border-t border-white/10 pt-3">
             <p className="text-xs text-brand-400 font-semibold mb-1">Válassz:</p>
             {decision.options.map((option, index) => {
@@ -224,8 +233,8 @@ export function DecisionView() {
       </div>
 
       {/* Valasztas utani visszajelzes */}
-      {selectedOptionId && (() => {
-        const chosenOption = decision.options.find((o) => o.id === selectedOptionId);
+      {chosenId && (() => {
+        const chosenOption = decision.options.find((o) => o.id === chosenId);
         if (!chosenOption) return null;
         return (
           <motion.div

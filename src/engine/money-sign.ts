@@ -14,9 +14,14 @@ export function effectDirection(target: string, amount: number): 'good' | 'bad' 
   return up ? 'good' : 'bad';
 }
 
-/** Előjeles összeg: "+12 000 Ft", "−5 000 Ft/hó", "+1 pont" */
+/**
+ * Előjeles összeg a pénzed szemszögéből: "+12 000 Ft", "−5 000 Ft/hó", "+1 pont".
+ * Kiadásnál az előjel a pénzmozgás iránya: a kiadás növekedése "−" (piros), a csökkenése "+" (zöld),
+ * így az előjel és a szín mindig egyezik.
+ */
 export function signedEffect(target: string, amount: number, opts?: { durationMonths?: number }): string {
-  const sign = amount > 0 ? '+' : amount < 0 ? MINUS : '';
+  const flow = EXPENSE_TARGETS.has(target) ? -amount : amount;
+  const sign = flow > 0 ? '+' : flow < 0 ? MINUS : '';
   const body = formatEffectAmount(target, Math.abs(amount));
   const monthly = MONTHLY_TARGETS.has(target) ? '/hó' : '';
   const dur = opts?.durationMonths ? ` (${opts.durationMonths} hónapig)` : '';
