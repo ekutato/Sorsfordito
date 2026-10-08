@@ -45,8 +45,12 @@ describe('mezőbónusz', () => {
   });
   it('a Tudás mező lapja ingyenes, még meg nem szerzett tudáskártya', () => {
     const c = bonusCardFor('knowledge', 0, 'g1', ['know-tax'])!;
-    expect(c.options[0].effects[0].target).toMatch(/^knowledge:/);
-    expect(c.options[0].effects[0].target).not.toBe('knowledge:know-tax');
+    // A tudás csak a helyes válasszal szerezhető meg: pontosan egy opció adja
+    const learning = c.options.filter((o) => o.effects.some((e) => e.target.startsWith('knowledge:')));
+    expect(learning).toHaveLength(1);
+    expect(learning[0].effects[0].target).not.toBe('knowledge:know-tax');
+    expect(c.body).toMatch(/Hogyan tanulod meg/);
+    expect(c.body).toMatch(/Ellenőrző kérdés/);
     expect(c.options.some((o) => !o.effects.some((e) => e.target === 'balance' && e.amount < 0))).toBe(true);
   });
 });

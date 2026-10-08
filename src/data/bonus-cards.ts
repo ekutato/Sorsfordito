@@ -32,18 +32,31 @@ export function bonusCardFor(field: FieldType, visit: number, seed: string, owne
     const deck = shuffle(learnable, createRng(seedFromString(`${seed}-tudas-${visit}`)));
     const k = learnable.find((x) => x.id === themed[visit % Math.max(1, themed.length)]) ?? deck[0];
     if (!k) return undefined;
+    // Hogyan szerzed meg: elolvasod a forrás tájékoztatóját, majd egy kérdéssel ellenőrzöd magad.
+    // A tudás csak helyes válasz után a tiéd (mint a piacon a tudáspróba).
+    const effects = [`${LEVEL_LABEL[levelOf(k.id)]} szint`, ...knowledgeEffects(k.id)].join(' · ');
+    const host = (() => { try { return new URL(k.sourceUrl).hostname.replace(/^www\./, ''); } catch { return 'a hivatalos forrás'; } })();
+    const learn = `Hogyan tanulod meg: ingyenes tanulási alkalom - elolvasod a lenti forrás tájékoztatóját (${host}, kb. egy óra), aztán egy kérdéssel ellenőrzöd magad. Ha jól válaszolsz, a tudás a tiéd.`;
+    const q = k.quiz?.length ? k.quiz[visit % k.quiz.length] : undefined;
+    const acquire = { target: `${KNOWLEDGE_TARGET}${k.id}`, amount: 1 };
+    const skip = { label: 'Most kihagyom', effects: [], outcome: 'Rendben. A tudáskártyák piacán ebben a körben 3 lapot szerezhetsz.' };
     return {
       id: `bonus-know-${k.id}`,
       field: 'knowledge',
       title: `Tudás mező: ${k.name}`,
-      body: `Ingyen megtanulhatod: ${k.realWorldKnowledge.split(/(?<=\.)\s/)[0]} Ebben a körben a piacon is eggyel több tudáskártyát szerezhetsz (3).`,
-      options: [
-        { label: 'Megtanulom (ingyenes)', effects: [{ target: `${KNOWLEDGE_TARGET}${k.id}`, amount: 1 }],
-          outcome: `Megszerezted: ${k.name}. A tudásbefektetés később pénzt vagy bajt spórol meg.` },
-        { label: 'Most kihagyom', effects: [],
-          outcome: 'Rendben. A tudáskártyák piacán ebben a körben így is 3 lapot szerezhetsz.' },
-      ],
-      realStep: [`${LEVEL_LABEL[levelOf(k.id)]} szint.`, ...knowledgeEffects(k.id)].join(' · '),
+      body: `${learn}\n\nAmit megtanulsz: ${k.realWorldKnowledge}${q ? `\n\nEllenőrző kérdés: ${q.question}` : ''}`,
+      options: q
+        ? [
+          ...q.options.map((opt, i) => i === q.correctIndex
+            ? { label: opt, effects: [acquire], outcome: `Helyes! ${q.explanation} Megszerezted: ${k.name}. A játékban: ${effects}.` }
+            : { label: opt, effects: [], outcome: `Nem ez a helyes válasz. ${q.explanation} Most nem szerezted meg; a tudáskártyák piacán később újra megpróbálhatod.` }),
+          skip,
+        ]
+        : [
+          { label: 'Megtanulom (ingyenes)', effects: [acquire], outcome: `Megszerezted: ${k.name}. A játékban: ${effects}.` },
+          skip,
+        ],
+      realStep: `Olvasd el te is a forrást (${host}): ebből tanul a játékbeli karaktered is.`,
       sourceUrl: k.sourceUrl,
     };
   }

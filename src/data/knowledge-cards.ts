@@ -252,7 +252,7 @@ export const KNOWLEDGE_CARDS_RAW: KnowledgeCard[] = [
     realWorldKnowledge:
       'A Munka Törvénykönyve (Mt.) szerint: ' +
       '1) Próbaidő max. 3 hónap (kollektív szerződéssel max. 6). ' +
-      '2) Felmondási idő: min. 30 nap, minden 3 ledolgozott év után +5 nap. ' +
+      '2) Felmondási idő: 30 nap; munkáltatói felmondásnál a munkaviszony hosszával nő (3 év után +5 nap, lépcsőzetesen 20 év után +60 napig). ' +
       '3) Túlóra: +50% pótlék hétköznapon, +100% pihenőnapon. ' +
       '4) Alapszabadság: 20 nap + életkor után pótszabadság (+1-10 nap). ' +
       '5) Jelenleg a minimálbér bruttó {{min_wage}} Ft, a garantált bérminimum {{guaranteed_min_wage}} Ft.',
@@ -265,7 +265,7 @@ export const KNOWLEDGE_CARDS_RAW: KnowledgeCard[] = [
         correctIndex: 2,
         explanation:
           'A felmondási idő alapesetben 30 nap. Munkáltatói felmondásnál ' +
-          'a munkaviszony időtartama alapján nőhet (+5 nap minden 3 év után).',
+          'a munkaviszony időtartama alapján nő (3 év után +5 nap, lépcsőzetesen 20 év után +60 napig).',
       },
       {
         question: 'Mennyit kapsz túlórapótlékként hétköznapon?',

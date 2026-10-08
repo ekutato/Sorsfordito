@@ -63,7 +63,9 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
   const flags = hasKnowledge ? allFlags : allFlags.slice(0, Math.ceil(allFlags.length / 2));
   const knowledgeName = card.highlightWithKnowledge ? KNOWLEDGE_CARDS.find((k) => k.id === card.highlightWithKnowledge)?.name : undefined;
   // A helyes válasz ne mindig ugyanott álljon (kártyánként állandó, de vegyes sorrend)
-  const options = card.field === 'market_news' ? card.options : shuffle(card.options, createRng(seedFromString(card.id)));
+  const mixed = card.field === 'market_news' ? card.options : shuffle(card.options, createRng(seedFromString(card.id)));
+  // A "Most kihagyom" mindig a végén áll (a válaszok közé nem keveredik)
+  const options = [...mixed.filter((o) => !o.label.startsWith('Most kihagyom')), ...mixed.filter((o) => o.label.startsWith('Most kihagyom'))];
   return (
     <motion.article ref={ref} key={card.id} className="rounded-2xl overflow-hidden scroll-mt-24" style={{ background: '#FBF7EE', color: '#1C1A16', transformPerspective: 900 }}
       initial={{ rotateY: -90, opacity: 0, scale: 0.9 }} animate={{ rotateY: 0, opacity: 1, scale: 1 }}
@@ -79,7 +81,7 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
       <div className="p-4 space-y-3">
         {card.field === 'trap' && <span className="text-sm font-bold tracking-wider" style={{ color: '#8A4B0B' }}>AJÁNLAT ÉRKEZETT</span>}
         <h2 className="text-xl font-extrabold leading-tight">{card.title}</h2>
-        <p className="text-base leading-relaxed" style={{ color: '#3D3628' }}>{card.body}</p>
+        <p className="text-base leading-relaxed whitespace-pre-line" style={{ color: '#3D3628' }}>{card.body}</p>
 
         {isTrap && !checked && (
           <div className="space-y-2" role="timer" aria-live="polite">
