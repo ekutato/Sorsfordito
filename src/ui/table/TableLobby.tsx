@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useTableStore, inviteLink } from '@/store/table-store';
 import { useSettingsStore } from '@/store/settings-store';
 import { PRESETS_BY_DIFFICULTY } from '@/data/character-presets';
-import { TIME_SCALE_CONFIGS, type TimeScale } from '@/types/game';
-import { MAX_PLAYERS, PLAYER_COLORS, displayColor, type TableState } from '@/engine/table/state';
+import { DEFAULT_RULES, TIME_SCALE_CONFIGS, type CharacterPresetId, type TimeScale } from '@/types/game';
+import { MAX_PLAYERS, PLAYER_COLORS, displayColor, pendingCustoms, type TableState } from '@/engine/table/state';
+import { presetAsCustom } from '@/engine/custom-profile';
+import { CustomProfileForm, CustomSummary } from '@/ui/components/CustomProfileForm';
 import { formatHUF } from '@/engine/financial-calculator';
 import { ConnectionBanner } from './TableBar';
 import { loadPlayerName, savePlayerName } from '@/store/player-name';
@@ -98,6 +100,69 @@ export function ColorPicker({ table, playerId, onPick }: { table: TableState; pl
   );
 }
 
+/** Saját helyzet a játékos oldalán: beküldés, állapot (jóváhagyásra vár / jóváhagyva / elutasítva) */
+export function CustomSection({ table, playerId }: { table: TableState; playerId: string | null }) {
+  const { setCustom } = useTableStore();
+  const [editing, setEditing] = useState(false);
+  const me = table.players.find((p) => p.id === playerId);
+  if (!me || !table.config.rules?.customProfile) return null;
+  const isHost = me.id === table.hostId;
+  const base = presetAsCustom((me.profileId ?? 'career_start') as CharacterPresetId);
+  return (
+    <section className="space-y-2 rounded-xl border border-amber-400/30 bg-white/5 p-3">
+      <h2 className="text-lg font-bold">Saját helyzetem (nem kötelező)</h2>
+      {me.custom && !editing ? (
+        <>
+          <CustomSummary c={me.custom} />
+          <p className={`text-sm font-semibold ${me.customApproved ? 'text-money-positive' : 'text-amber-200'}`}>
+            {me.customApproved ? (isHost ? 'Játékmesterként a sajátod automatikusan jóváhagyott ✓' : 'A játékmester jóváhagyta ✓') : 'A játékmester jóváhagyására vár…'}
+          </p>
+          <div className="flex gap-4">
+            <button onClick={() => setEditing(true)} className="text-sm underline text-brand-400">Módosítás</button>
+            <button onClick={() => setCustom(null)} className="text-sm underline text-[var(--color-text-muted)]">A karakter alapértékeivel játszom</button>
+          </div>
+        </>
+      ) : editing || !me.custom ? (
+        <>
+          {me.customRejected && !editing && <p className="text-sm text-rose-300">A játékmester elutasította a megadott helyzetet. A karakter alapértékeivel játszol, vagy küldj újat.</p>}
+          {!editing ? (
+            <button onClick={() => setEditing(true)} className="w-full h-11 rounded-xl text-base font-semibold border border-white/15 bg-white/5">
+              Megadom a saját életkorom, tőkém, bevételem és kiadásaim
+            </button>
+          ) : (
+            <CustomProfileForm initial={me.custom ?? base} submitLabel={isHost ? 'Mentés' : 'Elküldöm jóváhagyásra'}
+              note={isHost ? undefined : 'A játékmester átnézi és jóváhagyja; addig a játék nem indul el.'}
+              onSubmit={(c) => { setCustom(c); setEditing(false); }} />
+          )}
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+/** A játékmester jóváhagyó listája: a beküldött saját helyzetek */
+export function CustomApprovals({ table }: { table: TableState }) {
+  const { approveCustom } = useTableStore();
+  const pending = pendingCustoms(table).filter((p) => p.id !== table.hostId);
+  if (pending.length === 0) return null;
+  return (
+    <section className="space-y-2 rounded-xl border border-amber-400/50 bg-amber-400/10 p-3" aria-live="polite">
+      <h2 className="text-lg font-bold">Jóváhagyásra vár ({pending.length})</h2>
+      <p className="text-sm text-[var(--color-text-muted)]">Nézd át, életszerű-e a megadott helyzet. Elutasításnál a játékos a karakter alapértékeivel játszik, vagy újat küld.</p>
+      {pending.map((p) => (
+        <div key={p.id} className="rounded-lg bg-black/20 p-3 space-y-2">
+          <span className="block text-base font-semibold">{p.name}</span>
+          {p.custom && <CustomSummary c={p.custom} />}
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => approveCustom(p.id, true)} className="h-10 rounded-lg text-sm font-bold" style={{ background: '#3FC795', color: '#0E1525' }}>Jóváhagyom</button>
+            <button onClick={() => approveCustom(p.id, false)} className="h-10 rounded-lg text-sm font-bold border border-white/20 bg-white/10">Elutasítom</button>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 /** Játék közben érkezett játékos: karakterválasztás, aztán indul a saját játéka */
 export function LateJoin() {
   const { table, setProfile, setColor, playerId, leave } = useTableStore();
@@ -115,8 +180,10 @@ export function LateJoin() {
         <h2 className="text-lg font-bold">A színed</h2>
         <ColorPicker table={table} playerId={playerId} onPick={setColor} />
       </section>
+      <CustomSection table={table} playerId={playerId} />
       <section className="space-y-2">
         <h2 className="text-lg font-bold">A karaktered</h2>
+        {table.config.rules?.customProfile && <p className="text-sm text-[var(--color-text-muted)]">Ha saját helyzetet adsz meg, előbb azt küldd el; a karakter választása után indul a játékod (a jóváhagyás után).</p>}
         {table.config.sameProfile && hostProfile ? (
           <button onClick={() => setProfile(hostProfile.id)} className="w-full h-14 rounded-2xl text-lg font-extrabold pulse-cta" style={{ background: '#F2A33A', color: '#0E1525' }}>
             Beszállok: {hostProfile.avatar} {hostProfile.name}
@@ -149,6 +216,7 @@ export function NotAdmitted() {
 /** Váróterem: kód, meghívás, játékosok, karakterválasztás, indítás */
 export function TableLobby() {
   const { table, role, playerId, roomCode, setProfile, setColor, configure, start, leave, error } = useTableStore();
+  const settingsRules = useSettingsStore((st) => st.rules);
   const [copied, setCopied] = useState(false);
   useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 2000); return () => clearTimeout(t); } }, [copied]);
   if (!table || !roomCode) {
@@ -164,7 +232,9 @@ export function TableLobby() {
   const me = table.players.find((p) => p.id === playerId);
   const isHost = role === 'host';
   const link = inviteLink(roomCode);
-  const allReady = table.players.length >= 1 && table.players.every((p) => p.profileId && p.color);
+  const waiting = pendingCustoms(table);
+  const allReady = table.players.length >= 1 && table.players.every((p) => p.profileId && p.color) && waiting.length === 0;
+  const rules = table.config.rules ?? settingsRules();
   const scale = table.config.timeScale ?? 'sprint';
   const share = async () => {
     try {
@@ -192,7 +262,7 @@ export function TableLobby() {
               <li key={p.id} className="flex items-center gap-3 rounded-xl px-3 py-2 bg-white/5">
                 <span className="w-4 h-4 rounded-full shrink-0" style={{ background: displayColor(p), border: p.color ? 'none' : '2px dashed #9CA3AF' }} />
                 <span className="flex-1 text-base font-semibold">{p.name}{p.id === table.hostId ? ' (asztal)' : ''}{p.id === playerId ? ' - te' : ''}</span>
-                <span className="text-sm text-[var(--color-text-muted)]">{prof ? `${prof.avatar} ${prof.name}` : 'választ…'}{!p.color ? ' · színt választ' : ''}</span>
+                <span className="text-sm text-[var(--color-text-muted)]">{prof ? `${prof.avatar} ${prof.name}` : 'választ…'}{!p.color ? ' · színt választ' : ''}{rules.customProfile && p.custom ? (p.customApproved ? ' · saját helyzet ✓' : ' · saját helyzet: jóváhagyásra vár') : ''}</span>
                 {!p.connected && <span className="text-xs text-rose-300">kiesett</span>}
               </li>
             );
@@ -221,6 +291,16 @@ export function TableLobby() {
         )}
       </section>
 
+      {isHost && (
+        <label className="flex items-start gap-3 rounded-xl px-3 py-2 bg-white/5">
+          <input type="checkbox" className="mt-1 w-5 h-5" checked={!!rules.customProfile}
+            onChange={(e) => configure({ rules: { ...DEFAULT_RULES, ...rules, customProfile: e.target.checked } })} />
+          <span className="text-sm"><b>Saját helyzet megadása</b> - a játékosok megadhatják az életkorukat, induló tőkéjüket, bevételüket és kiadásaikat; te hagyod jóvá.</span>
+        </label>
+      )}
+      <CustomSection table={table} playerId={playerId} />
+      {isHost && <CustomApprovals table={table} />}
+
       {isHost ? (
         <section className="space-y-3">
           <h2 className="text-lg font-bold">Időtáv</h2>
@@ -241,7 +321,7 @@ export function TableLobby() {
           <button onClick={() => { if (!table.config.timeScale) configure({ timeScale: scale, totalRounds: TIME_SCALE_CONFIGS[scale].totalRounds, monthsPerRound: TIME_SCALE_CONFIGS[scale].monthsPerRound }); start(); }}
             disabled={!allReady}
             className={`w-full h-14 rounded-2xl text-lg font-extrabold disabled:opacity-40 ${allReady ? 'pulse-cta' : ''}`} style={{ background: '#F2A33A', color: '#0E1525' }}>
-            {!allReady ? 'Mindenki válasszon színt és karaktert' : table.players.length === 1 ? 'Indítás egyedül' : `Indítás (${table.players.length} játékos)`}
+            {waiting.length > 0 ? `Jóváhagyásra vár: ${waiting.map((p) => p.name).join(', ')}` : !allReady ? 'Mindenki válasszon színt és karaktert' : table.players.length === 1 ? 'Indítás egyedül' : `Indítás (${table.players.length} játékos)`}
           </button>
         </section>
       ) : (

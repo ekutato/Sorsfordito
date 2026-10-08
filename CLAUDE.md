@@ -23,8 +23,8 @@
 ### Karakter-presetek (3 élethelyzet)
 | ID | Név | Leírás |
 |----|-----|--------|
-| `fresh_start` | Zsófi, 18 | Érettségi utáni útelágazás, 0 Ft jövedelem, 120K megtakarítás |
-| `career_start` | Dani, 24 | Pályakezdő junior fejlesztő, 320K nettó, a szüleinél indul Kecskeméten (a lakhatás a `dani-d01` döntésből jön, a budapesti albérlet a heti `rent_bp` adatból); DH2 opcionális |
+| `fresh_start` | Zsófi, 18 | Érettségi utáni útelágazás, 0 Ft jövedelem, 80K megtakarítás (nyári diákmunka) |
+| `career_start` | Dani, 24 | Pályakezdő junior fejlesztő, 320K nettó, 220K megtakarítás, a szüleinél indul Kecskeméten (a lakhatás a `dani-d01` döntésből jön, a budapesti albérlet a heti `rent_bp` adatból); DH2 opcionális |
 | `inheritance` | Petra, 30 | Váratlan örökség (5M Ft + telek), 420K nettó, 1.8M személyi kölcsön |
 
 ### Játékmódok
@@ -171,6 +171,10 @@ M6:                                          ████████
 - Kocka: `secureDieRoll` (crypto + elutasításos mintavétel); "Honnan jön a véletlen?" lap dobásnaplóval és eloszlással; "Saját kockával dobok" lehetőség
 - Pénzmatek: a hitel törlesztőjéből a kamat feletti rész csökkenti a tartozást (`amortizeDebts`, lejáratkor a törlesztő megszűnik); a befektetés vásárláskor rögzített havi hatása (`src/engine/investment-income.ts`: PMÁP a heti hozamból, betét 28% kamatadó után; képzés/távmunka → fizetés, napelem → rezsi) eladáskor visszavonódik; Maraton/Ultra: évente egyszer az éves infláció; a bevétel/kiadás előnézet a kör hónapjaival szoroz. 25. születésnap (`src/data/tax-2026.ts`, preset `nextBirthdayInMonths`): a következő hónaptól a fiatalok SZJA-mentessége megszűnik, a nettó a 2026-os kulcsokkal (SZJA 15%, TB 18,5%, határ 715 765 Ft) csökken; Dani Sprintben a 7. körtől 320 000 → 261 104 Ft. Teszt: `money-math.test.ts`.
 - Hangok (`src/audio/sfx.ts`: valódi CC0 hangfájlok a `public/sounds/`-ban - Kenney, UI SFX; eredet: `public/sounds/LICENSE.txt`; tartalékként Web Audio szintézis) és rezgés: alapból némítva, kapcsoló a Játékmesteri beállítások "Kijelzés" részében és a menüben. Állapotfigyelő hangok (pénz, mérföldkő, forduló, reakció, vége): `src/audio/SoundBridge.tsx`; kocka/lépés/kártya/csapdaóra a komponensekben `play()`-jel.
+- Befektetések értéke (`src/engine/investment-value.ts`): az árfolyamos eszközök (EUR/USD, BUX-hoz kötött részvény/ETF, arany) havonta a `src/data/live/history.json` valós havi mozgását követik (12 hónap, ciklikusan, évszámmal jelölve; csak `verified` sorozat). A kamatozók értéke állandó, a kamat havi jövedelemként jön (nincs dupla számolás). A hónap első hétfőjén a heti rutin bővíti az adatsort.
+- Pénzmozgás átláthatóan (`src/ui/components/MoneyOverview.tsx`): `BalanceHighlight` (induló egyenleg az 1. körben, havi egyenleg a kör összegzésén), `InvestmentTable` (tételesen: befektetett, mostani érték, havi változás és oka), `EndMoneyComparison` a játék végén (befektetések nélkül vs. befektetésekkel, tételesen).
+- Mezőbónusz (`src/data/bonus-cards.ts`): Tudás mező → 3 tudáskártya-keret + egy ingyenes tudáskártya; Befektetés mező → 2 befektetés, 5 lapos heti piac. A mezőkártya hátlappal jelenik meg, koppintásra felnagyul és felfordul (`CardFlip` a `FieldCardView`-ban).
+- Saját helyzet (`src/engine/custom-profile.ts`, `CustomProfileForm`): játékmesteri kapcsolóval (`GameRules.customProfile`) a játékos megadja az életkorát, induló tőkéjét, havi bevételét és kiadásait; a karakter története és tartozásai maradnak. Asztalnál `setCustom` → a host `approveCustom`-mal jóváhagyja vagy elutasítja (a hosté automatikusan jóváhagyott); az indítás addig vár (`pendingCustoms`). Késői játékosnál a jóváhagyás a játékmester asztalsávjában jelenik meg.
 - Tábla: 6 tematikus negyed × 4 mező (`DISTRICTS` a `src/data/board.ts`-ben), mezőnként rövid felirat és jelmagyarázat
 
 ### Fájl struktúra

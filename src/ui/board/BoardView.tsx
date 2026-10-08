@@ -208,10 +208,11 @@ export function BoardFull({ position, highlight, from, reveal, fitViewport, onAr
 interface StripProps {
   position: number;
   onExpand: () => void;
+  pawnColor?: string;
 }
 
 /** Keskeny sáv a kör többi részére: a bábu környéke, a teljes tábla egy gombnyomásra */
-export function BoardStrip({ position, onExpand }: StripProps) {
+export function BoardStrip({ position, onExpand, pawnColor = '#F2A33A' }: StripProps) {
   const around = [-2, -1, 0, 1, 2, 3].map((d) => BOARD[(position + d + BOARD_SIZE) % BOARD_SIZE]);
   const [picked, setPicked] = useState<number | null>(null);
   const info = picked !== null ? BOARD[picked] : undefined;
@@ -229,7 +230,7 @@ export function BoardStrip({ position, onExpand }: StripProps) {
                 aria-label={`${FIELD_LABELS[f.type]} (${districtOf(f.index).label})`}>
                 <span className="rounded px-1 text-xs font-extrabold" style={{ background: st.color, color: st.ink }}>{st.glyph}</span>
                 <span className="text-[10px] font-bold leading-none truncate max-w-full" style={{ color: '#4A3F2C' }}>{FIELD_SHORT[f.type]}</span>
-                {here && <span className="absolute -top-2 -right-1 w-4 h-4 rounded-full border-2" style={{ background: '#F2A33A', borderColor: '#FBF7EE' }} />}
+                {here && <span className="absolute -top-2 -right-1 w-4 h-4 rounded-full border-2" style={{ background: pawnColor, borderColor: '#FBF7EE' }} />}
               </button>
             );
           })}

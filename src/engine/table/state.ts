@@ -4,7 +4,8 @@ import { createRng, rollDie } from '@/engine/rng';
 import { moveOnBoard, BOARD } from '@/data/board';
 import type { FieldType } from '@/data/board';
 import type { RulesetId } from '@/rulesets';
-import type { GameRules, TimeScale } from '@/types/game';
+import type { CustomProfile, GameRules, TimeScale } from '@/types/game';
+import { sanitizeCustomProfile } from '@/engine/custom-profile';
 
 export const PROTOCOL_VERSION = 1;
 export const MAX_PLAYERS = 10;
@@ -75,6 +76,12 @@ export interface TablePlayer {
   lateJoinRound?: number;
   /** Hely a közös mezőkártya-pakliban (a csatlakozás sorrendje, nem változik) */
   slot?: number;
+  /** Saját helyzet (ha a játékmester engedi): életkor, induló tőke, havi bevétel és kiadás */
+  custom?: CustomProfile;
+  /** A játékmester jóváhagyta a saját helyzetet (a hosté automatikusan jóváhagyott) */
+  customApproved?: boolean;
+  /** A játékmester elutasította: a játékos a karakter alapértékeivel játszik, vagy újat küld */
+  customRejected?: boolean;
 }
 
 export interface TableState {
@@ -102,6 +109,10 @@ export type TableAction =
   | { type: 'reconnect'; playerId: string }
   | { type: 'setProfile'; playerId: string; profileId: string; goal?: string }
   | { type: 'setColor'; playerId: string; color: string }
+  /** Saját helyzet beküldése (null = visszavonás, a karakter alapértékei) */
+  | { type: 'setCustom'; playerId: string; custom: CustomProfile | null }
+  /** A játékmester jóváhagyja vagy elutasítja egy játékos saját helyzetét */
+  | { type: 'approveCustom'; by: string; target: string; approved: boolean }
   | { type: 'configure'; by: string; config: Partial<TableConfig> }
   | { type: 'start'; by: string; sharedFateId?: string }
   | { type: 'roll'; playerId: string; /** Csak fizikai kockánál: a dobott érték (1-6) */ value?: number }
@@ -216,6 +227,26 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
       if (s.players.some((x) => x.id !== p.id && x.color === a.color)) return s;
       return { ...s, players: mapPlayer(s, p.id, (x) => ({ ...x, color: a.color })) };
     }
+    case 'setCustom': {
+      const p = s.players.find((x) => x.id === a.playerId);
+      if (!p || !s.config.rules?.customProfile) return s;
+      if (!customEditable(s, p)) return s;
+      if (a.custom === null) return { ...s, players: mapPlayer(s, p.id, (x) => ({ ...x, custom: undefined, customApproved: undefined, customRejected: undefined })) };
+      const custom = sanitizeCustomProfile(a.custom);
+      if (!custom) return s;
+      return { ...s, players: mapPlayer(s, p.id, (x) => ({ ...x, custom, customApproved: isHost(s, p.id), customRejected: undefined })) };
+    }
+    case 'approveCustom': {
+      if (!isHost(s, a.by)) return s;
+      const p = s.players.find((x) => x.id === a.target);
+      if (!p?.custom || !customEditable(s, p)) return s;
+      return {
+        ...s,
+        players: mapPlayer(s, p.id, (x) => (a.approved
+          ? { ...x, customApproved: true, customRejected: undefined }
+          : { ...x, custom: undefined, customApproved: undefined, customRejected: true })),
+      };
+    }
     case 'configure': {
       if (!isHost(s, a.by) || s.phase !== 'lobby') return s;
       const config = { ...s.config, ...a.config };
@@ -228,6 +259,8 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
     }
     case 'start':
       if (!isHost(s, a.by) || s.phase !== 'lobby' || s.players.length < 1) return s;
+      // Saját helyzet: indulás csak, ha a játékmester mindet átnézte
+      if (pendingCustoms(s).length > 0) return s;
       return startRound({ ...s, phase: 'playing', players: withFallbackColors(s.players) }, a.sharedFateId);
     case 'roll': {
       if (s.phase !== 'playing') return s;
@@ -284,6 +317,22 @@ export function reduceTable(s: TableState, a: TableAction): TableState {
 export function rankPlayers<T extends { report?: PlayerReport }>(players: T[]): T[] {
   return players.filter((p) => p.report).sort((a, b) =>
     b.report!.freedom - a.report!.freedom || b.report!.safety - a.report!.safety || b.report!.wellbeing - a.report!.wellbeing);
+}
+
+/** Jóváhagyásra váró saját helyzetek (csak ha a szabály engedi) */
+export function pendingCustoms(s: TableState): TablePlayer[] {
+  if (!s.config.rules?.customProfile) return [];
+  return s.players.filter((p) => p.custom && !p.customApproved && customEditable(s, p));
+}
+
+/** A lobbyban bárki; játék közben csak a késői játékos, amíg a saját játéka el nem indult (nincs jelentése) */
+function customEditable(s: TableState, p: TablePlayer): boolean {
+  return s.phase === 'lobby' || (p.lateJoinRound !== undefined && !p.report);
+}
+
+/** A játékos induló saját helyzete: csak engedélyezett szabálynál és jóváhagyva */
+export function approvedCustom(s: TableState, p: TablePlayer): CustomProfile | undefined {
+  return s.config.rules?.customProfile && p.custom && p.customApproved ? p.custom : undefined;
 }
 
 /** Későn csatlakozott, és még nem érte utol az asztali fordulót: nem tartja fel a többieket */

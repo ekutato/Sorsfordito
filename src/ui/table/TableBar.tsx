@@ -9,6 +9,7 @@ import { formatHUF } from '@/engine/financial-calculator';
 import type { TableState } from '@/engine/table/state';
 import { useDiag, diagText } from '@/net/diag';
 import { wakeLockSupported, wakeLockEnabled, setWakeLockEnabled } from '@/net/wake-lock';
+import { CustomApprovals } from './TableLobby';
 
 const REACTIONS = ['👍 Szép!', '⏰ Gyerünk, várunk rád!', '🤔 Gondolkodom…', '😂', '🎉 Gratulálok!'];
 
@@ -39,6 +40,7 @@ export function TableBar() {
           </span>
         ))}
       </div>
+      {table.hostId === playerId && <CustomApprovals table={table} />}
       {open && <Leaderboard table={table} />}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5">
         {REACTIONS.map((r) => (

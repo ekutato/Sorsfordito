@@ -64,7 +64,7 @@ describe('fedezet a mezőkártyákon', () => {
       'career_start', 'Teszt',
     );
     // mínuszos egyenleg (a kezdő egyenleg nem lehet negatív, ezért utólag vonjuk le)
-    useGameStore.getState().modifyBalance('player-1', -185_000, 'teszt');
+    useGameStore.getState().modifyBalance('player-1', -320_000, 'teszt');
     const cafe = ENCOUNTER_CARDS.find((c) => c.id === 'tal-baratod-uzlete')!;
     const join = cafe.options.find((o) => optionCost(o) > 0)!;
     const advice = cafe.options.find((o) => o.label.startsWith('Segítek'))!;

@@ -1095,9 +1095,18 @@ function useOtherPawns() {
   return (table?.players ?? []).filter((p) => p.id !== me && p.report).map((p) => ({ position: p.position, color: displayColor(p), label: p.name }));
 }
 
+/** A saját bábu színe: asztalnál a lobbyban választott szín, egyébként az alapszín */
+function useMyPawnColor(): string | undefined {
+  const table = useTableStore((s) => s.table);
+  const me = useTableStore((s) => s.playerId);
+  const p = table?.players.find((x) => x.id === me);
+  return p?.color || undefined;
+}
+
 function BoardLayer() {
   const game = useGameStore((s) => s.game);
   const others = useOtherPawns();
+  const myColor = useMyPawnColor();
   const [expanded, setExpanded] = useState(false);
   if (!game) return null;
   const rules = gameRules(game.config);
@@ -1124,7 +1133,7 @@ function BoardLayer() {
     const hasKnowledge = !!card.highlightWithKnowledge && player.financialSheet.acquiredKnowledge.includes(card.highlightWithKnowledge);
     return (
       <section className="space-y-3">
-        {expanded ? <BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        {expanded ? <BoardFull others={others} pawnColor={myColor} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip pawnColor={myColor} position={b.position} onExpand={() => setExpanded(true)} />}
         {b.lastRoll ? <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]"><DieFace value={b.lastRoll} size={28} /> Dobtál: <b>{b.lastRoll}</b> · {FIELD_LABELS[field.type]}, {districtOf(field.index).label}</p> : null}
         <CardFlip key={`flip-${game.currentRound}-${card.id}`} field={card.field} district={districtOf(field.index).label}>
           <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
@@ -1138,7 +1147,7 @@ function BoardLayer() {
   if (b.awaitingOutcomeAck && b.lastResult && b.lastOutcome) {
     return (
       <section className="space-y-3">
-        {expanded ? <BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        {expanded ? <BoardFull others={others} pawnColor={myColor} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip pawnColor={myColor} position={b.position} onExpand={() => setExpanded(true)} />}
         <FieldOutcomeView result={b.lastResult} outcome={b.lastOutcome} onContinue={() => { acknowledgeOutcome(); setExpanded(false); }} />
       </section>
     );
@@ -1148,9 +1157,9 @@ function BoardLayer() {
   return (
     <section className="space-y-2">
       {expanded
-        ? <div className="space-y-2"><BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} />
+        ? <div className="space-y-2"><BoardFull others={others} pawnColor={myColor} position={b.position} highlight={b.position} pawnLabel={player.name} />
             <button onClick={() => setExpanded(false)} className="w-full h-10 rounded-lg text-sm font-semibold bg-white/5">Tábla bezárása</button></div>
-        : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
+        : <BoardStrip pawnColor={myColor} position={b.position} onExpand={() => setExpanded(true)} />}
       {b.lastOutcome
         ? <div role="status" className="rounded-xl px-4 py-3 text-base leading-snug font-medium border border-amber-400/40 bg-amber-400/10">{b.lastOutcome}</div>
         : FIELD_HINTS[field.type] && <div className="rounded-xl px-3 py-2 text-sm bg-white/5">Dobtál: <b>{b.lastRoll}</b> · {FIELD_HINTS[field.type]}</div>}
@@ -1164,11 +1173,12 @@ function BoardOpen({ rolledNow, b, field, hasCard, playerName, rules, others }: 
   rolledNow: boolean; b: SoloBoardState; field: (typeof BOARD)[number]; hasCard: boolean; playerName: string; rules: GameRules;
 }) {
   const [arrived, setArrived] = useState(!rolledNow);
+  const myColor = useMyPawnColor();
   const ref = useRef<HTMLElement>(null);
   useEffect(() => { ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, [rolledNow]);
   return (
     <section ref={ref} className="space-y-3 scroll-mt-24" aria-label="Tábla">
-      <BoardFull others={others} position={b.position} highlight={rolledNow ? b.position : undefined}
+      <BoardFull others={others} pawnColor={myColor} position={b.position} highlight={rolledNow ? b.position : undefined}
         from={rolledNow ? b.from : undefined} reveal={rolledNow ? { field: field.type, hasCard } : undefined}
         fitViewport onArrived={() => setArrived(true)} onRevealClick={continueBoard} pawnLabel={playerName} />
       <div className="sticky bottom-3 z-10 space-y-2">

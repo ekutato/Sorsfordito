@@ -39,9 +39,23 @@ export interface GameConfig {
   /** Játékmesteri szabályok - indításkor rögzülnek, a játék alatt nem változnak */
   rules?: GameRules;
 
-  /** Asztali (többjátékos) játék: melyik szobához tartozik ez a saját játék */
   /** Asztali játék: a szoba, és a közös mezőkártya-pakli adatai */
   table?: { roomCode: string; deckSeed?: number; slot?: number };
+
+  /** Saját helyzet (játékmesteri engedéllyel): életkor, induló tőke, havi bevétel és kiadás */
+  customProfile?: CustomProfile;
+}
+
+/** A játékos saját helyzete; a választott karakter története (döntései) adja a játékmenetet */
+export interface CustomProfile {
+  age: number;
+  balance: number;
+  salary: number;
+  housing: number;
+  utilities: number;
+  food: number;
+  transport: number;
+  other: number;
 }
 
 export interface GameRules {
@@ -55,6 +69,8 @@ export interface GameRules {
   diceSource: 'app' | 'physical';
   /** Tesztmód: korlátlan egyenleg, kézi kockaérték, mezőugrás, körátugrás */
   testMode: boolean;
+  /** Saját helyzet megadása (életkor, induló tőke, bevétel, kiadás); asztalnál a játékmester hagyja jóvá */
+  customProfile?: boolean;
 }
 
 export const DEFAULT_RULES: GameRules = {
@@ -63,6 +79,7 @@ export const DEFAULT_RULES: GameRules = {
   trapTimerSeconds: 20,
   diceSource: 'app',
   testMode: false,
+  customProfile: false,
 };
 
 /** Tesztmódban a kezdő egyenleg felső határa */

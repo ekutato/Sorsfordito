@@ -10,6 +10,7 @@ import { isLocalNet } from '@/net/transport';
 import { backoffDelay, isStale, PING_INTERVAL_MS, CLIENT_DEAD_AFTER_MS, WAKE_CHECK_MS, CONNECT_TIMEOUT_MS, HOST_WATCH_MS, HOST_REOPEN_AFTER_MS } from '@/net/heartbeat';
 import { diag } from '@/net/diag';
 import { keepAwake, releaseAwake } from '@/net/wake-lock';
+import type { CustomProfile } from '@/types/game';
 
 export type TableRole = 'host' | 'client';
 type Status = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error';
@@ -50,6 +51,8 @@ interface TableStore {
   reconnectNow: () => void;
   setProfile: (profileId: string) => void;
   setColor: (color: string) => void;
+  setCustom: (custom: CustomProfile | null) => void;
+  approveCustom: (target: string, approved: boolean) => void;
   configure: (config: Partial<TableConfig>) => void;
   start: () => void;
   report: (r: PlayerReport) => void;
@@ -255,6 +258,8 @@ export const useTableStore = create<TableStore>()((set, get) => {
 
     setProfile: (profileId) => dispatch({ type: 'setProfile', playerId: get().playerId ?? '', profileId }),
     setColor: (color) => dispatch({ type: 'setColor', playerId: get().playerId ?? '', color }),
+    setCustom: (custom) => dispatch({ type: 'setCustom', playerId: get().playerId ?? '', custom }),
+    approveCustom: (target, approved) => dispatch({ type: 'approveCustom', by: get().playerId ?? '', target, approved }),
     configure: (config) => dispatch({ type: 'configure', by: get().playerId ?? '', config }),
     start: () => dispatch({ type: 'start', by: get().playerId ?? '' }),
     report: (report) => dispatch({ type: 'report', playerId: get().playerId ?? '', report }),

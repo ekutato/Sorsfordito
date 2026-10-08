@@ -6,7 +6,7 @@
 import history from '@/data/live/history.json';
 import type { Investment } from '@/types/financial';
 
-interface Series { source?: string; url?: string; values: Record<string, number | null> }
+interface Series { source?: string; url?: string; verified?: boolean; values: Record<string, number | null> }
 interface History { months: string[]; series: Record<string, Series> }
 const H = history as unknown as History;
 
@@ -20,11 +20,16 @@ export const VALUE_DRIVER: Record<string, 'eurHuf' | 'usdHuf' | 'bux' | 'goldHuf
   'inv-gold': 'goldHuf',
 };
 
+/** Csak a jóváhagyott (verified) adatsor mozgat értéket (CLAUDE.md 1. szabály) */
+const ok = (name: string) => H.series[name]?.verified !== false;
+
 function point(driver: string, month: string): number | null {
   if (driver === 'goldHuf') {
+    if (!ok('goldUsdOz') || !ok('usdHuf')) return null;
     const g = H.series.goldUsdOz?.values[month], u = H.series.usdHuf?.values[month];
     return g && u ? g * u : null;
   }
+  if (!ok(driver)) return null;
   return H.series[driver]?.values[month] ?? null;
 }
 

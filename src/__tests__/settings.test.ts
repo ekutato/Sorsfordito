@@ -7,8 +7,8 @@ import { TRAP_CARDS, TEMPTATION_CARDS, RECHARGE_CARDS, ENCOUNTER_CARDS, OFFICE_C
 
 describe('játékmesteri szabályok: kezdő egyenleg', () => {
   it('alapból a karakter kezdő egyenlege, bármit kér a felület', () => {
-    expect(clampStartBalance('fresh_start', 9_000_000)).toBe(120_000);
-    expect(clampStartBalance('career_start', undefined)).toBe(85_000);
+    expect(clampStartBalance('fresh_start', 9_000_000)).toBe(80_000);
+    expect(clampStartBalance('career_start', undefined)).toBe(220_000);
   });
 
   it('egyéni beállításnál a karakter felső határára vág', () => {

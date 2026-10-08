@@ -6,7 +6,7 @@ import { useTableStore } from '@/store/table-store';
 import { computeIndices } from '@/engine/indices';
 import { RULESETS, DEFAULT_RULESET_ID } from '@/rulesets';
 import { livePreGameContext } from '@/data/live';
-import type { PlayerReport } from '@/engine/table/state';
+import { approvedCustom, type PlayerReport } from '@/engine/table/state';
 import type { CharacterPresetId } from '@/types/game';
 
 /** A saját játék állapotát jelenti az asztalnak (kör, pozíció, mutatók) - csak változáskor */
@@ -51,6 +51,8 @@ export function useTableAutoStart() {
     if (game?.config.table?.roomCode === table.roomCode) return;
     const me = table.players.find((p) => p.id === playerId);
     if (!me?.profileId) return;
+    // A saját helyzet a játékmester jóváhagyására vár
+    if (table.config.rules?.customProfile && me.custom && !me.customApproved) return;
     const now = new Date();
     startNewGame(
       {
@@ -61,6 +63,7 @@ export function useTableAutoStart() {
         startDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
         rules: table.config.rules,
         table: { roomCode: table.roomCode, deckSeed: table.deckSeed, slot: me.slot },
+        customProfile: approvedCustom(table, me),
       },
       me.profileId as CharacterPresetId,
       me.name,

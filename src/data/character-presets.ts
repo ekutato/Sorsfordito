@@ -39,7 +39,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       // Még nincs munkahelye – a pályaválasztás az 1. döntés
     },
     startingFinancials: {
-      balance: 120_000,     // Diakamunkabol
+      balance: 80_000,      // Nyári diákmunkából (2026-os diák-minimálórabér 1 856 Ft, 426/2025. Korm. r.); a 18-25 évesek többségének ≤ 100 000 Ft megtakarítása van (2023-as HR-felmérés)
       salary: 0,            // Egyelore nincs
       housing: 0,           // Szuloknel lakik
       utilities: 0,
@@ -83,7 +83,7 @@ export const LIFE_SITUATION_PRESETS: Record<string, CharacterPreset> = {
       commuteMethod: 'vonat + BKK (országbérlet)',
     },
     startingFinancials: {
-      balance: 85_000,
+      balance: 220_000,         // A 19-25 évesek átlagos megtakarítása (K&H ifjúsági index, 2019 Q3) - egyetem alatti diákmunkából
       salary: 320_000,          // Junior pozicio netto
       // Otthonról indul: a lakhatás az 1. döntésből (dani-d01) jön, így nem számolódik kétszer
       housing: 40_000,          // Hozzájárulás a szülői háztartáshoz

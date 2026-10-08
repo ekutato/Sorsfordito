@@ -14,7 +14,9 @@ import { LiveDataButton } from '@/ui/components/LiveDataPanel';
 import { useTableStore } from '@/store/table-store';
 import { loadPlayerName, savePlayerName } from '@/store/player-name';
 import { TEST_MODE_MAX_BALANCE } from '@/types/game';
-import type { LifeSituationId, TimeScale } from '@/types/game';
+import type { CustomProfile, LifeSituationId, TimeScale } from '@/types/game';
+import { presetAsCustom } from '@/engine/custom-profile';
+import { CustomProfileForm, CustomSummary } from '@/ui/components/CustomProfileForm';
 
 type SetupStep = 'name' | 'situation' | 'timeScale' | 'ready';
 
@@ -27,6 +29,8 @@ export function StartScreen() {
   const [selectedSituation, setSelectedSituation] = useState<LifeSituationId | null>(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState<TimeScale>('sprint');
   const [customBalance, setCustomBalance] = useState<number | null>(null);
+  const [custom, setCustom] = useState<CustomProfile | null>(null);
+  const [customOpen, setCustomOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +38,7 @@ export function StartScreen() {
   const isFeatureAvailable = useFreemiumStore((s) => s.isFeatureAvailable);
   const allowCustomBalance = useSettingsStore((s) => s.customStartBalance);
   const testMode = useSettingsStore((s) => s.testMode);
+  const allowCustomProfile = useSettingsStore((s) => !!s.customProfile);
 
   const handleStart = async () => {
     if (!selectedSituation || !playerName.trim()) return;
@@ -57,6 +62,7 @@ export function StartScreen() {
           useLiveData: hasLiveData,
           startDate,
           rules: useSettingsStore.getState().rules(),
+          customProfile: allowCustomProfile && custom ? custom : undefined,
         },
         selectedSituation,
         playerName.trim(),
@@ -76,6 +82,7 @@ export function StartScreen() {
           useLiveData: false,
           startDate,
           rules: useSettingsStore.getState().rules(),
+          customProfile: allowCustomProfile && custom ? custom : undefined,
         },
         selectedSituation,
         playerName.trim(),
@@ -213,7 +220,7 @@ export function StartScreen() {
                 return (
                   <button
                     key={preset.id}
-                    onClick={() => { if (isAvailable) { setSelectedSituation(preset.id as LifeSituationId); setCustomBalance(null); } }}
+                    onClick={() => { if (isAvailable) { setSelectedSituation(preset.id as LifeSituationId); setCustomBalance(null); setCustom(null); } }}
                     disabled={!isAvailable}
                     className={`
                       w-full text-left p-4 rounded-xl border transition-all
@@ -269,7 +276,31 @@ export function StartScreen() {
             </div>
 
             {/* Kezdő egyenleg: alapból csak kijelzés; egyéni állítás csak játékmesteri engedéllyel */}
-            {selectedSituation && (() => {
+            {selectedSituation && allowCustomProfile && (
+              <div className="mt-4 bg-[var(--color-bg-card)] border border-amber-400/30 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-base font-semibold">Saját helyzetem</span>
+                  {custom && <button onClick={() => { setCustom(null); setCustomOpen(false); }} className="text-sm text-brand-400 underline">A karakter alapértékei</button>}
+                </div>
+                {custom && !customOpen && (
+                  <>
+                    <CustomSummary c={custom} />
+                    <button onClick={() => setCustomOpen(true)} className="text-sm text-brand-400 underline">Módosítás</button>
+                  </>
+                )}
+                {!custom && !customOpen && (
+                  <button onClick={() => setCustomOpen(true)} className="w-full h-11 rounded-xl text-base font-semibold border border-white/15 bg-white/5">
+                    Megadom a saját életkorom, tőkém, bevételem és kiadásaim
+                  </button>
+                )}
+                {customOpen && (
+                  <CustomProfileForm initial={custom ?? presetAsCustom(selectedSituation)} submitLabel="Ezzel indulok"
+                    onSubmit={(c) => { setCustom(c); setCustomOpen(false); }} />
+                )}
+              </div>
+            )}
+
+            {selectedSituation && !custom && (() => {
               const p = LIFE_SITUATION_PRESETS[selectedSituation];
               const defaultBal = p.startingFinancials.balance;
               const editable = allowCustomBalance || testMode;

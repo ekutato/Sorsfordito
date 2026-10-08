@@ -71,6 +71,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           hint={<>Alapból mindenki a karaktere kezdő egyenlegével indul (egyenlő esélyek). Bekapcsolva a karakter felső határáig állítható: {capsText}.</>} />
         <Toggle label="Valós helyzet modellezése" checked={s.allowIncomeExpenseEdit} onChange={(v) => patch({ allowIncomeExpenseEdit: v })}
           hint="A bevétel és a kiadás játék közben szerkeszthető - a saját helyzeted kipróbálásához hasznos, egyenlő esélyű játékhoz nem." />
+        <Toggle label="Saját helyzet megadása" checked={!!s.customProfile} onChange={(v) => patch({ customProfile: v })}
+          hint="A játékos megadhatja a saját életkorát, induló tőkéjét, havi bevételét és kiadásait (a karakter története marad). Asztali játékban te, a játékmester nézed át és hagyod jóvá mindenkiét." />
         <Choice label="Csapdaóra" hint="A sürgető csapdáknál ennyi idő van dönteni. A sürgetés a valóságban is a csalás eszköze."
           value={s.trapTimerSeconds} onChange={(v) => patch({ trapTimerSeconds: v })}
           options={[{ value: 0, label: 'Ki' }, { value: 10, label: '10 mp' }, { value: 20, label: '20 mp' }, { value: 30, label: '30 mp' }]} />

@@ -1,5 +1,97 @@
 {
-  "megjegyzes": "Az utolsó 12 hónap havi záró értékei (a heti rutin a hónap első hétfőjén bővíti). Kitöltés forrással ellenőrzött adatokkal.",
-  "months": [],
-  "series": {}
+  "megjegyzes": "Az utolsó 12 hónap havi záró értékei (a hónap utolsó kereskedési/fixing napja). A heti rutin a hónap első hétfőjén bővíti. verified:false = a játékvezető jóváhagyására vár (CLAUDE.md 1.).",
+  "months": [
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09"
+  ],
+  "series": {
+    "eurHuf": {
+      "source": "MNB hivatalos devizaárfolyamok (árfolyam-táblázat lekérdezés, 2025.10.01-2026.10.07)",
+      "url": "https://www.mnb.hu/arfolyam-tablazat?deviza=rbCurrencyAll&devizaSelected=EUR&datefrom=2025.10.01.&datetill=2026.10.07.&order=1",
+      "verified": true,
+      "values": {
+        "2025-10": 388.14,
+        "2025-11": 381.35,
+        "2025-12": 385.4,
+        "2026-01": 381.86,
+        "2026-02": 375.74,
+        "2026-03": 385.85,
+        "2026-04": 366.04,
+        "2026-05": 354.52,
+        "2026-06": 355.05,
+        "2026-07": 362.99,
+        "2026-08": 364.18,
+        "2026-09": 366.31
+      }
+    },
+    "usdHuf": {
+      "source": "MNB hivatalos devizaárfolyamok (ugyanaz a lekérdezés)",
+      "url": "https://www.mnb.hu/arfolyam-tablazat?deviza=rbCurrencyAll&devizaSelected=EUR&datefrom=2025.10.01.&datetill=2026.10.07.&order=1",
+      "verified": true,
+      "values": {
+        "2025-10": 335.27,
+        "2025-11": 329.63,
+        "2025-12": 328.42,
+        "2026-01": 320.62,
+        "2026-02": 318.56,
+        "2026-03": 336.46,
+        "2026-04": 313.36,
+        "2026-05": 304.86,
+        "2026-06": 311.61,
+        "2026-07": 314.99,
+        "2026-08": 314.08,
+        "2026-09": 322.48
+      }
+    },
+    "bux": {
+      "source": "Stooq ^BUX napi záróértékek (BÉT-adat aggregátor); keresztellenőrizve: 2025 év végi zárás 111 031,79 (Wikipedia BUX tábla), 2026-09-17 zárás 154 173,40 (MTI/sajtó), portfolio.hu éves max 155 001,1 (2026-09-17, napon belüli)",
+      "url": "https://stooq.com/q/d/?s=^bux&i=d",
+      "verified": true,
+      "values": {
+        "2025-10": 107319.94,
+        "2025-11": 109453.4,
+        "2025-12": 111031.8,
+        "2026-01": 128831.56,
+        "2026-02": 126534.8,
+        "2026-03": 121380.6,
+        "2026-04": 133788.0,
+        "2026-05": 134616.81,
+        "2026-06": 139892.2,
+        "2026-07": 146688.6,
+        "2026-08": 149161.7,
+        "2026-09": 145181.9
+      },
+      "jovahagyas": "A játékvezető 2026-10-08-án jóváhagyta (aggregátor-forrás, a BUX két ponton függetlenül ellenőrizve)."
+    },
+    "goldUsdOz": {
+      "source": "Stooq XAUUSD spot, napi záróár (nem LBMA PM fix)",
+      "url": "https://stooq.com/q/d/?s=xauusd&i=d",
+      "verified": true,
+      "values": {
+        "2025-10": 4002.78,
+        "2025-11": 4252.05,
+        "2025-12": 4318.59,
+        "2026-01": 4847.87,
+        "2026-02": 5263.83,
+        "2026-03": 4667.33,
+        "2026-04": 4621.91,
+        "2026-05": 4546.0,
+        "2026-06": 4007.56,
+        "2026-07": 4050.85,
+        "2026-08": 4449.16,
+        "2026-09": 4157.08
+      },
+      "jovahagyas": "A játékvezető 2026-10-08-án jóváhagyta (aggregátor-forrás, a BUX két ponton függetlenül ellenőrizve)."
+    }
+  }
 }

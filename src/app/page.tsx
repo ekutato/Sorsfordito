@@ -47,6 +47,7 @@ export default function Home() {
     const me = table.players.find((p) => p.id === tablePlayerId);
     if (!me) return <NotAdmitted />;
     if (!me.profileId) return <LateJoin />;
+    if (table.config.rules?.customProfile && me.custom && !me.customApproved) return <LateJoin />;
     return <div className="flex-1 flex items-center justify-center p-6 text-lg">A játék indul…</div>;
   }
 

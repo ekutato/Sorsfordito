@@ -27,6 +27,10 @@ Minden hétfőn 06:47-kor (Europe/Budapest) egy Claude-rutin frissíti a játék
 
    - **Ha egy érték nem erősíthető meg:** a régi marad, `verified=false` jelöléssel.
    - **Ha a szkript 10%-nál nagyobb ugrást jelez:** a rutin megáll (lásd 7. pont).
+3/B. **Havi zárás (a hónap első hétfőjén):** a `src/data/live/history.json` kap egy új hónapot, és a legrégebbi kiesik (mindig 12 hónap marad).
+   - `eurHuf`, `usdHuf`: az MNB hivatalos árfolyama a hónap utolsó munkanapján.
+   - `bux`, `goldUsdOz`: a hónap utolsó kereskedési napjának záró értéke (Stooq: `^bux`, `xauusd`).
+   - Minden új értéket online ellenőriz; ha nem sikerül, a sorozat `verified: false` lesz, és a rutin rákérdez (CLAUDE.md 1. szabály). A játék ilyenkor a sorozatot nem használja (a befektetés értéke változatlan marad).
 4. **Hírek és Közlöny:**
    - A Gmail "MK figyelő" piszkozatából és a hét gazdasági híreiből legfeljebb 5 hír kerül a `hirek` tömbbe.
    - A hír szövege saját megfogalmazás, mellette a forráslink. Pártpolitikai állásfoglalás nincs.

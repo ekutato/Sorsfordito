@@ -11,6 +11,7 @@ import type {
   GameConfig,
   PlayerState,
   CharacterPresetId,
+  CustomProfile,
   DecisionCard,
   FateEvent,
   GameEvent,
@@ -31,6 +32,7 @@ import { CHARACTER_PRESETS } from '@/data/character-presets';
 import { amortizeDebts, applyInflation } from '@/engine/financial-calculator';
 import { round25, netAfterTurning25 } from '@/data/tax-2026';
 import { revalue } from '@/engine/investment-value';
+import { sanitizeCustomProfile } from '@/engine/custom-profile';
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { LIVE_ECONOMIC_DATA } from '@/data/live';
 import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
@@ -109,10 +111,12 @@ function createFinancialSheet(
   playerId: string,
   presetId: CharacterPresetId,
   balanceOverride?: number,
-  rules?: GameRules
+  rules?: GameRules,
+  custom?: CustomProfile,
 ): FinancialSheet {
   const preset = CHARACTER_PRESETS[presetId];
-  const sf = preset.startingFinancials;
+  // Saját helyzet: a játékos számai lépnek a karakter induló számai helyére (a tartozások maradnak)
+  const sf = custom ? { ...preset.startingFinancials, ...custom } : preset.startingFinancials;
 
   const income: Income = {
     salary: sf.salary,
@@ -144,8 +148,8 @@ function createFinancialSheet(
 
   const sheet: FinancialSheet = {
     playerId,
-    balance: clampStartBalance(presetId, balanceOverride, rules),
-    startBalance: clampStartBalance(presetId, balanceOverride, rules),
+    balance: custom ? custom.balance : clampStartBalance(presetId, balanceOverride, rules),
+    startBalance: custom ? custom.balance : clampStartBalance(presetId, balanceOverride, rules),
     income,
     expenses,
     investments: [],
@@ -226,7 +230,9 @@ export const useGameStore = create<GameStore>()(
         const playerId = `player-1`;
         const tsConfig = TIME_SCALE_CONFIGS[config.timeScale];
 
-        const financialSheet = createFinancialSheet(playerId, characterPreset, balanceOverride, config.rules);
+        // Csak ha a szabály engedi (a játékmester kapcsolta be)
+        const custom = config.customProfile && config.rules?.customProfile ? sanitizeCustomProfile(config.customProfile) ?? undefined : undefined;
+        const financialSheet = createFinancialSheet(playerId, characterPreset, balanceOverride, config.rules, custom);
 
         const player: PlayerState = {
           playerId,
@@ -564,8 +570,9 @@ export const useGameStore = create<GameStore>()(
 
         // 25. születésnap: a következő hónaptól a bérből SZJA-t is vonnak (ugyanaz a bruttó, kisebb nettó)
         const preset = CHARACTER_PRESETS[player.lifeSituation as CharacterPresetId];
+        const age = state.game.config.customProfile?.age ?? preset?.age ?? 99;
         if (preset?.nextBirthdayInMonths && currentSalary > 0 && !player.financialSheet.youthTaxEnded
-          && round25(preset.age, preset.nextBirthdayInMonths, monthsInRound, tsConfig.totalRounds) === round) {
+          && round25(age, preset.nextBirthdayInMonths, monthsInRound, tsConfig.totalRounds) === round) {
           const after = netAfterTurning25(currentSalary);
           const delta = after - currentSalary;
           state.modifyIncome(player.playerId, 'salary', delta);

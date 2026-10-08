@@ -22,8 +22,8 @@ export const useSettingsStore = create<SettingsStore>()(
         return next;
       },
       rules: () => {
-        const { customStartBalance, allowIncomeExpenseEdit, trapTimerSeconds, diceSource, testMode } = get();
-        return { customStartBalance, allowIncomeExpenseEdit, trapTimerSeconds, diceSource, testMode };
+        const { customStartBalance, allowIncomeExpenseEdit, trapTimerSeconds, diceSource, testMode, customProfile } = get();
+        return { customStartBalance, allowIncomeExpenseEdit, trapTimerSeconds, diceSource, testMode, customProfile };
       },
     }),
     { name: 'sorsfordito-beallitasok' },
