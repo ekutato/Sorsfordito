@@ -694,6 +694,7 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   },
   {
     id: 'fate-gen-25', round: 0, title: 'Albérleti kaució elvesztés',
+    requires: { rentsHome: true },
     description: 'Az előző főbérlő visszatartotta a kauciód egy részét „festés" címén: –80 000 Ft.',
     type: 'negative' as const,
     effects: [{ target: 'balance', amount: -80_000 }],

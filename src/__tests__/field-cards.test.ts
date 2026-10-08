@@ -158,3 +158,32 @@ describe('pakli állapota a keveréshez', () => {
     expect(cardDrawInfo('knowledge', 0)).toBeUndefined();
   });
 });
+
+describe('hírlap és sorskártya csak a helyzethez illően', () => {
+  it('otthon lakó, fizetés nélküli 18 éves nem kap lakbéremelést és béremelést', async () => {
+    const { marketNewsCard } = await import('@/data/field-cards');
+    const ctx = { preset: 'fresh_start', housing: 15_000, investments: [], salary: 0 };
+    for (let i = 0; i < 20; i++) {
+      const c = marketNewsCard(i, ctx);
+      if (!c) continue;
+      expect(c.options[0].effects.some((e) => e.target === 'housing' || e.target === 'salary'), c.title).toBe(false);
+    }
+    const renter = marketNewsCard(0, { preset: 'career_start', housing: 260_000, investments: [], salary: 320_000 });
+    expect(renter).toBeDefined();
+  });
+
+  it('sorskártya: otthon lakva nincs lakbéremelés és kaucióvesztés, fizetés nélkül nincs béremelés', async () => {
+    const { drawFateCard } = await import('@/engine/fate-deck');
+    const D = await import('@/data/decisions');
+    const pool = { scripted: D.getScriptedFateEvents('fresh_start', 'marathon'), generic: D.GENERIC_FATE_EVENTS, knowledge: D.GENERIC_KNOWLEDGE_FATE_EVENTS, storyline: D.STORYLINE_FATE_EVENTS };
+    const sheet = { income: { salary: 0, passive: 0, oneTime: 0 }, expenses: { housing: 15_000, utilities: 0, food: 0, transport: 0, loanPayments: 0, other: 0 }, acquiredKnowledge: [] as string[] };
+    const drawn: string[] = [];
+    for (let r = 0; r < 60; r++) {
+      const e = drawFateCard({ pool, months: [(r % 12) + 1], district: (['piacter', 'munkahely', 'hivatal'] as const)[r % 3], onFateField: false, drawn, sheet, seed: 'z' });
+      if (!e) break;
+      drawn.push(e.id);
+      expect(e.effects.some((x) => (x.target === 'housing' && x.amount > 0) || x.target === 'salary'), e.title).toBe(false);
+      expect(e.id).not.toBe('fate-gen-25');
+    }
+  });
+});

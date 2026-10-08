@@ -36,6 +36,10 @@ export interface DrawInput {
 export const groupKey = (e: Pick<FateEventEntry, 'id'>) => e.id.replace(/b$/, '');
 
 function fits(e: FateEventEntry, sheet: DrawInput['sheet']): boolean {
+  // A hatásból adódó feltétel: lakbér csak albérlőt, fizetés csak keresőt érint
+  const rents = sheet.expenses.housing >= RENT_THRESHOLD_FATE;
+  if (!rents && e.effects.some((x) => x.target === 'housing' && x.amount > 0)) return false;
+  if (sheet.income.salary <= 0 && e.effects.some((x) => x.target === 'salary')) return false;
   const r = e.requires;
   if (!r) return true;
   if (r.hasSalary && sheet.income.salary <= 0) return false;

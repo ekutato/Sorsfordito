@@ -62,10 +62,12 @@ export interface CardRequires {
   rentsHome?: boolean;
   /** Van ilyen befektetése vagy vagyontárgya */
   hasInvestment?: string[];
+  /** Van fizetése (béremelés csak ekkor) */
+  hasSalary?: boolean;
 }
 
 /** A játékos helyzete a kártyák szűréséhez */
-export interface CardContext { preset: string; housing: number; investments: string[] }
+export interface CardContext { preset: string; housing: number; investments: string[]; salary?: number }
 
 export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
   const r = card.requires;
@@ -73,6 +75,7 @@ export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
   if (r.presets && !r.presets.includes(ctx.preset)) return false;
   if (r.rentsHome && ctx.housing < 100_000) return false;
   if (r.hasInvestment && !r.hasInvestment.some((id) => ctx.investments.includes(id))) return false;
+  if (r.hasSalary && !(ctx.salary && ctx.salary > 0)) return false;
   return true;
 }
 
@@ -245,19 +248,39 @@ export const OFFICE_CARDS: FieldCard[] = [
 /** Minden saját mezőkártya (a piaci hír a heti csomagból jön) */
 export const ALL_FIELD_CARDS: FieldCard[] = [...TRAP_CARDS, ...TEMPTATION_CARDS, ...RECHARGE_CARDS, ...ENCOUNTER_CARDS, ...OFFICE_CARDS];
 
-export function marketNewsCard(index: number): FieldCard | undefined {
+/**
+ * A hír játékhatása csak annak szól, akire vonatkozik: lakbéremelés csak albérletben (otthon lakva nincs lakbér),
+ * béremelés vagy bércsökkenés csak annak, akinek van fizetése. Ha nem illik, a következő hír jön.
+ */
+function newsRequires(effects: Array<{ target: string }>): CardRequires | undefined {
+  const r: CardRequires = {};
+  if (effects.some((e) => e.target === 'housing')) r.rentsHome = true;
+  if (effects.some((e) => e.target === 'salary')) r.hasSalary = true;
+  return Object.keys(r).length ? r : undefined;
+}
+
+export function marketNewsCard(index: number, ctx?: CardContext): FieldCard | undefined {
   const items = LIVE_DATA.hirek.filter((h) => h.jatekEsemeny);
   if (items.length === 0) return undefined;
-  const h = items[index % items.length];
+  for (let k = 0; k < items.length; k++) {
+    const i = (index + k) % items.length;
+    const card = newsCard(items[i], i);
+    if (cardFits(card, ctx)) return card;
+  }
+  return undefined;
+}
+
+function newsCard(h: (typeof LIVE_DATA.hirek)[number], i: number): FieldCard {
   const ev = h.jatekEsemeny!;
   return {
-    id: `hir-${LIVE_DATA.het}-${index % items.length}`,
+    id: `hir-${LIVE_DATA.het}-${i}`,
     field: 'market_news',
     title: ev.title,
     body: ev.description,
     options: [{ label: 'Tudomásul veszem', effects: ev.effects.map((e) => ({ target: e.target, amount: e.amount })), outcome: `Forrás: ${h.source}` }],
     realStep: `Forrás: ${h.source}`,
     sourceUrl: h.url,
+    requires: newsRequires(ev.effects),
   };
 }
 
@@ -292,7 +315,7 @@ export function cardForField(field: FieldType, visit: number, seed?: string, sha
     case 'encounter': return pick(ENCOUNTER_CARDS);
     case 'office': return pick(OFFICE_CARDS);
     case 'market_news':
-      return marketNewsCard(shared ? visit * Math.max(1, shared.players) + shared.slot : seed ? visit + (seedFromString(seed) % 97) : visit);
+      return marketNewsCard(shared ? visit * Math.max(1, shared.players) + shared.slot : seed ? visit + (seedFromString(seed) % 97) : visit, ctx);
     default: return undefined;
   }
 }
