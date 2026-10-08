@@ -1149,7 +1149,7 @@ function offerContext(game: GameState): Pick<OfferContext, 'district' | 'decisio
 function roundCardFor(game: GameState, field: FieldType, visit: number) {
   const owned = game.players[game.activePlayerIndex]?.financialSheet.acquiredKnowledge ?? [];
   const sheet = game.players[game.activePlayerIndex]?.financialSheet;
-  const ctx = sheet ? { preset: game.players[game.activePlayerIndex].lifeSituation, housing: sheet.expenses.housing, investments: sheet.investments.map((i) => i.optionId), salary: sheet.income.salary } : undefined;
+  const ctx = sheet ? { preset: game.players[game.activePlayerIndex].lifeSituation, housing: sheet.expenses.housing, investments: sheet.investments.map((i) => i.optionId), salary: sheet.income.salary, chosen: (game.eventLog ?? []).map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x) } : undefined;
   return cardForField(field, visit, game.gameId, sharedDeckOf(game), ctx) ?? bonusCardFor(field, visit, game.gameId, owned, BOARD[game.board?.position ?? 0]?.district);
 }
 

@@ -70,7 +70,7 @@ export interface CardRequires {
 }
 
 /** A játékos helyzete a kártyák szűréséhez */
-export interface CardContext { preset: string; housing: number; investments: string[]; salary?: number }
+export interface CardContext { preset: string; housing: number; investments: string[]; salary?: number; /** A játékos eddigi döntései (opcióazonosítók) */ chosen?: string[] }
 
 export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
   const r = card.requires;
@@ -79,7 +79,7 @@ export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
   if (r.rentsHome && ctx.housing < 100_000) return false;
   if (r.hasInvestment && !r.hasInvestment.some((id) => ctx.investments.includes(id))) return false;
   if (r.hasSalary && !(ctx.salary && ctx.salary > 0)) return false;
-  if (r.employed && !isEmployed(ctx.salary ?? 0)) return false;
+  if (r.employed && !isEmployed(ctx.salary ?? 0, ctx.chosen)) return false;
   return true;
 }
 

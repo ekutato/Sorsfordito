@@ -189,7 +189,7 @@ describe('hírlap és sorskártya csak a helyzethez illően', () => {
 });
 
 describe('munkahelyi lapok csak munkaviszonnyal', () => {
-  it('ösztöndíj, duális juttatás, diákmunka: nincs cafeteria és munkahelyi lap; főállásban lehet', async () => {
+  it('ösztöndíj, diákmunka: nincs cafeteria és munkahelyi lap; főállásban lehet', async () => {
     const { isEmployed } = await import('@/engine/employment');
     for (const s of [0, 25_000, 80_000, 100_000]) expect(isEmployed(s), String(s)).toBe(false);
     for (const s of [260_000, 320_000]) expect(isEmployed(s), String(s)).toBe(true);
@@ -209,5 +209,28 @@ describe('munkahelyi lapok csak munkaviszonnyal', () => {
       const c = cardForField('encounter', v, 'g', undefined, { preset: 'fresh_start', housing: 15_000, investments: [], salary: 100_000 })!;
       expect(c.title).not.toMatch(/kolléga|munkahelyi/);
     }
+  });
+
+  it('szakképzési munkaszerződés munkaviszony: a tanuló munkahelyi lapot is kaphat; a nettó bér a 2026-os szabály szerint', async () => {
+    const { isEmployed, apprenticeNet } = await import('@/engine/employment');
+    expect(isEmployed(81_500)).toBe(false);
+    expect(isEmployed(81_500, ['fs-d01-b'])).toBe(true);
+    expect(isEmployed(25_000, ['fs-d01-a'])).toBe(false);
+    expect(apprenticeNet()).toBe(81_500);
+    expect(apprenticeNet(168_000)).toBe(136_920);
+    const D = await import('@/data/decisions');
+    const { FRESH_START_DECISIONS_SPRINT } = await import('@/data/decisions/fresh-start-sprint');
+    const opt = FRESH_START_DECISIONS_SPRINT.find((d) => d.id === 'fs-d01')!.options.find((o) => o.id === 'fs-d01-b')!;
+    expect(opt.financialEffects.find((e) => e.target === 'salary')?.amount).toBe(apprenticeNet());
+    const { drawFateCard } = await import('@/engine/fate-deck');
+    const pool = { scripted: [], generic: D.GENERIC_FATE_EVENTS, knowledge: [], storyline: [] };
+    const sheet = { income: { salary: 81_500, passive: 0, oneTime: 0 }, expenses: { housing: 15_000, utilities: 0, food: 30_000, transport: 0, loanPayments: 0, other: 0 }, acquiredKnowledge: [] as string[] };
+    const drawn: string[] = [];
+    for (let r = 0; r < 60; r++) {
+      const e = drawFateCard({ pool, months: [1], district: 'munkahely', onFateField: false, drawn, sheet, seed: 'a', chosen: ['fs-d01-b'] });
+      if (!e) break;
+      drawn.push(e.id);
+    }
+    expect(drawn).toContain('fate-gen-19');
   });
 });

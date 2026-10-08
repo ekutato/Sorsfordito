@@ -46,7 +46,7 @@ function fits(e: FateEventEntry, sheet: DrawInput['sheet'], chosen?: string[]): 
   const r = e.requires;
   if (!r) return true;
   if (r.hasSalary && sheet.income.salary <= 0) return false;
-  if (r.employed && !isEmployed(sheet.income.salary)) return false;
+  if (r.employed && !isEmployed(sheet.income.salary, chosen)) return false;
   if (r.chose && !(chosen ?? []).some((id) => r.chose!.includes(id))) return false;
   if (r.hasHighTransport && sheet.expenses.transport < 25_000) return false;
   if (r.rentsHome && sheet.expenses.housing < RENT_THRESHOLD_FATE) return false;

@@ -51,14 +51,15 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'fs-d01-b',
-        label: 'Szakmát tanulsz (OKJ/technikus)',
+        label: 'Szakmát tanulsz (technikum / szakképző iskola)',
         description:
-          'Villanyszerelő, informatikus, CNC-operátor – 1-2 éves képzés. ' +
-          'A duális képzésen akár 60-100 000 Ft/hó fizetést is kaphatsz tanulás mellett. ' +
+          'Villanyszerelő, informatikus, CNC-gépkezelő - érettségi után rövidebb képzés. ' +
+          'Duális képzésben szakképzési munkaszerződést kötsz a képzőhellyel: ez munkaviszony, ' +
+          'bruttó 100-168 ezer Ft munkabérrel, amelyből csak a 18,5% TB-járulék jön le (SZJA-mentes). ' +
           'Hamarabb keresel, de alacsonyabb a plafon.',
         financialEffects: [
-          { target: 'salary', amount: 80_000, description: 'Duális képzés ösztöndíja' },
-          { target: 'transport', amount: 10_000, description: 'Bejárás a képzőhelyre' },
+          { target: 'salary', amount: 81_500, description: 'Tanulói munkabér (bruttó 100 000 Ft − 18,5% TB-járulék)' },
+          { target: 'transport', amount: 1_400, description: 'Bejárás (a bérlet 86%-át a képzőhely megtéríti)' },
         ],
         nextDecisionId: 'fs-d02',
         didYouKnow: 'A szakmunkások iránti kereslet nagy. Egy tapasztalt villanyszerelő vagy hegesztő akár az országos nettó átlagkereset ({{avg_wage}} Ft) felett is kereshet.',

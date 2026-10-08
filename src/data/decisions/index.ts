@@ -656,7 +656,8 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
   {
     id: 'fate-gen-19', round: 0, title: 'Munkáltatói cafeteria',
     description:
-      'A céged bővítette a cafeteriát: a SZÉP-kártyádra mostantól havonta jut egy kis keret. ' +
+      'A munkáltatód bővítette a cafeteriát: a SZÉP-kártyádra mostantól havonta jut egy kis keret ' +
+      '(szakképzési munkaszerződéssel tanulóként is jár, arányosan, ha az azonos munkakörű kollégák is kapják). ' +
       'Ez nem készpénz - csak meghatározott célra (például étkezésre) költhető, ezért az étkezési kiadásod csökken, nem az egyenleged nő.',
     type: 'positive' as const,
     effects: [{ target: 'food', amount: -10_000 }],
@@ -1298,7 +1299,7 @@ export function decisionFits(d: DecisionCard, housing?: number, ctx?: DecisionCo
   if (r.livesHome && housing !== undefined && housing >= RENT_THRESHOLD) return false;
   if (r.chose && ctx?.chosen && !r.chose.some((id) => ctx.chosen!.includes(id))) return false;
   if (r.hasDebtType && ctx?.debtTypes && !ctx.debtTypes.includes(r.hasDebtType)) return false;
-  if (r.employed && ctx?.salary !== undefined && !isEmployed(ctx.salary)) return false;
+  if (r.employed && ctx?.salary !== undefined && !isEmployed(ctx.salary, ctx.chosen)) return false;
   return true;
 }
 
