@@ -10,6 +10,7 @@ import { LIVE_DATA } from './live';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 import { EXTRA_TRAP_CARDS, EXTRA_TEMPTATION_CARDS, EXTRA_RECHARGE_CARDS, EXTRA_ENCOUNTER_CARDS, EXTRA_OFFICE_CARDS } from './field-cards-extra';
 import type { WellbeingKey } from '@/types/wellbeing';
+import { isEmployed } from '@/engine/employment';
 
 export interface FieldEffect {
   target: string;
@@ -64,6 +65,8 @@ export interface CardRequires {
   hasInvestment?: string[];
   /** Van fizetése (béremelés csak ekkor) */
   hasSalary?: boolean;
+  /** Munkaviszonya van (munkahelyi lapok) */
+  employed?: boolean;
 }
 
 /** A játékos helyzete a kártyák szűréséhez */
@@ -76,6 +79,7 @@ export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
   if (r.rentsHome && ctx.housing < 100_000) return false;
   if (r.hasInvestment && !r.hasInvestment.some((id) => ctx.investments.includes(id))) return false;
   if (r.hasSalary && !(ctx.salary && ctx.salary > 0)) return false;
+  if (r.employed && !isEmployed(ctx.salary ?? 0)) return false;
   return true;
 }
 

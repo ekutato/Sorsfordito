@@ -187,3 +187,27 @@ describe('hírlap és sorskártya csak a helyzethez illően', () => {
     }
   });
 });
+
+describe('munkahelyi lapok csak munkaviszonnyal', () => {
+  it('ösztöndíj, duális juttatás, diákmunka: nincs cafeteria és munkahelyi lap; főállásban lehet', async () => {
+    const { isEmployed } = await import('@/engine/employment');
+    for (const s of [0, 25_000, 80_000, 100_000]) expect(isEmployed(s), String(s)).toBe(false);
+    for (const s of [260_000, 320_000]) expect(isEmployed(s), String(s)).toBe(true);
+    const { drawFateCard } = await import('@/engine/fate-deck');
+    const D = await import('@/data/decisions');
+    const pool = { scripted: D.getScriptedFateEvents('fresh_start', 'marathon'), generic: D.GENERIC_FATE_EVENTS, knowledge: D.GENERIC_KNOWLEDGE_FATE_EVENTS, storyline: D.STORYLINE_FATE_EVENTS };
+    const sheet = { income: { salary: 100_000, passive: 0, oneTime: 0 }, expenses: { housing: 15_000, utilities: 0, food: 0, transport: 0, loanPayments: 0, other: 0 }, acquiredKnowledge: [] as string[] };
+    const drawn: string[] = [];
+    for (let r = 0; r < 60; r++) {
+      const e = drawFateCard({ pool, months: [(r % 12) + 1], district: 'munkahely', onFateField: false, drawn, sheet, seed: 'm' });
+      if (!e) break;
+      drawn.push(e.id);
+      expect(['fate-gen-19', 'fate-gen-03', 'fate-gen-05', 'fate-gen-01']).not.toContain(e.id);
+    }
+    const { cardForField } = await import('@/data/field-cards');
+    for (let v = 0; v < 20; v++) {
+      const c = cardForField('encounter', v, 'g', undefined, { preset: 'fresh_start', housing: 15_000, investments: [], salary: 100_000 })!;
+      expect(c.title).not.toMatch(/kolléga|munkahelyi/);
+    }
+  });
+});

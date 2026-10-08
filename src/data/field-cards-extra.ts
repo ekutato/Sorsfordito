@@ -463,6 +463,7 @@ export const EXTRA_RECHARGE_CARDS: FieldCard[] = [
         reflection: { keys: ['egyensuly'], prompt: 'Nemet mondani a főnöknek: van, akinek ez egészséges határ, van, akit bűntudat gyötör miatta.' },
         outcome: 'A hétvégéid a tiéd maradtak.' },
     ],
+    requires: { employed: true },
     realStep: 'A túlórát a munka törvénykönyve korlátozza; érdemes tudni, mennyi rendelhető el, és mennyi pihenőidő jár.',
   },
 ];
@@ -519,6 +520,7 @@ export const EXTRA_ENCOUNTER_CARDS: FieldCard[] = [
       { label: 'Nem vállalom', effects: [],
         outcome: 'Az estéid szabadok maradtak.' },
     ],
+    requires: { employed: true },
     realStep: 'Mellékjövedelem előtt nézz utána, milyen formában szabályos (pl. megbízás vagy egyéni vállalkozás), és mit kell adózni utána.',
   },
   {
@@ -591,6 +593,7 @@ export const EXTRA_ENCOUNTER_CARDS: FieldCard[] = [
         reflection: { keys: ['egyensuly'], prompt: 'Saját ebéd egyedül: van, akinek ez nyugalom, van, akinek hiányzik a közösség.' },
         outcome: 'Nem változik a kiadásod.' },
     ],
+    requires: { employed: true },
     realStep: 'Az ebédre költött összeg havonta jelentős lehet: számold ki, mennyi egy hónapnyi éttermi ebéd.',
   },
   {

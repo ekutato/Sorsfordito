@@ -9,6 +9,7 @@ import type { FinancialSheet } from '@/types/financial';
 import { FATE_MONTHS, FATE_THEME } from '@/data/fate-themes';
 import { liveConditionHolds } from '@/data/live/vars';
 import { createRng, seedFromString, shuffle } from './rng';
+import { isEmployed } from './employment';
 
 export const RENT_THRESHOLD_FATE = 100_000;
 
@@ -43,6 +44,7 @@ function fits(e: FateEventEntry, sheet: DrawInput['sheet']): boolean {
   const r = e.requires;
   if (!r) return true;
   if (r.hasSalary && sheet.income.salary <= 0) return false;
+  if (r.employed && !isEmployed(sheet.income.salary)) return false;
   if (r.hasHighTransport && sheet.expenses.transport < 25_000) return false;
   if (r.rentsHome && sheet.expenses.housing < RENT_THRESHOLD_FATE) return false;
   return true;

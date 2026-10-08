@@ -534,21 +534,21 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
     description: 'A munkahelyed éves inflációkövető emelést adott (az infláció most {{inflation}}%): +15 000 Ft nettó havonta.',
     type: 'positive' as const,
     effects: [{ target: 'salary', amount: 15_000 }],
-    requires: { hasSalary: true },
+    requires: { hasSalary: true, employed: true },
   },
   {
     id: 'fate-gen-03', round: 0, title: 'Prémium a cégtől',
     description: 'Jó évet zárt a cég — kaptál egyhavi prémiumot!',
     type: 'positive' as const,
     effects: [{ target: 'balance', amount: 200_000 }],
-    requires: { hasSalary: true },
+    requires: { hasSalary: true, employed: true },
   },
   {
     id: 'fate-gen-05', round: 0, title: 'Sikeres próbaidő/értékelés',
     description: 'A féléves teljesítményértékelésed kiváló lett. A főnöködtől kaptál egyszeri juttatást.',
     type: 'positive' as const,
     effects: [{ target: 'balance', amount: 100_000 }],
-    requires: { hasSalary: true },
+    requires: { hasSalary: true, employed: true },
   },
   // --- Pozitív események (mindig) ---
   {
@@ -658,7 +658,7 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
       'Ez nem készpénz - csak meghatározott célra (például étkezésre) költhető, ezért az étkezési kiadásod csökken, nem az egyenleged nő.',
     type: 'positive' as const,
     effects: [{ target: 'food', amount: -10_000 }],
-    requires: { hasSalary: true },
+    requires: { hasSalary: true, employed: true },
   },
   {
     id: 'fate-gen-20', round: 0, title: 'Nyereménybetét sorsolás',
@@ -801,6 +801,7 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
   {
     id: 'fate-know-03',
     round: 0,
+    requires: { employed: true },
     title: 'Munkahelyi konfliktus',
     description:
       'A főnököd jogtalanul le akar vonni a fizetésedből egy hibáért. ' +
@@ -1115,6 +1116,7 @@ export const STORYLINE_FATE_EVENTS: FateEventEntry[] = [
   {
     id: 'fate-story-invest-tip',
     round: 0,
+    requires: { employed: true },
     title: 'Befektetési tipp egy kollégától',
     description:
       'Egy kollégád megsúgja: „Van egy biztos befektetési lehetőség, egy startup részvény. ' +
@@ -1324,6 +1326,8 @@ export type FateEventEntry = {
   requires?: {
     /** Játékosnak van fizetése (salary > 0) */
     hasSalary?: boolean;
+    /** Munkaviszonya van (munkáltatói juttatás, munkahelyi helyzet) - engine/employment.ts */
+    employed?: boolean;
     /** Játékosnak van magas közlekedési kiadása (autó-proxy: transport >= 25000) */
     hasHighTransport?: boolean;
     /** Albérletben lakik (lakhatási kiadás >= 100 000 Ft/hó; otthon lakva csak hozzájárulás van) */
