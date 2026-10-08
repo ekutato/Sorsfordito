@@ -1273,15 +1273,29 @@ export function getDecisionsFor(
 /** Albérletben lakik-e (otthon lakva csak hozzájárulás van, az albérlet legalább ennyi) */
 export const RENT_THRESHOLD = 100_000;
 
+/** A játékos helyzete a döntések szűréséhez: korábbi választások, fennálló tartozások */
+export interface DecisionContext { chosen?: string[]; debtTypes?: string[] }
+
+/** Illik-e a döntés a játékos ágához és helyzetéhez */
+export function decisionFits(d: DecisionCard, housing?: number, ctx?: DecisionContext): boolean {
+  const r = d.requires;
+  if (!r) return true;
+  if (r.rentsHome && housing !== undefined && housing < RENT_THRESHOLD) return false;
+  if (r.livesHome && housing !== undefined && housing >= RENT_THRESHOLD) return false;
+  if (r.chose && ctx?.chosen && !r.chose.some((id) => ctx.chosen!.includes(id))) return false;
+  if (r.hasDebtType && ctx?.debtTypes && !ctx.debtTypes.includes(r.hasDebtType)) return false;
+  return true;
+}
+
 export function getDecisionForRound(
   decisions: DecisionCard[],
   round: number,
   completedIds: string[] = [],
   housing?: number,
+  ctx?: DecisionContext,
 ): DecisionCard | undefined {
   return decisions.find(
-    (d) => d.availableAtRounds.includes(round) && !completedIds.includes(d.id)
-      && !(d.requires?.rentsHome && housing !== undefined && housing < RENT_THRESHOLD)
+    (d) => d.availableAtRounds.includes(round) && !completedIds.includes(d.id) && decisionFits(d, housing, ctx)
   );
 }
 
@@ -1290,13 +1304,12 @@ export function getDecisionForRound(
  * a mező így értelmet kap, és a karakter életútja a dobással gyorsulhat.
  */
 export function getDecisionForField(
-  decisions: DecisionCard[], round: number, completedIds: string[], housing: number | undefined, onDecisionField: boolean,
+  decisions: DecisionCard[], round: number, completedIds: string[], housing: number | undefined, onDecisionField: boolean, ctx?: DecisionContext,
 ): { decision?: DecisionCard; broughtForward: boolean } {
-  const now = getDecisionForRound(decisions, round, completedIds, housing);
+  const now = getDecisionForRound(decisions, round, completedIds, housing, ctx);
   if (now || !onDecisionField) return { decision: now, broughtForward: false };
   const next = decisions
-    .filter((d) => !completedIds.includes(d.id) && d.availableAtRounds.some((r) => r > round)
-      && !(d.requires?.rentsHome && housing !== undefined && housing < RENT_THRESHOLD))
+    .filter((d) => !completedIds.includes(d.id) && d.availableAtRounds.some((r) => r > round) && decisionFits(d, housing, ctx))
     .sort((a, b) => Math.min(...a.availableAtRounds.filter((r) => r > round)) - Math.min(...b.availableAtRounds.filter((r) => r > round)))[0];
   return { decision: next, broughtForward: !!next };
 }

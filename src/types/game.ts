@@ -287,7 +287,15 @@ export interface DecisionCard {
 
   /** Melyik kor(ok)ben jelenik meg */
   /** Feltétel: csak albérletben lakónak jelenik meg (otthon lakva a lakhatás csak hozzájárulás) */
-  requires?: { rentsHome?: boolean };
+  requires?: {
+    rentsHome?: boolean;
+    /** A szülőknél lakik (nincs albérlet) */
+    livesHome?: boolean;
+    /** Csak akkor, ha korábban ezek egyikét választotta (ág, pl. egyetem) */
+    chose?: string[];
+    /** Csak ha van ilyen típusú tartozása */
+    hasDebtType?: string;
+  };
   availableAtRounds: number[];
 
   /** Elofeltetelek (korabbi dontesek) */

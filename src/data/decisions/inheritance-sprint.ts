@@ -81,6 +81,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
 
   {
     id: 'inh-d02',
+    requires: { hasDebtType: 'personal_loan' },
     category: 'Adósságkezelés',
     title: 'A személyi kölcsön kérdése',
     situation:

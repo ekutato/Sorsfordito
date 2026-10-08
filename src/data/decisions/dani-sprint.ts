@@ -161,9 +161,9 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Adósságkezelés',
     title: 'Diákhitel kérdés',
     situation:
-      'Az egyetemi évek alatt lehetőséged volt Diákhitel 2-t (DH2) felvenni — ' +
-      'kamatmentes, szabad felhasználású hitel max 3 200 000 Ft-ig. ' +
-      'Sok hallgatótársad élt vele. Te igényelted?',
+      'Önköltséges képzésre jártál. A tandíjat Diákhitel2-ből (DH2) is fizethetted: ' +
+      'ez célzott, kamatmentes hitel, amelyet közvetlenül az egyetem kap, és a tandíjnál több nem lehet. ' +
+      'Négy év alatt 3 200 000 Ft gyűlt volna össze. Te felvetted?',
     options: [
       {
         id: 'dani-d03-a',

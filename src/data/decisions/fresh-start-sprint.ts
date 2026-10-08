@@ -148,6 +148,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
 
   {
     id: 'fs-d03',
+    requires: { chose: ['fs-d01-a'] },
     category: 'Finanszírozás',
     title: 'Kell a diákhitel?',
     situation:
@@ -257,6 +258,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
 
   {
     id: 'fs-d05',
+    requires: { livesHome: true },
     category: 'Életmód',
     title: 'Maradj vagy költözz?',
     situation:

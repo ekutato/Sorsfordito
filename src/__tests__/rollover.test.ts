@@ -34,7 +34,8 @@ function playGame(preset: LifeSituationId, timeScale: TimeScale, pick: number) {
     st.processRoundIncome();
     st.processRoundExpenses();
     const done = useGameStore.getState().game!.eventLog.map((e) => e.details?.decisionCardId).filter(Boolean) as string[];
-    const d = getDecisionForRound(decisions, r, done, sheetOf().expenses.housing);
+    const chosen = useGameStore.getState().game!.eventLog.map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x);
+    const d = getDecisionForRound(decisions, r, done, sheetOf().expenses.housing, { chosen, debtTypes: sheetOf().debts.map((x) => x.type) });
     if (d) applyDecisionOption(d, d.options[(r + pick) % d.options.length]);
     const after = sheetOf().balance;
     const logged = roundImpact(r);
@@ -149,5 +150,18 @@ describe('Diákhitel1: havi folyósítás tartozásként', () => {
     expect(after.balance - before.balance).toBe(75_000);
     expect(dh1.remainingAmount).toBe(75_000);
     expect(after.computed.netWorth).toBe(before.computed.netWorth);
+  });
+});
+
+describe('döntési ágak: a döntés a korábbi választáshoz és a helyzethez igazodik', () => {
+  const ds = () => getDecisionsFor('fresh_start', 'sprint');
+  it('diákhitel-döntés csak annak, aki egyetemre ment', () => {
+    expect(getDecisionForRound(ds(), 5, ['fs-d01', 'fs-d02'], 0, { chosen: ['fs-d01-b'], debtTypes: [] })?.id).not.toBe('fs-d03');
+    expect(getDecisionForRound(ds(), 5, ['fs-d01', 'fs-d02'], 0, { chosen: ['fs-d01-a'], debtTypes: [] })?.id).toBe('fs-d03');
+  });
+  it('Petra: végtörlesztés után nem jön a személyi kölcsön kérdése', () => {
+    const d = getDecisionsFor('inheritance', 'sprint');
+    expect(getDecisionForRound(d, 3, ['inh-d01'], 220_000, { chosen: ['inh-d01-a'], debtTypes: [] })?.id).not.toBe('inh-d02');
+    expect(getDecisionForRound(d, 3, ['inh-d01'], 220_000, { chosen: ['inh-d01-b'], debtTypes: ['personal_loan'] })?.id).toBe('inh-d02');
   });
 });

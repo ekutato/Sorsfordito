@@ -11,11 +11,13 @@ import { getDecisionsFor, getDecisionForField } from '@/data/decisions';
 import { BOARD } from '@/data/board';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
-import { liveCurrentData } from '@/data/live';
+import { liveCurrentData, LIVE_DATA } from '@/data/live';
 import { applyDecisionOption, affordableOptions, decisionCost, financeNotes } from '@/store/decision-finance';
 import { EffectAmount } from '@/ui/components/Money';
 
 const LIVE = liveCurrentData();
+// A Diákhitel1 kamata a heti csomagból (Diákhitel Központ)
+const LIVE_DATA_DH1 = LIVE_DATA.ertekek['diakhitel.dh1Rate']?.value ?? 0;
 
 export function DecisionView() {
   const game = useGameStore((s) => s.game);
@@ -56,7 +58,10 @@ export function DecisionView() {
   const onDecisionField = BOARD[game.board?.position ?? 0]?.type === 'decision';
   const found = decidedCard
     ? { decision: decidedCard, broughtForward: !decidedCard.availableAtRounds.includes(game.currentRound) }
-    : getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField);
+    : getDecisionForField(decisions, game.currentRound, completedDecisionIds, player.financialSheet.expenses.housing, onDecisionField, {
+        chosen: (game.eventLog ?? []).map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x),
+        debtTypes: player.financialSheet.debts.map((d) => d.type),
+      });
   const { decision, broughtForward } = found;
   // Újratöltés után is a meghozott döntés látszik (nem lehet kétszer dönteni)
   const chosenId = selectedOptionId ?? (decidedNow?.details?.optionId as string | undefined) ?? null;
@@ -97,7 +102,7 @@ export function DecisionView() {
         // Valós gazdasági adatok PreGameContext-ből, fallback mock értékekkel
         const pgc = game.preGameContext?.currentData;
         const econLookup: Record<string, number> = {
-          'economicData.interestRates.dh1': 0,
+          'economicData.interestRates.dh1': LIVE_DATA_DH1,
           'economicData.interestRates.pmapYield': pgc?.pmapYield ?? LIVE.pmapYield,
           'economicData.inflation.latest': pgc?.inflation ?? LIVE.inflation,
           'economicData.realEstate.budapestRentAvg': pgc?.avgRentBudapest ?? LIVE.avgRentBudapest,
