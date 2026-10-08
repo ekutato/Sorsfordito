@@ -700,7 +700,7 @@ function InvestPhase() {
               : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]'
           } ${tab !== 'invest' && openedNow.length > 0 ? 'pulse-cta ring-1 ring-yellow-400/70' : ''}`}
         >
-          💰 Heti piac ({availableInvestments.length}){tab !== 'invest' && openedNow.length > 0 && <span className="text-yellow-300"> · 🔓 {openedNow.length}</span>}
+          💰 Heti piac ({availableInvestments.length}){tab !== 'invest' && openedNow.length > 0 && <span className="text-yellow-300"> 🔓{openedNow.length}</span>}
         </button>
         <button
           onClick={() => { setTab('knowledge'); setSelectedId(null); setQuizState(null); }}
@@ -711,7 +711,7 @@ function InvestPhase() {
           } ${tab !== 'knowledge' && linkedKnowledgeCount > 0 ? 'pulse-cta ring-1 ring-yellow-400/70' : ''}`}
           title={linkedKnowledgeCount > 0 ? 'Itt szerezheted meg a piac zárt befektetéséhez kellő tudást' : undefined}
         >
-          📚 Tudás ({availableKnowledge.length}){tab !== 'knowledge' && linkedKnowledgeCount > 0 && <span className="text-yellow-300"> · 🔓 {linkedKnowledgeCount}</span>}
+          📚 Tudás ({availableKnowledge.length}){tab !== 'knowledge' && linkedKnowledgeCount > 0 && <span className="text-yellow-300"> 🔓{linkedKnowledgeCount}</span>}
         </button>
       </div>
 
