@@ -485,9 +485,6 @@ function IncomeExpensePhase() {
   );
 }
 
-/** Névelő a név kezdőhangja szerint */
-const az = (name: string) => (/^[aáeéiíoóöőuúüű]/i.test(name) ? 'az' : 'a');
-
 function InvestPhase() {
   const game = useGameStore((s) => s.game);
   const setPhase = useGameStore((s) => s.setPhase);
@@ -551,11 +548,11 @@ function InvestPhase() {
   const openedNow = investLimitLeft ? availableInvestments.filter((inv) => inv.requiredKnowledge && unlockedHere.includes(inv.requiredKnowledge) && ownedKnowledgeIds.includes(inv.requiredKnowledge)) : [];
   const goToKnowledge = (id: string) => {
     setTab('knowledge'); setSelectedId(id); setQuizState(null);
-    setTimeout(() => document.getElementById(`know-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    setTimeout(() => document.getElementById(`know-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
   const goToInvestment = (id: string) => {
     setTab('invest'); setSelectedId(id); setQuizState(null);
-    setTimeout(() => document.getElementById(`inv-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    setTimeout(() => document.getElementById(`inv-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const handleBuyInvestment = (optionId: string) => {
@@ -735,6 +732,8 @@ function InvestPhase() {
               const needsKnowledge = inv.requiredKnowledge && !ownedKnowledgeIds.includes(inv.requiredKnowledge);
               const isSelected = selectedId === inv.id;
               const buyable = canAfford && !needsKnowledge && investBoughtThisRound < MAX_INVEST_PER_ROUND && !isSelected;
+              // A tudáshoz vezető sáv ne halványuljon el (az a teendő)
+              const liveLock = !!needsKnowledge && !!links.locks[inv.id]?.offered && knowledgeLimitLeft;
 
               return (
                 <div key={inv.id} id={`inv-${inv.id}`}>
@@ -744,7 +743,7 @@ function InvestPhase() {
                       isSelected
                         ? 'bg-brand-600/20 border border-brand-500/50'
                         : 'bg-[var(--color-bg-elevated)] hover:bg-white/5 border border-transparent'
-                    } ${!canAfford || needsKnowledge ? 'opacity-60' : ''} ${buyable ? 'pulse-card' : ''}`}
+                    } ${(!canAfford || needsKnowledge) && !liveLock ? 'opacity-60' : ''} ${buyable ? 'pulse-card' : ''}`}
                     style={buyable ? { animationDelay: `${i * 0.4}s` } : undefined}
                   >
                     <div className="flex justify-between items-start">
@@ -772,7 +771,7 @@ function InvestPhase() {
                             live ? 'border-yellow-400/60 bg-yellow-500/15 text-yellow-200 pulse-cta cursor-pointer' : 'border-white/10 bg-white/5 text-[var(--color-text-muted)]'
                           }`}
                         >
-                          🔒 Kell hozzá {az(lock.needName)} <b>„{lock.needName}”</b> tudáskártya
+                          🔒 Kell hozzá ez a tudáskártya: <b>„{lock.needName}”</b>
                           {lock.stepName && <>; előbb az alapja: <b>„{lock.stepName}”</b></>}
                           <span className="block">
                             {!lock.offered
