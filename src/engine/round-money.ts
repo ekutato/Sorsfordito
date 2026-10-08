@@ -20,6 +20,8 @@ export interface IncomePlan {
   salary: number;
   passive: number;
   total: number;
+  /** Havonta folyósított hitel (nem bevétel, de a számlára érkezik) */
+  loanDraw: number;
 }
 
 export function planRoundIncome(game: GameState): IncomePlan {
@@ -44,7 +46,8 @@ export function planRoundIncome(game: GameState): IncomePlan {
     salary += birthdayDelta;
   }
   const passive = player.financialSheet.income.passive;
-  return { months, salaryBefore, raise, birthdayDelta, salary, passive, total: (salary + passive) * months };
+  const loanDraw = player.financialSheet.debts.reduce((a, d) => a + (d.monthlyDraw ?? 0), 0) * months;
+  return { months, salaryBefore, raise, birthdayDelta, salary, passive, total: (salary + passive) * months, loanDraw };
 }
 
 export interface ExpensePlan {

@@ -457,12 +457,15 @@ function IncomeExpensePhase() {
       {/* Új egyenleg előnézet */}
       {!isEditing && (
         <>
+          {isIncome && incomePlan.loanDraw > 0 && (
+            <p className="text-center text-xs text-amber-300 mb-1">Diákhitel-folyósítás: +{formatHUF(incomePlan.loanDraw)} a számládra - ez nem bevétel, ennyivel nő a tartozásod.</p>
+          )}
           {refund > 0 && (
             <p className="text-center text-xs text-money-positive mb-1">Lejár egy hitel: a túlfizetett részlet visszajár, +{formatHUF(refund)}</p>
           )}
           <div className="text-center text-xs text-[var(--color-text-muted)] mb-3">
             Új egyenleg: <span className="font-mono font-semibold text-white">
-              {formatHUF(isIncome ? sheet.balance + total : sheet.balance - total + refund)}
+              {formatHUF(isIncome ? sheet.balance + total + incomePlan.loanDraw : sheet.balance - total + refund)}
             </span>
           </div>
 

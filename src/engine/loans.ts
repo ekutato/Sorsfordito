@@ -51,5 +51,6 @@ export function makeDebt(spec: LoanSpec, id: string): Debt {
     originalAmount: l.principal, remainingAmount: l.principal,
     interestRate: l.ratePct, monthlyPayment: l.monthlyPayment,
     remainingMonths: l.months || 120, isInterestFree: l.ratePct === 0,
+    ...(spec.monthlyDraw ? { monthlyDraw: spec.monthlyDraw } : {}),
   };
 }

@@ -277,6 +277,9 @@ export interface Debt {
 
   /** Mikor indul a torlesztes (jatek kor, DH2-nel kesobbi) */
   repaymentStartsAtRound?: number;
+
+  /** Havi folyósítás (pl. Diákhitel1): minden hónapban ennyivel nő a tartozás és a számlád */
+  monthlyDraw?: HUF;
 }
 
 // --- Sztorivonalak (többkörös eseménylánc) ---

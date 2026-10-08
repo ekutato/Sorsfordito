@@ -165,9 +165,8 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'Havi 75 000 Ft kölcsön, szabad felhasználásra. ' +
           'Kényelmesebb élet, de adósságba kerülsz. ' +
           'A törlesztés diploma után indul (piaci kamattal!).',
-        financialEffects: [
-          { target: 'salary', amount: 75_000, description: 'Diákhitel 1 havi folyósítás' },
-        ],
+        financialEffects: [],
+        takesLoan: { name: 'Diákhitel1', type: 'student_loan', principal: 0, monthlyPayment: 0, rateKey: 'diakhitel.dh1Rate', monthlyDraw: 75_000 },
         didYouKnow: 'A DH1 kamatozó hitel (jelenleg {{dh1_rate}}% kamattal), a törlesztés a tanulmányok után indul. Ha 3 évig havi 75 000 Ft-ot veszel fel, ~2,7M Ft tőketartozásod lesz, amit kamatostul kell visszafizetni!',
       },
       {

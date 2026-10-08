@@ -134,3 +134,20 @@ describe('hitelek a döntésekből', () => {
     expect(s.computed.netWorth).toBe(nw0);
   });
 });
+
+describe('Diákhitel1: havi folyósítás tartozásként', () => {
+  beforeEach(() => useGameStore.getState().resetGame());
+  it('a számlára érkezik, ugyanennyivel nő a tartozás, a nettó vagyon nem változik tőle', () => {
+    useGameStore.getState().startNewGame({ timeScale: 'sprint', mode: 'solo', playerCount: 1, useLiveData: false, startDate: '2026-10', rules: DEFAULT_RULES }, 'fresh_start', 'Teszt');
+    const d = getDecisionsFor('fresh_start', 'sprint').find((x) => x.options.some((o) => o.id === 'fs-d03-a'))!;
+    applyDecisionOption(d, d.options.find((o) => o.id === 'fs-d03-a')!);
+    const before = sheetOf();
+    useGameStore.getState().processRoundIncome();
+    const after = sheetOf();
+    const dh1 = after.debts.find((x) => x.name === 'Diákhitel1')!;
+    expect(after.income.salary).toBe(0);
+    expect(after.balance - before.balance).toBe(75_000);
+    expect(dh1.remainingAmount).toBe(75_000);
+    expect(after.computed.netWorth).toBe(before.computed.netWorth);
+  });
+});

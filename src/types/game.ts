@@ -362,6 +362,8 @@ export interface LoanSpec {
   rateKey?: string;
   /** A hitelösszeg a számlára érkezik (személyi kölcsön, Babaváró); lakás/autó esetén az eladóhoz megy */
   disburse?: boolean;
+  /** Havonta folyósított hitel (pl. Diákhitel1): a tartozás a folyósítással nő, a törlesztés később indul */
+  monthlyDraw?: HUF;
 }
 
 export interface FinancialEffect {

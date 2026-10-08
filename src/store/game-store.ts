@@ -610,6 +610,19 @@ export const useGameStore = create<GameStore>()(
           });
         }
 
+        // Havonta folyósított hitel (Diákhitel1): nem bevétel - a számlára érkezik, és ugyanennyivel nő a tartozás
+        for (const d of get().game!.players[get().game!.activePlayerIndex].financialSheet.debts.filter((x) => x.monthlyDraw)) {
+          const draw = d.monthlyDraw! * monthsInRound;
+          set((st) => st.game ? { game: { ...st.game, players: st.game.players.map((p) => {
+            if (p.playerId !== player.playerId) return p;
+            const sheet = { ...p.financialSheet, balance: p.financialSheet.balance + draw,
+              debts: p.financialSheet.debts.map((x) => x.id === d.id ? { ...x, remainingAmount: x.remainingAmount + draw, originalAmount: x.originalAmount + draw } : x) };
+            sheet.computed = computeFinancials(sheet);
+            return { ...p, financialSheet: sheet };
+          }) } } : st);
+          state.logEvent({ type: 'decision', description: `${d.name}: folyósítás (${monthsInRound} hó × ${d.monthlyDraw!.toLocaleString('hu-HU')} Ft) - ennyivel nő a tartozásod`, financialImpact: draw });
+        }
+
         const totalIncome = (currentSalary + passive) * monthsInRound;
         state.modifyBalance(player.playerId, totalIncome, `Bevétel (${monthsInRound} hónap)`);
         state.logEvent({
