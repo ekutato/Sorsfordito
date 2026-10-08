@@ -3,7 +3,7 @@ import { KNOWLEDGE_TREE, prerequisitesMet, knowledgeEffects, levelOf } from '@/d
 import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { ALL_FIELD_CARDS } from '@/data/field-cards';
-import { drawOffers, nextLearnable } from '@/engine/offers';
+import { drawOffers, knowledgeLinks, nextLearnable } from '@/engine/offers';
 
 describe('egymásra épülő tudás', () => {
   it('minden tudáskártya a fában van, az előfeltételek léteznek és alacsonyabb szintűek (nincs kör)', () => {
@@ -59,5 +59,27 @@ describe('egymásra épülő tudás', () => {
     const o = drawOffers({ gameId: 'g', round: 5, ownedInvestments: [], ownedKnowledge: [], investOffers: 3, knowledgeOffers: 3, unlockedInvestments: ['inv-map-plus'] });
     expect(o.investments.map((i) => i.id)).toContain('inv-map-plus');
     expect(INVESTMENT_OPTIONS.some((i) => i.id === 'inv-map-plus')).toBe(true);
+  });
+
+  it('piac ↔ Tudás fül: a zárt befektetéshez vezető tudás megnevezve, és visszafelé is látszik', () => {
+    const inv = INVESTMENT_OPTIONS.filter((i) => i.requiredKnowledge === 'know-tbsz');
+    const k = (id: string) => KNOWLEDGE_CARDS.find((x) => x.id === id)!;
+    // közvetlenül tanulható
+    let l = knowledgeLinks({ investments: inv, knowledge: [k('know-tbsz')] }, ['know-inflation']);
+    for (const i of inv) expect(l.locks[i.id]).toMatchObject({ needId: 'know-tbsz', offered: true });
+    expect(l.locks[inv[0].id].stepId).toBeUndefined();
+    expect(l.unlocks['know-tbsz'].map((u) => u.investmentId)).toEqual(inv.map((i) => i.id));
+    expect(l.unlocks['know-tbsz'].every((u) => u.direct)).toBe(true);
+    // előbb az előfeltétel
+    l = knowledgeLinks({ investments: inv, knowledge: [k('know-inflation')] }, []);
+    expect(l.locks[inv[0].id]).toMatchObject({ needId: 'know-tbsz', stepId: 'know-inflation', offered: true });
+    expect(l.unlocks['know-inflation'][0].direct).toBe(false);
+    // nincs a kínálatban
+    l = knowledgeLinks({ investments: inv, knowledge: [k('know-tax')] }, []);
+    expect(l.locks[inv[0].id].offered).toBe(false);
+    expect(l.unlocks).toEqual({});
+    // már megvan: nincs zár
+    l = knowledgeLinks({ investments: inv, knowledge: [] }, ['know-inflation', 'know-tbsz']);
+    expect(l.locks).toEqual({});
   });
 });

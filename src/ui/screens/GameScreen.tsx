@@ -38,7 +38,7 @@ import { displayColor } from '@/engine/table/state';
 import { getDecisionsFor } from '@/data/decisions';
 import { planRoundIncome, planRoundExpenses } from '@/engine/round-money';
 import { MoneyDelta } from '@/ui/components/Money';
-import { drawOffers, type OfferContext } from '@/engine/offers';
+import { drawOffers, knowledgeLinks, type OfferContext } from '@/engine/offers';
 import { cardDrawInfo } from '@/data/field-cards';
 import { LEVEL_LABEL, levelOf, knowledgeEffects } from '@/data/knowledge-tree';
 
@@ -485,6 +485,9 @@ function IncomeExpensePhase() {
   );
 }
 
+/** Névelő a név kezdőhangja szerint */
+const az = (name: string) => (/^[aáeéiíoóöőuúüű]/i.test(name) ? 'az' : 'a');
+
 function InvestPhase() {
   const game = useGameStore((s) => s.game);
   const setPhase = useGameStore((s) => s.setPhase);
@@ -496,6 +499,8 @@ function InvestPhase() {
   const [tab, setTab] = useState<'invest' | 'knowledge'>('invest');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [justBought, setJustBought] = useState<string | null>(null);
+  // Ebben a körben megszerzett tudások (a megnyílt befektetés jelzéséhez)
+  const [unlockedHere, setUnlockedHere] = useState<string[]>([]);
   // Körönkénti limit: 1 befektetés + 2 tudáskártya (a játéknaplóból számolva, így elnavigálással sem kijátszható)
   // A mező bónuszt ad: Tudás mezőn +1 tudás, Befektetés mezőn +1 befektetés és bővebb piac
   const bonus = game ? roundBonus(game) : fieldBonus(undefined);
@@ -537,6 +542,21 @@ function InvestPhase() {
   });
   const availableInvestments = offers.investments;
   const availableKnowledge = offers.knowledge;
+  // A piac és a Tudás fül összekötése: a zárt befektetéshez vezető tudás a másik fülön kiemelve
+  const links = knowledgeLinks(offers, ownedKnowledgeIds);
+  const knowledgeLimitLeft = knowledgeBoughtThisRound < MAX_KNOWLEDGE_PER_ROUND;
+  const linkedKnowledgeCount = knowledgeLimitLeft ? Object.keys(links.unlocks).length : 0;
+  // Ha a Tudás fülön épp megnyílt egy befektetés, a Heti piac gomb jelez
+  const investLimitLeft = investBoughtThisRound < MAX_INVEST_PER_ROUND;
+  const openedNow = investLimitLeft ? availableInvestments.filter((inv) => inv.requiredKnowledge && unlockedHere.includes(inv.requiredKnowledge) && ownedKnowledgeIds.includes(inv.requiredKnowledge)) : [];
+  const goToKnowledge = (id: string) => {
+    setTab('knowledge'); setSelectedId(id); setQuizState(null);
+    setTimeout(() => document.getElementById(`know-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+  };
+  const goToInvestment = (id: string) => {
+    setTab('invest'); setSelectedId(id); setQuizState(null);
+    setTimeout(() => document.getElementById(`inv-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+  };
 
   const handleBuyInvestment = (optionId: string) => {
     const option = INVESTMENT_OPTIONS.find((o) => o.id === optionId);
@@ -599,6 +619,7 @@ function InvestPhase() {
     if (knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND) return;
 
     addKnowledge(player.playerId, card.id);
+    setUnlockedHere((u) => [...u, card.id]);
     if (card.price > 0) {
       modifyBalance(player.playerId, -card.price, `Tudás kártya: ${card.name}`);
     }
@@ -675,9 +696,9 @@ function InvestPhase() {
             tab === 'invest'
               ? 'bg-brand-600 text-white'
               : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]'
-          }`}
+          } ${tab !== 'invest' && openedNow.length > 0 ? 'pulse-cta ring-1 ring-yellow-400/70' : ''}`}
         >
-          💰 Heti piac ({availableInvestments.length})
+          💰 Heti piac ({availableInvestments.length}){tab !== 'invest' && openedNow.length > 0 && <span className="text-yellow-300"> · 🔓 {openedNow.length}</span>}
         </button>
         <button
           onClick={() => { setTab('knowledge'); setSelectedId(null); setQuizState(null); }}
@@ -685,9 +706,10 @@ function InvestPhase() {
             tab === 'knowledge'
               ? 'bg-brand-600 text-white'
               : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]'
-          }`}
+          } ${tab !== 'knowledge' && linkedKnowledgeCount > 0 ? 'pulse-cta ring-1 ring-yellow-400/70' : ''}`}
+          title={linkedKnowledgeCount > 0 ? 'Itt szerezheted meg a piac zárt befektetéséhez kellő tudást' : undefined}
         >
-          📚 Tudás ({availableKnowledge.length})
+          📚 Tudás ({availableKnowledge.length}){tab !== 'knowledge' && linkedKnowledgeCount > 0 && <span className="text-yellow-300"> · 🔓 {linkedKnowledgeCount}</span>}
         </button>
       </div>
 
@@ -715,7 +737,7 @@ function InvestPhase() {
               const buyable = canAfford && !needsKnowledge && investBoughtThisRound < MAX_INVEST_PER_ROUND && !isSelected;
 
               return (
-                <div key={inv.id}>
+                <div key={inv.id} id={`inv-${inv.id}`}>
                   <button
                     onClick={() => setSelectedId(isSelected ? null : inv.id)}
                     className={`w-full text-left p-3 rounded-xl transition-all ${
@@ -728,21 +750,6 @@ function InvestPhase() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <span className="font-semibold text-sm"><GlossaryText text={inv.name} /></span>
-                        {needsKnowledge && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTab('knowledge');
-                              setSelectedId(inv.requiredKnowledge ?? null);
-                            }}
-                            className="ml-2 text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded
-                                       hover:bg-yellow-500/30 transition-colors cursor-pointer"
-                            title="Kattints a szükséges tudáskártyához"
-                          >
-                            🔒 Tudás kell →
-                          </button>
-                        )}
                       </div>
                       <span className="text-xs font-mono text-right">
                         <span className="text-white">Ár: {formatHUF(inv.entryPrice)}</span>
@@ -750,6 +757,33 @@ function InvestPhase() {
                       </span>
                     </div>
                     {offers.reasons[inv.id] && <p className="text-xs text-sky-300 mt-1">{offers.reasons[inv.id]}</p>}
+                    {needsKnowledge && (() => {
+                      const lock = links.locks[inv.id];
+                      if (!lock) return null;
+                      const target = lock.stepId ?? lock.needId;
+                      const live = lock.offered && knowledgeLimitLeft;
+                      return (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); if (lock.offered) goToKnowledge(target); }}
+                          onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && lock.offered) { e.preventDefault(); e.stopPropagation(); goToKnowledge(target); } }}
+                          className={`mt-2 block rounded-lg border px-2.5 py-1.5 text-xs leading-snug ${
+                            live ? 'border-yellow-400/60 bg-yellow-500/15 text-yellow-200 pulse-cta cursor-pointer' : 'border-white/10 bg-white/5 text-[var(--color-text-muted)]'
+                          }`}
+                        >
+                          🔒 Kell hozzá {az(lock.needName)} <b>„{lock.needName}”</b> tudáskártya
+                          {lock.stepName && <>; előbb az alapja: <b>„{lock.stepName}”</b></>}
+                          <span className="block">
+                            {!lock.offered
+                              ? 'Ebben a körben nincs a Tudás fülön, egy későbbi körben jöhet.'
+                              : knowledgeLimitLeft
+                              ? 'Most megszerezheted a 📚 Tudás fülön →'
+                              : 'A Tudás fülön van, de ebben a körben már nem tanulhatsz többet.'}
+                          </span>
+                        </span>
+                      );
+                    })()}
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
                       {(() => {
                         const m = monthlyInvestmentIncome(inv);
@@ -823,7 +857,7 @@ function InvestPhase() {
                           : !canAfford
                           ? 'Nincs elég pénzed'
                           : needsKnowledge
-                          ? '🔒 Tudás kártya szükséges — kattints a fenti badge-re'
+                          ? `🔒 Előbb szerezd meg: ${links.locks[selectedInvestment.id]?.stepName ?? links.locks[selectedInvestment.id]?.needName ?? 'a tudáskártyát'}`
                           : `Megveszem: ${formatHUF(selectedInvestment.entryPrice)}`}
                       </button>
                     </div>
@@ -838,6 +872,12 @@ function InvestPhase() {
       {/* Knowledge cards list */}
       {tab === 'knowledge' && (
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+          {openedNow.map((inv) => (
+            <button key={inv.id} onClick={() => goToInvestment(inv.id)}
+              className="pulse-cta w-full text-left bg-green-900/40 border border-green-500/40 rounded-xl px-3 py-2 text-sm text-green-200">
+              🔓 Megnyílt a Heti piacon: <b>{inv.name}</b> - megnézem →
+            </button>
+          ))}
           {knowledgeBoughtThisRound >= MAX_KNOWLEDGE_PER_ROUND && (
             <div className="bg-brand-600/10 border border-brand-500/30 rounded-xl px-3 py-2 mb-1 text-xs text-brand-300">
               📚 Ebben a körben ennyi tanulás lehetséges. A következő körben új lapokat húzol.
@@ -852,14 +892,16 @@ function InvestPhase() {
               const canAfford = card.price === 0 || balance >= card.price;
               const isSelected = selectedId === card.id;
               const buyable = canAfford && knowledgeBoughtThisRound < MAX_KNOWLEDGE_PER_ROUND && !isSelected;
+              const opens = links.unlocks[card.id] ?? [];
 
               return (
-                <div key={card.id}>
+                <div key={card.id} id={`know-${card.id}`}>
                   <button
                     onClick={() => { setSelectedId(isSelected ? null : card.id); if (!isSelected) setQuizState(null); }}
                     className={`w-full text-left p-3 rounded-xl transition-all ${
                       isSelected
                         ? 'bg-brand-600/20 border border-brand-500/50'
+                        : opens.length > 0 ? 'bg-[var(--color-bg-elevated)] hover:bg-white/5 border border-yellow-400/60'
                         : 'bg-[var(--color-bg-elevated)] hover:bg-white/5 border border-transparent'
                     } ${!canAfford ? 'opacity-60' : ''} ${buyable ? 'pulse-card' : ''}`}
                     style={buyable ? { animationDelay: `${i * 0.4}s` } : undefined}
@@ -873,8 +915,19 @@ function InvestPhase() {
                     </div>
                     <p className="text-xs mt-1">
                       <span className="rounded px-1.5 py-0.5 mr-1 font-bold bg-white/10">{LEVEL_LABEL[levelOf(card.id)]}</span>
-                      {offers.reasons[card.id] && <span className="text-sky-300">{offers.reasons[card.id]}</span>}
+                      {opens.length === 0 && offers.reasons[card.id] && <span className="text-sky-300">{offers.reasons[card.id]}</span>}
                     </p>
+                    {opens.length > 0 && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); goToInvestment(opens[0].investmentId); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); goToInvestment(opens[0].investmentId); } }}
+                        className="mt-1.5 block rounded-lg border border-yellow-400/60 bg-yellow-500/15 px-2.5 py-1.5 text-xs leading-snug text-yellow-200 cursor-pointer"
+                      >
+                        🔓 {opens.every((o) => o.direct) ? 'Feloldja a Heti piacon' : 'Az első lépés ehhez a Heti piacon'}: <b>{opens.map((o) => o.name).join(', ')}</b> ←
+                      </span>
+                    )}
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
                       {knowledgeEffects(card.id).join(' · ') || 'Alapismeret: a sorskártyák tudáspróbáin és a döntéseidnél segít.'}
                     </p>

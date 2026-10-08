@@ -78,3 +78,41 @@ export function drawOffers(c: OfferContext): Offers {
   const knowledge = [...targeted, ...rest].slice(0, c.knowledgeOffers);
   return { investments, knowledge, reasons };
 }
+
+export interface KnowledgeLock {
+  /** A befektetéshez szükséges tudás */
+  needId: string;
+  needName: string;
+  /** Ha előbb egy előfeltételt kell megtanulni: a következő tanulható lépcsőfok */
+  stepId?: string;
+  stepName?: string;
+  /** A lépcsőfok (vagy maga a tudás) ott van-e a mostani tudáskínálatban */
+  offered: boolean;
+}
+
+export interface KnowledgeLinks {
+  /** Zárt, kínált befektetés → a hozzá vezető tudás */
+  locks: Record<string, KnowledgeLock>;
+  /** Kínált tudáskártya → a kínált befektetések, amelyekhez ez a (következő) lépés */
+  unlocks: Record<string, { investmentId: string; name: string; direct: boolean }[]>;
+}
+
+/** A piac és a Tudás fül összekötése: melyik zárt befektetéshez melyik kínált tudás vezet */
+export function knowledgeLinks(offers: Pick<Offers, 'investments' | 'knowledge'>, owned: string[]): KnowledgeLinks {
+  const locks: KnowledgeLinks['locks'] = {};
+  const unlocks: KnowledgeLinks['unlocks'] = {};
+  const nameOf = (id: string) => KNOWLEDGE_CARDS.find((k) => k.id === id)?.name ?? id;
+  for (const inv of offers.investments) {
+    const need = inv.requiredKnowledge;
+    if (!need || owned.includes(need)) continue;
+    const step = nextLearnable(need, owned) ?? need;
+    const offered = offers.knowledge.some((k) => k.id === step);
+    locks[inv.id] = {
+      needId: need, needName: nameOf(need),
+      ...(step !== need ? { stepId: step, stepName: nameOf(step) } : {}),
+      offered,
+    };
+    if (offered) (unlocks[step] ??= []).push({ investmentId: inv.id, name: inv.name, direct: step === need });
+  }
+  return { locks, unlocks };
+}
