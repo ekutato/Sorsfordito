@@ -6,6 +6,9 @@ import type { FieldType } from './board';
 import type { FieldCard } from './field-cards';
 import { KNOWLEDGE_CARDS } from './knowledge-cards';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
+import { DISTRICT_KNOWLEDGE, LEVEL_LABEL, knowledgeEffects, levelOf, prerequisitesMet } from './knowledge-tree';
+import { nextLearnable } from '@/engine/offers';
+import type { DistrictId } from './board';
 
 /** A mező által adott körönkénti bónusz (a piac kereteihez) */
 export interface FieldBonus { knowledgeLimit: number; investLimit: number; investOffers: number; knowledgeOffers: number }
@@ -21,10 +24,13 @@ export function fieldBonus(field: FieldType | undefined): FieldBonus {
 /** Hatás-célpont az ingyenes tudáskártyához (a táblás hatások között kezelve) */
 export const KNOWLEDGE_TARGET = 'knowledge:';
 
-export function bonusCardFor(field: FieldType, visit: number, seed: string, owned: string[]): FieldCard | undefined {
+export function bonusCardFor(field: FieldType, visit: number, seed: string, owned: string[], district?: DistrictId): FieldCard | undefined {
   if (field === 'knowledge') {
-    const deck = shuffle(KNOWLEDGE_CARDS.filter((k) => k.tier === 'free' && !owned.includes(k.id)), createRng(seedFromString(`${seed}-tudas`)));
-    const k = deck[visit % Math.max(1, deck.length)];
+    // Csak tanulható (előfeltétellel rendelkező) lap; elsőként a negyed témájához illő lépcsőfok
+    const learnable = KNOWLEDGE_CARDS.filter((k) => k.tier === 'free' && !owned.includes(k.id) && prerequisitesMet(k.id, owned));
+    const themed = (district ? DISTRICT_KNOWLEDGE[district] : []).map((id) => nextLearnable(id, owned)).filter((id): id is string => !!id);
+    const deck = shuffle(learnable, createRng(seedFromString(`${seed}-tudas-${visit}`)));
+    const k = learnable.find((x) => x.id === themed[visit % Math.max(1, themed.length)]) ?? deck[0];
     if (!k) return undefined;
     return {
       id: `bonus-know-${k.id}`,
@@ -37,7 +43,7 @@ export function bonusCardFor(field: FieldType, visit: number, seed: string, owne
         { label: 'Most kihagyom', effects: [],
           outcome: 'Rendben. A tudáskártyák piacán ebben a körben így is 3 lapot szerezhetsz.' },
       ],
-      realStep: `Valós lépés: ${k.ongoingEffect}`,
+      realStep: [`${LEVEL_LABEL[levelOf(k.id)]} szint.`, ...knowledgeEffects(k.id)].join(' · '),
       sourceUrl: k.sourceUrl,
     };
   }

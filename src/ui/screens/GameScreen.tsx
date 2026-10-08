@@ -35,9 +35,11 @@ import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
 import { useTableStore } from '@/store/table-store';
 import { displayColor } from '@/engine/table/state';
-import { createRng, seedFromString, shuffle } from '@/engine/rng';
+import { getDecisionsFor } from '@/data/decisions';
 import { planRoundIncome, planRoundExpenses } from '@/engine/round-money';
 import { MoneyDelta } from '@/ui/components/Money';
+import { drawOffers, type OfferContext } from '@/engine/offers';
+import { LEVEL_LABEL, levelOf, knowledgeEffects } from '@/data/knowledge-tree';
 
 
 export function GameScreen() {
@@ -518,13 +520,19 @@ function InvestPhase() {
   const investBoughtThisRound = roundLog.filter((e) => e.description.startsWith('Befektetés:')).length;
   const knowledgeBoughtThisRound = roundLog.filter((e) => e.description.startsWith('Tudás kártya:')).length;
 
-  // Mint egy táblajátékban: nem a teljes piac látszik, hanem körönként néhány húzott lap.
+  // Mint egy táblajátékban: nem a teljes piac látszik, hanem körönként néhány húzott lap - a kör helyzetéhez igazítva
+  // (a lépett negyed, a kör döntése, a döntésekkel feloldott befektetések, a nem kivédett csapda).
   // A húzás körönként állandó (a játék és a kör azonosítójából), így újratöltéskor sem változik.
   const deckInvest = INVESTMENT_OPTIONS.filter((inv) => !ownedInvestmentIds.includes(inv.id) && inv.tier === 'free');
   const deckKnowledge = KNOWLEDGE_CARDS.filter((k) => !ownedKnowledgeIds.includes(k.id) && k.tier === 'free');
-  const drawRng = createRng(seedFromString(`${game.gameId}-r${game.currentRound}`));
-  const availableInvestments = shuffle(deckInvest, drawRng).slice(0, bonus.investOffers);
-  const availableKnowledge = shuffle(deckKnowledge, drawRng).slice(0, bonus.knowledgeOffers);
+  const offers = drawOffers({
+    gameId: game.gameId, round: game.currentRound,
+    ownedInvestments: ownedInvestmentIds, ownedKnowledge: ownedKnowledgeIds,
+    investOffers: bonus.investOffers, knowledgeOffers: bonus.knowledgeOffers,
+    ...offerContext(game),
+  });
+  const availableInvestments = offers.investments;
+  const availableKnowledge = offers.knowledge;
 
   const handleBuyInvestment = (optionId: string) => {
     const option = INVESTMENT_OPTIONS.find((o) => o.id === optionId);
@@ -737,6 +745,7 @@ function InvestPhase() {
                         {!canAfford && <span className="block text-money-negative">nincs fedezet</span>}
                       </span>
                     </div>
+                    {offers.reasons[inv.id] && <p className="text-xs text-sky-300 mt-1">{offers.reasons[inv.id]}</p>}
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
                       {(() => {
                         const m = monthlyInvestmentIncome(inv);
@@ -858,14 +867,13 @@ function InvestPhase() {
                         {card.price > 0 && !canAfford && <span className="block text-money-negative">nincs fedezet</span>}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                      {card.ongoingEffect}
+                    <p className="text-xs mt-1">
+                      <span className="rounded px-1.5 py-0.5 mr-1 font-bold bg-white/10">{LEVEL_LABEL[levelOf(card.id)]}</span>
+                      {offers.reasons[card.id] && <span className="text-sky-300">{offers.reasons[card.id]}</span>}
                     </p>
-                    {card.unlocks.length > 0 && (
-                      <p className="text-xs text-yellow-400 mt-1">
-                        🔓 Feloldja: {card.unlocks.map((id) => resolveUnlockName(id)).join(', ')}
-                      </p>
-                    )}
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                      {knowledgeEffects(card.id).join(' · ') || 'Alapismeret: a sorskártyák tudáspróbáin és a döntéseidnél segít.'}
+                    </p>
                   </button>
 
                   {/* Expanded detail */}
@@ -1036,23 +1044,6 @@ function CrisisPhase() {
   );
 }
 
-/** Unlock ID-ból olvasható nevet csinál */
-function resolveUnlockName(id: string): string {
-  // Befektetés ID → név
-  const inv = INVESTMENT_OPTIONS.find((o) => o.id === id);
-  if (inv) return inv.name;
-
-  // Ismert döntés-kulcsok
-  const decisionNames: Record<string, string> = {
-    'decision-csok': 'CSOK pályázat',
-    'decision-home-purchase': 'Lakásvásárlás',
-  };
-  if (decisionNames[id]) return decisionNames[id];
-
-  // Fallback: ID-ból csinál olvashatót
-  return id.replace(/^(inv-|decision-)/, '').replace(/-/g, ' ');
-}
-
 function formatGameDate(dateStr: string): string {
   const [year, month] = dateStr.split('-');
   const months = [
@@ -1073,10 +1064,26 @@ function sharedDeckOf(game: GameState): SharedDeck | undefined {
   return { seed: t.deckSeed, slot: t.slot, players };
 }
 
+/** A heti piac helyzete: lépett negyed, a kör döntésének témája, feloldott befektetések, nem kivédett csapdák */
+function offerContext(game: GameState): Pick<OfferContext, 'district' | 'decisionCategory' | 'unlockedInvestments' | 'missedTrapKnowledge'> {
+  const player = game.players[game.activePlayerIndex];
+  const decisions = getDecisionsFor(player.lifeSituation as LifeSituationId, game.config.timeScale);
+  const chosen = game.eventLog.filter((e) => e.type === 'decision' && e.details?.decisionCardId);
+  const thisRound = chosen.filter((e) => e.round === game.currentRound).map((e) => decisions.find((d) => d.id === e.details!.decisionCardId)).find(Boolean);
+  const unlockedInvestments = chosen.flatMap((e) => {
+    const d = decisions.find((x) => x.id === e.details!.decisionCardId);
+    return d?.options.find((o) => o.id === e.details!.optionId)?.unlocksInvestment ?? [];
+  });
+  const missedTrapKnowledge = game.eventLog
+    .filter((e) => e.type === 'field' && (e.financialImpact ?? 0) < 0 && typeof e.details?.knowledge === 'string')
+    .map((e) => e.details!.knowledge as string);
+  return { district: BOARD[game.board?.position ?? 0]?.district, decisionCategory: thisRound?.category, unlockedInvestments, missedTrapKnowledge };
+}
+
 /** A kör lapja a lépett mezőn: mezőkártya, vagy a Tudás/Befektetés mező bónuszlapja */
 function roundCardFor(game: GameState, field: FieldType, visit: number) {
   const owned = game.players[game.activePlayerIndex]?.financialSheet.acquiredKnowledge ?? [];
-  return cardForField(field, visit, game.gameId, sharedDeckOf(game)) ?? bonusCardFor(field, visit, game.gameId, owned);
+  return cardForField(field, visit, game.gameId, sharedDeckOf(game)) ?? bonusCardFor(field, visit, game.gameId, owned, BOARD[game.board?.position ?? 0]?.district);
 }
 
 /** A kör mezőbónusza (a tudás- és befektetési keretekhez) */

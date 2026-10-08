@@ -12,6 +12,7 @@ import { WellbeingReflection } from '@/ui/components/WellbeingReflection';
 import type { SubjectiveWellbeing } from '@/data/wellbeing-effects';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 import { effectDirection, signedEffect } from '@/engine/money-sign';
+import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
 
 interface Props {
   card: FieldCard;
@@ -38,7 +39,8 @@ const TIMEOUT_OPTION: FieldOption = {
 export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_SECONDS, onChoose }: Props) {
   const st = FIELD_STYLE[card.field];
   const isTrap = card.field === 'trap';
-  const timed = isTrap && trapSeconds > 0;
+  // Tudással nyugodtan dönthetsz: a sürgető óra el sem indul (a tudás számít, nem a szerencse)
+  const timed = isTrap && trapSeconds > 0 && !hasKnowledge;
   const [left, setLeft] = useState(trapSeconds);
   const [checked, setChecked] = useState(false);
   const ref = useRef<HTMLElement>(null);
@@ -56,6 +58,10 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
     return () => clearTimeout(t);
   }, [timed, checked, left, onChoose]);
   const showFlags = !!card.redFlags && (hasKnowledge || checked);
+  // Tudás nélkül az utánanézés a vészjelek felét mutatja; a hozzá illő tudáskártya mindet
+  const allFlags = card.redFlags ?? [];
+  const flags = hasKnowledge ? allFlags : allFlags.slice(0, Math.ceil(allFlags.length / 2));
+  const knowledgeName = card.highlightWithKnowledge ? KNOWLEDGE_CARDS.find((k) => k.id === card.highlightWithKnowledge)?.name : undefined;
   // A helyes válasz ne mindig ugyanott álljon (kártyánként állandó, de vegyes sorrend)
   const options = card.field === 'market_news' ? card.options : shuffle(card.options, createRng(seedFromString(card.id)));
   return (
@@ -96,12 +102,17 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
         {showFlags && (
           <div className="rounded-xl p-3 space-y-1.5" style={{ background: '#FFF4E0' }}>
             <span className="text-sm font-bold">{hasKnowledge ? 'A tudásod alapján gyanús:' : 'Utánanéztél - ezt találtad:'}</span>
-            {(card.redFlags ?? []).map((f) => (
+            {flags.map((f) => (
               <div key={f} className="flex gap-2 text-base leading-snug">
                 <span className="shrink-0 w-5 h-5 mt-0.5 rounded-full text-xs font-extrabold text-white flex items-center justify-center" style={{ background: '#B4441F' }}>!</span>
                 <span>{f}</span>
               </div>
             ))}
+            {!hasKnowledge && flags.length < allFlags.length && (
+              <p className="text-sm" style={{ color: '#6B5D43' }}>
+                Még {allFlags.length - flags.length} vészjel maradt rejtve.{knowledgeName ? ` A(z) „${knowledgeName}” tudáskártyával mindet látnád, és a hívó sem tudna sürgetni.` : ''}
+              </p>
+            )}
           </div>
         )}
 

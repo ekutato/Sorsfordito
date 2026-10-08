@@ -157,7 +157,7 @@ export const EXTRA_TRAP_CARDS: FieldCard[] = [
       'Sürget: „ma”, különben másé lesz.',
       'Nem igazolja, hogy ő a tulajdonos.',
     ],
-    highlightWithKnowledge: 'know-housing',
+    highlightWithKnowledge: 'know-digital',
     options: [
       { label: 'Személyes megtekintést és a tulajdonjog igazolását kérem, csak utána fizetek', effects: [{ target: 'wellbeing.egyensuly', amount: 1 }],
         outcome: 'A „tulaj” kifogásokat keres, majd eltűnik. Kivédted.' },

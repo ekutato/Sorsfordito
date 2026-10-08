@@ -65,14 +65,14 @@ export function emptyBoard(): SoloBoardState {
   return { position: 0, visits: {}, reverts: [] };
 }
 
-function applyEffect(target: string, amount: number, description: string) {
+function applyEffect(target: string, amount: number, description: string, details?: Record<string, unknown>) {
   const s = useGameStore.getState();
   const pid = s.game?.players[s.game.activePlayerIndex]?.playerId;
   if (!pid) return;
   if (target === 'balance') {
     s.modifyBalance(pid, amount, description);
     // A mezőkártya pénzhatása is a kör naplójába kerül (a kör összegzése így kiadja az egyenlegváltozást)
-    s.logEvent({ type: 'field', description, financialImpact: amount });
+    s.logEvent({ type: 'field', description, financialImpact: amount, ...(details ? { details } : {}) });
   }
   else if (target === 'salary') s.modifyIncome(pid, 'salary', amount);
   else if (target === 'passive') s.modifyIncome(pid, 'passive', amount);
@@ -144,7 +144,7 @@ export function resolveFieldCard(fieldType: string, option?: FieldOption, card?:
 
   const reverts = [...board.reverts];
   if (option) {
-    for (const e of option.effects) applyEffect(e.target, e.amount, card ? `${card.title}: ${option.label}` : option.label);
+    for (const e of option.effects) applyEffect(e.target, e.amount, card ? `${card.title}: ${option.label}` : option.label, card ? { cardId: card.id, field: card.field, knowledge: card.highlightWithKnowledge } : undefined);
     if (option.durationMonths) {
       const months = TIME_SCALE_CONFIGS[game.config.timeScale].monthsPerRound;
       const rounds = Math.max(1, Math.ceil(option.durationMonths / months));

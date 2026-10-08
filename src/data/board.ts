@@ -4,10 +4,12 @@ export type FieldType =
   | 'payday' | 'decision' | 'market_news' | 'temptation' | 'investment' | 'fate'
   | 'knowledge' | 'trap' | 'encounter' | 'office' | 'recharge';
 
+export type DistrictId = 'munkahely' | 'bankutca' | 'piacter' | 'tozsde' | 'hivatal' | 'kozossegi-ter';
+
 export interface BoardField {
   index: number;
   type: FieldType;
-  district: 'munkahely' | 'bankutca' | 'piacter' | 'tozsde' | 'hivatal' | 'kozossegi-ter';
+  district: DistrictId;
 }
 
 // Tematikus negyedek: a negyed neve magyarázza a benne lévő mezőket (4 mező / negyed).

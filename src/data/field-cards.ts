@@ -219,6 +219,9 @@ export const OFFICE_CARDS: FieldCard[] = [
 ];
 
 /** Piaci hír mező: a heti élő adatcsomag egy híre (saját megfogalmazás + forrás) */
+/** Minden saját mezőkártya (a piaci hír a heti csomagból jön) */
+export const ALL_FIELD_CARDS: FieldCard[] = [...TRAP_CARDS, ...TEMPTATION_CARDS, ...RECHARGE_CARDS, ...ENCOUNTER_CARDS, ...OFFICE_CARDS];
+
 export function marketNewsCard(index: number): FieldCard | undefined {
   const items = LIVE_DATA.hirek.filter((h) => h.jatekEsemeny);
   if (items.length === 0) return undefined;
