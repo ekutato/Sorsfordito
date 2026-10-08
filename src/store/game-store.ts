@@ -30,6 +30,8 @@ import type { PreGameContext } from '@/data-sources/types';
 import { CHARACTER_PRESETS } from '@/data/character-presets';
 import { amortizeDebts, applyInflation } from '@/engine/financial-calculator';
 import { round25, netAfterTurning25 } from '@/data/tax-2026';
+import { revalue } from '@/engine/investment-value';
+import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { LIVE_ECONOMIC_DATA } from '@/data/live';
 import { TIME_SCALE_CONFIGS, DEFAULT_RULES, TEST_MODE_MAX_BALANCE, type GameRules } from '@/types/game';
 import { neutralWellbeing, applyWellbeingDelta, type WellbeingKey } from '@/types/wellbeing';
@@ -143,6 +145,7 @@ function createFinancialSheet(
   const sheet: FinancialSheet = {
     playerId,
     balance: clampStartBalance(presetId, balanceOverride, rules),
+    startBalance: clampStartBalance(presetId, balanceOverride, rules),
     income,
     expenses,
     investments: [],
@@ -531,6 +534,34 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
+        // Befektetések értékváltozása a kör hónapjaiban (valós havi mozgásokból); az e körben vettek még nem
+        const revals = player.financialSheet.investments
+          .filter((inv) => inv.purchasedAtRound < round)
+          .map((inv) => revalue(inv, (round - 1) * monthsInRound, monthsInRound))
+          .filter((r): r is NonNullable<typeof r> => !!r);
+        if (revals.length) {
+          set((st) => st.game ? { game: { ...st.game, players: st.game.players.map((p) => {
+            if (p.playerId !== player.playerId) return p;
+            const investments = p.financialSheet.investments.map((inv) => {
+              const r = revals.find((x) => x.optionId === inv.optionId);
+              return r ? { ...inv, currentValue: r.after, lastChange: r.after - r.before, lastReason: r.reason, lastChangeRound: round } : inv;
+            });
+            const sheet = { ...p.financialSheet, investments };
+            sheet.computed = computeFinancials(sheet);
+            return { ...p, financialSheet: sheet };
+          }) } } : st);
+          for (const r of revals) {
+            const name = INVESTMENT_OPTIONS.find((o) => o.id === r.optionId)?.name ?? r.optionId;
+            state.logEvent({ type: 'investment', description: `Értékváltozás - ${name}: ${(r.after - r.before).toLocaleString('hu-HU')} Ft (${r.reason})`, financialImpact: 0 });
+          }
+        }
+
+        // A befektetések e körben jóváírt hozama tételesen (a játék végi kimutatáshoz)
+        set((st) => st.game ? { game: { ...st.game, players: st.game.players.map((p) => p.playerId !== player.playerId ? p : {
+          ...p, financialSheet: { ...p.financialSheet, investments: p.financialSheet.investments.map((inv) =>
+            inv.purchasedAtRound < round ? { ...inv, totalIncomeGenerated: (inv.totalIncomeGenerated ?? 0) + (inv.monthlyIncome ?? 0) * monthsInRound } : inv) },
+        }) } } : st);
+
         // 25. születésnap: a következő hónaptól a bérből SZJA-t is vonnak (ugyanaz a bruttó, kisebb nettó)
         const preset = CHARACTER_PRESETS[player.lifeSituation as CharacterPresetId];
         if (preset?.nextBirthdayInMonths && currentSalary > 0 && !player.financialSheet.youthTaxEnded
@@ -676,6 +707,11 @@ export const useGameStore = create<GameStore>()(
               netWorth: p.financialSheet.computed.netWorth,
               freeCashflow: p.financialSheet.computed.freeCashflow,
               passiveIncome: p.financialSheet.income.passive,
+              investments: p.financialSheet.investments.map((inv) => ({
+                optionId: inv.optionId, invested: inv.purchasePrice, value: inv.currentValue,
+                change: inv.lastChangeRound === state.game!.currentRound ? inv.lastChange ?? 0 : 0,
+                monthlyIncome: inv.monthlyIncome ?? 0, reason: inv.lastChangeRound === state.game!.currentRound ? inv.lastReason : undefined,
+              })),
             };
             return {
               ...p,

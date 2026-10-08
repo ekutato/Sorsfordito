@@ -15,11 +15,12 @@ import { LIFE_SITUATION_PRESETS } from '@/data/character-presets';
 import type { LifeSituationId } from '@/types/game';
 import type { Investment } from '@/types/financial';
 import type { GameState } from '@/types/game';
-import { BOARD, FIELD_LABELS, FIELD_EXPLAIN, districtOf } from '@/data/board';
+import { BOARD, FIELD_LABELS, FIELD_EXPLAIN, districtOf, type FieldType } from '@/data/board';
 import { cardForField, FIELD_HINTS, type SharedDeck } from '@/data/field-cards';
+import { bonusCardFor, fieldBonus, type FieldBonus } from '@/data/bonus-cards';
 import { rollBoard, resolveFieldCard, emptyBoard, continueBoard, acknowledgeOutcome } from '@/store/board-actions';
 import { BoardFull, BoardStrip, BoardLegend, DiceButton } from '@/ui/board/BoardView';
-import { FieldCardView, FieldOutcomeView } from '@/ui/board/FieldCardView';
+import { FieldCardView, FieldOutcomeView, CardFlip } from '@/ui/board/FieldCardView';
 import { VersionTag } from '@/ui/components/AppVersion';
 import { gameRules } from '@/store/settings-store';
 import { fillDeep } from '@/data/live/vars';
@@ -28,6 +29,7 @@ import { DieFace, LandingDie } from '@/ui/board/Die';
 import type { GameRules, DiceRollSource, SoloBoardState } from '@/types/game';
 import { SettingsPanel, SoundQuickToggle } from '@/ui/components/SettingsPanel';
 import { ScrollTarget } from '@/ui/components/ScrollTarget';
+import { BalanceHighlight } from '@/ui/components/MoneyOverview';
 import { monthlyInvestmentIncome, investmentTarget } from '@/engine/investment-income';
 import { LiveDataPanel, weekLabel } from '@/ui/components/LiveDataPanel';
 import { TableBar } from '@/ui/table/TableBar';
@@ -35,8 +37,6 @@ import { useTableStore } from '@/store/table-store';
 import { displayColor } from '@/engine/table/state';
 import { createRng, seedFromString, shuffle } from '@/engine/rng';
 
-const MARKET_INVEST_OFFERS = 3;
-const MARKET_KNOWLEDGE_OFFERS = 3;
 
 export function GameScreen() {
   const game = useGameStore((s) => s.game);
@@ -87,8 +87,11 @@ export function GameScreen() {
         {game.currentRound === 1 && game.phase === 'round_income' && boardDone && (() => {
           const preset = LIFE_SITUATION_PRESETS[player.lifeSituation as LifeSituationId];
           const loc = preset?.location;
+          const fs = player.financialSheet;
           return (
             <div className="space-y-2">
+              <BalanceHighlight label="Induló egyenleged" after={fs.startBalance ?? fs.balance}
+                note={`Havi bevétel: ${formatHUF(fs.computed.totalIncome)} · havi kiadás: ${formatHUF(fs.computed.totalExpenses)} · szabad pénz: ${formatHUF(fs.computed.freeCashflow)}/hó`} />
               {/* Lokáció banner */}
               {loc && (
                 <div className="bg-slate-800/60 border border-slate-600/30 rounded-xl px-4 py-3">
@@ -484,8 +487,10 @@ function InvestPhase() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [justBought, setJustBought] = useState<string | null>(null);
   // Körönkénti limit: 1 befektetés + 2 tudáskártya (a játéknaplóból számolva, így elnavigálással sem kijátszható)
-  const MAX_KNOWLEDGE_PER_ROUND = 2;
-  const MAX_INVEST_PER_ROUND = 1;
+  // A mező bónuszt ad: Tudás mezőn +1 tudás, Befektetés mezőn +1 befektetés és bővebb piac
+  const bonus = game ? roundBonus(game) : fieldBonus(undefined);
+  const MAX_KNOWLEDGE_PER_ROUND = bonus.knowledgeLimit;
+  const MAX_INVEST_PER_ROUND = bonus.investLimit;
 
   // MiFID kvíz állapot
   const [quizState, setQuizState] = useState<{
@@ -514,8 +519,8 @@ function InvestPhase() {
   const deckInvest = INVESTMENT_OPTIONS.filter((inv) => !ownedInvestmentIds.includes(inv.id) && inv.tier === 'free');
   const deckKnowledge = KNOWLEDGE_CARDS.filter((k) => !ownedKnowledgeIds.includes(k.id) && k.tier === 'free');
   const drawRng = createRng(seedFromString(`${game.gameId}-r${game.currentRound}`));
-  const availableInvestments = shuffle(deckInvest, drawRng).slice(0, MARKET_INVEST_OFFERS);
-  const availableKnowledge = shuffle(deckKnowledge, drawRng).slice(0, MARKET_KNOWLEDGE_OFFERS);
+  const availableInvestments = shuffle(deckInvest, drawRng).slice(0, bonus.investOffers);
+  const availableKnowledge = shuffle(deckKnowledge, drawRng).slice(0, bonus.knowledgeOffers);
 
   const handleBuyInvestment = (optionId: string) => {
     const option = INVESTMENT_OPTIONS.find((o) => o.id === optionId);
@@ -671,7 +676,7 @@ function InvestPhase() {
       </div>
 
       <p className="text-xs text-[var(--color-text-muted)] mb-3">
-        Ebben a körben ezeket a lapokat húztad. A paklikban még {Math.max(0, deckInvest.length - availableInvestments.length)} befektetés és {Math.max(0, deckKnowledge.length - availableKnowledge.length)} tudáskártya vár. Körönként 1 befektetést és 2 tudást szerezhetsz.
+        Ebben a körben ezeket a lapokat húztad. A paklikban még {Math.max(0, deckInvest.length - availableInvestments.length)} befektetés és {Math.max(0, deckKnowledge.length - availableKnowledge.length)} tudáskártya vár. Ebben a körben {MAX_INVEST_PER_ROUND} befektetést és {MAX_KNOWLEDGE_PER_ROUND} tudást szerezhetsz{bonus.investLimit > 1 ? ' (Befektetés mező bónusz)' : bonus.knowledgeLimit > 2 ? ' (Tudás mező bónusz)' : ''}.
       </p>
 
       {/* Investment options list */}
@@ -1062,12 +1067,24 @@ function sharedDeckOf(game: GameState): SharedDeck | undefined {
   return { seed: t.deckSeed, slot: t.slot, players };
 }
 
+/** A kör lapja a lépett mezőn: mezőkártya, vagy a Tudás/Befektetés mező bónuszlapja */
+function roundCardFor(game: GameState, field: FieldType, visit: number) {
+  const owned = game.players[game.activePlayerIndex]?.financialSheet.acquiredKnowledge ?? [];
+  return cardForField(field, visit, game.gameId, sharedDeckOf(game)) ?? bonusCardFor(field, visit, game.gameId, owned);
+}
+
+/** A kör mezőbónusza (a tudás- és befektetési keretekhez) */
+function roundBonus(game: GameState): FieldBonus {
+  const b = game.board;
+  return fieldBonus(b && b.rolledRound === game.currentRound ? BOARD[b.position].type : undefined);
+}
+
 function isBoardDone(game: GameState): boolean {
   if (game.board?.awaitingContinue || game.board?.awaitingOutcomeAck) return false;
   const b = game.board ?? emptyBoard();
   if (b.rolledRound !== game.currentRound) return false;
   const field = BOARD[b.position].type;
-  const card = cardForField(field, b.visits[field] ?? 0, game.gameId, sharedDeckOf(game));
+  const card = roundCardFor(game, field, b.visits[field] ?? 0);
   return !card || b.resolvedRound === game.currentRound;
 }
 
@@ -1089,7 +1106,7 @@ function BoardLayer() {
   const rolledNow = b.rolledRound === game.currentRound;
   const field = BOARD[b.position];
   const visit = b.visits[field.type] ?? 0;
-  const rawCard = rolledNow ? cardForField(field.type, visit, game.gameId, sharedDeckOf(game)) : undefined;
+  const rawCard = rolledNow ? roundCardFor(game, field.type, visit) : undefined;
   const card = rawCard ? fillDeep(rawCard) : undefined;
   const cardOpen = !!card && b.resolvedRound !== game.currentRound;
 
@@ -1109,8 +1126,10 @@ function BoardLayer() {
       <section className="space-y-3">
         {expanded ? <BoardFull others={others} position={b.position} highlight={b.position} pawnLabel={player.name} /> : <BoardStrip position={b.position} onExpand={() => setExpanded(true)} />}
         {b.lastRoll ? <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]"><DieFace value={b.lastRoll} size={28} /> Dobtál: <b>{b.lastRoll}</b> · {FIELD_LABELS[field.type]}, {districtOf(field.index).label}</p> : null}
-        <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
-          onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
+        <CardFlip key={`flip-${game.currentRound}-${card.id}`} field={card.field} district={districtOf(field.index).label}>
+          <FieldCardView card={card} hasKnowledge={hasKnowledge} balance={player.financialSheet.balance} trapSeconds={rules.trapTimerSeconds}
+            onChoose={(o) => { if (resolveFieldCard(field.type, o, card)) setExpanded(false); }} />
+        </CardFlip>
       </section>
     );
   }

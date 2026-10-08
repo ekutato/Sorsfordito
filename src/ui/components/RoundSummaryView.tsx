@@ -6,6 +6,7 @@ import { useTableStore } from '@/store/table-store';
 import { isCatchingUp } from '@/engine/table/state';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { formatHUF, getAmountColor } from '@/engine/financial-calculator';
+import { BalanceHighlight, InvestmentTable } from './MoneyOverview';
 
 export function RoundSummaryView() {
   const game = useGameStore((s) => s.game);
@@ -70,6 +71,15 @@ export function RoundSummaryView() {
           Összesített hatás
         </span>
       </div>
+
+      {/* Kiemelt egyenleg: előző kör vége → most, és a befektetések tételesen */}
+      <BalanceHighlight
+        label={tsConfig.monthsPerRound > 1 ? `Egyenleg a(z) ${game.currentRound}. kör (${tsConfig.monthsPerRound} hónap) végén` : 'Egyenleg a hónap végén'}
+        before={sheet.history.length ? sheet.history[sheet.history.length - 1].balance : sheet.startBalance}
+        after={sheet.balance}
+        note={sheet.investments.length ? `Befektetésekben: ${formatHUF(sheet.computed.investmentValue)} · Teljes vagyon: ${formatHUF(sheet.computed.netWorth)}` : undefined}
+      />
+      <InvestmentTable sheet={sheet} round={game.currentRound} monthsInRound={tsConfig.monthsPerRound} />
 
       {/* Esemenyek lista */}
       <div className="game-card">

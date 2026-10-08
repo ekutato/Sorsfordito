@@ -5,7 +5,7 @@ import { play } from '@/audio/sfx';
 import { motion } from 'framer-motion';
 
 import { canAfford, optionCost, type FieldCard, type FieldOption } from '@/data/field-cards';
-import { FIELD_LABELS } from '@/data/board';
+import { FIELD_LABELS, type FieldType } from '@/data/board';
 import { formatEffectAmount, formatHUF } from '@/engine/financial-calculator';
 import { FIELD_STYLE } from './fieldStyle';
 import { WellbeingReflection } from '@/ui/components/WellbeingReflection';
@@ -114,9 +114,9 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
                 className="w-full text-left rounded-xl border px-4 py-3.5 text-base leading-snug disabled:cursor-not-allowed"
                 style={{ borderColor: '#D9CCB0', background: ok ? '#FFFFFF' : '#EFE9DC', color: ok ? undefined : '#8A8170' }}>
                 <span className="block font-medium">{o.label}</span>
-                {(o.effects.length > 0 || o.reflection) && card.field !== 'trap' && (
+                {(o.effects.some((e) => !e.target.startsWith('knowledge:')) || o.reflection) && card.field !== 'trap' && (
                   <span className="flex flex-wrap gap-1.5 mt-2">
-                    {o.effects.map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} />)}
+                    {o.effects.filter((e) => !e.target.startsWith('knowledge:')).map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} />)}
                     {o.reflection && (
                       <span className="text-sm font-semibold px-2 py-0.5 rounded-md" style={{ background: '#E6F0FA', color: '#1D4F7A' }}>
                         Jóllét: te mérlegeled
@@ -181,9 +181,9 @@ export function FieldOutcomeView({ result, outcome, onContinue }: OutcomeProps) 
           <p className="text-base font-bold mt-1">A döntésed: {result.choice}</p>
         </div>
         <p className="text-lg leading-relaxed font-medium">{outcome}</p>
-        {result.effects.length > 0 && (
+        {result.effects.some((e) => !e.target.startsWith('knowledge:')) && (
           <div className="flex flex-wrap gap-2">
-            {result.effects.map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} big />)}
+            {result.effects.filter((e) => !e.target.startsWith('knowledge:')).map((e, i) => <EffectChip key={i} target={e.target} amount={e.amount} big />)}
           </div>
         )}
         <p className="text-sm leading-relaxed border-t border-dashed pt-3" style={{ borderColor: '#CDBB93', color: '#4A3F2C' }}>
@@ -201,5 +201,34 @@ export function FieldOutcomeView({ result, outcome, onContinue }: OutcomeProps) 
         )}
       </div>
     </article>
+  );
+}
+
+/**
+ * Kártyafelfordítás: előbb a hátlap jön fel nagyban (mező színe és jele), koppintásra vagy kis idő után
+ * megfordul, és csak ekkor jelenik meg az előlap (a csapdaóra is ekkor indul).
+ */
+export function CardFlip({ field, district, children }: { field: FieldType; district: string; children: React.ReactNode }) {
+  const st = FIELD_STYLE[field] ?? FIELD_STYLE.office;
+  const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const [flipped, setFlipped] = useState(!!reduce);
+  useEffect(() => {
+    if (flipped) return;
+    play('card');
+    const t = setTimeout(() => setFlipped(true), 1300);
+    return () => clearTimeout(t);
+  }, [flipped]);
+  if (flipped) return <>{children}</>;
+  return (
+    <motion.button type="button" onClick={() => setFlipped(true)} aria-label={`${FIELD_LABELS[field]} kártya - koppints a felfordításhoz`}
+      className="w-full aspect-[3/4] max-h-[60vh] rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl"
+      style={{ background: `repeating-linear-gradient(45deg, ${st.color} 0 18px, rgba(255,255,255,.12) 18px 36px)`, color: st.ink, transformPerspective: 900 }}
+      initial={{ scale: 0.55, y: 40, opacity: 0, rotateY: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
+      exit={{ rotateY: 90 }} transition={{ type: 'spring', stiffness: 160, damping: 18 }}>
+      <span className="w-28 h-28 rounded-full flex items-center justify-center text-6xl font-black" style={{ background: 'rgba(255,255,255,.9)', color: '#0E1525' }}>{st.glyph}</span>
+      <span className="text-2xl font-extrabold uppercase tracking-wide drop-shadow">{FIELD_LABELS[field]}</span>
+      <span className="text-base font-semibold opacity-90">{district}</span>
+      <span className="text-sm font-semibold mt-4 px-3 py-1 rounded-full bg-black/30 text-white">Koppints a felfordításhoz</span>
+    </motion.button>
   );
 }

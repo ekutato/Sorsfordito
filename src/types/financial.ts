@@ -48,6 +48,9 @@ export interface FinancialSheet {
   /** Jólléti jelölők (-5..+5); régi mentésekben hiányozhat */
   wellbeing?: Wellbeing;
 
+  /** Induló egyenleg (a játék elején, a kimutatásokhoz) */
+  startBalance?: HUF;
+
   /** Betöltötte a 25. évét a játék alatt: a fiatalok SZJA-kedvezménye megszűnt (egyszer fut le) */
   youthTaxEnded?: boolean;
 
@@ -133,6 +136,9 @@ export interface FinancialSnapshot {
 
   /** Passziv jovedelem ebben a korben */
   passiveIncome: HUF;
+
+  /** Befektetések tételesen a kör végén (régi mentésekben hiányozhat) */
+  investments?: Array<{ optionId: string; invested: HUF; value: HUF; change: HUF; monthlyIncome: HUF; reason?: string }>;
 }
 
 // --- Befektetesek ---
@@ -224,6 +230,11 @@ export interface Investment {
   monthlyIncome?: HUF;
   /** Hová hat: passzív jövedelem, fizetés vagy rezsi (csökkentés) */
   incomeTarget?: 'passive' | 'salary' | 'utilities';
+
+  /** Az utolsó értékváltozás (Ft), oka és köre - a havi kimutatáshoz */
+  lastChange?: HUF;
+  lastReason?: string;
+  lastChangeRound?: number;
 }
 
 // --- Adossagok ---

@@ -6,6 +6,8 @@ import { canAfford, type FieldCard, type FieldOption } from '@/data/field-cards'
 import { isWellbeingTarget, wellbeingKeyOf } from '@/types/wellbeing';
 import { TIME_SCALE_CONFIGS, type SoloBoardState, type DiceRollSource } from '@/types/game';
 import type { FieldType } from '@/data/board';
+import { KNOWLEDGE_TARGET } from '@/data/bonus-cards';
+import { KNOWLEDGE_CARDS } from '@/data/knowledge-cards';
 import type { Expenses } from '@/types/financial';
 
 const EXPENSE_KEYS = ['housing', 'utilities', 'food', 'transport', 'loanPayments', 'other'] as const;
@@ -50,6 +52,11 @@ function applyEffect(target: string, amount: number, description: string) {
   else if (target === 'salary') s.modifyIncome(pid, 'salary', amount);
   else if ((EXPENSE_KEYS as readonly string[]).includes(target)) s.modifyExpenses(pid, target as keyof Expenses, amount);
   else if (isWellbeingTarget(target)) s.modifyWellbeing(pid, wellbeingKeyOf(target), amount);
+  else if (target.startsWith(KNOWLEDGE_TARGET)) {
+    const id = target.slice(KNOWLEDGE_TARGET.length);
+    s.addKnowledge(pid, id);
+    s.logEvent({ type: 'investment', description: `Tudásbónusz (Tudás mező): ${KNOWLEDGE_CARDS.find((k) => k.id === id)?.name ?? id}`, financialImpact: 0 });
+  }
 }
 
 const SOURCE_LABEL: Record<DiceRollSource, string> = { app: '', physical: ' (saját kocka)', test: ' (teszt: kézi érték)' };

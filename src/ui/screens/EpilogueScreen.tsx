@@ -1,5 +1,6 @@
 'use client';
 
+import { EndMoneyComparison } from '@/ui/components/MoneyOverview';
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
@@ -259,6 +260,12 @@ export function EpilogueScreen() {
           </p>
         </div>
       </motion.div>
+
+      {/* Pénz: befektetések nélkül és befektetésekkel, egymás mellett */}
+      <div className="game-card">
+        <h3 className="font-display text-lg font-semibold mb-3">💼 Mit hoztak a befektetéseid?</h3>
+        <EndMoneyComparison sheet={sheet} />
+      </div>
 
       {/* Penzugyi osszesites */}
       <motion.div
