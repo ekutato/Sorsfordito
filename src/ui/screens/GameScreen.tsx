@@ -542,7 +542,12 @@ function InvestPhase() {
   // A piac és a Tudás fül összekötése: a zárt befektetéshez vezető tudás a másik fülön kiemelve
   const links = knowledgeLinks(offers, ownedKnowledgeIds);
   const knowledgeLimitLeft = knowledgeBoughtThisRound < MAX_KNOWLEDGE_PER_ROUND;
-  const linkedKnowledgeCount = knowledgeLimitLeft ? Object.keys(links.unlocks).length : 0;
+  // Csak az számít most elérhetőnek, amire van keret és fedezet
+  const canLearn = (id: string) => {
+    const k = availableKnowledge.find((x) => x.id === id);
+    return !!k && knowledgeLimitLeft && (k.price === 0 || balance >= k.price);
+  };
+  const linkedKnowledgeCount = Object.keys(links.unlocks).filter(canLearn).length;
   // Ha a Tudás fülön épp megnyílt egy befektetés, a Heti piac gomb jelez
   const investLimitLeft = investBoughtThisRound < MAX_INVEST_PER_ROUND;
   const openedNow = investLimitLeft ? availableInvestments.filter((inv) => inv.requiredKnowledge && unlockedHere.includes(inv.requiredKnowledge) && ownedKnowledgeIds.includes(inv.requiredKnowledge)) : [];
@@ -733,7 +738,8 @@ function InvestPhase() {
               const isSelected = selectedId === inv.id;
               const buyable = canAfford && !needsKnowledge && investBoughtThisRound < MAX_INVEST_PER_ROUND && !isSelected;
               // A tudáshoz vezető sáv ne halványuljon el (az a teendő)
-              const liveLock = !!needsKnowledge && !!links.locks[inv.id]?.offered && knowledgeLimitLeft;
+              const lockStep = links.locks[inv.id] ? (links.locks[inv.id].stepId ?? links.locks[inv.id].needId) : '';
+              const liveLock = !!needsKnowledge && !!links.locks[inv.id]?.offered && canLearn(lockStep);
 
               return (
                 <div key={inv.id} id={`inv-${inv.id}`}>
@@ -760,7 +766,8 @@ function InvestPhase() {
                       const lock = links.locks[inv.id];
                       if (!lock) return null;
                       const target = lock.stepId ?? lock.needId;
-                      const live = lock.offered && knowledgeLimitLeft;
+                      const live = liveLock;
+                      const stepCard = availableKnowledge.find((x) => x.id === target);
                       return (
                         <span
                           role="button"
@@ -776,9 +783,11 @@ function InvestPhase() {
                           <span className="block">
                             {!lock.offered
                               ? 'Ebben a körben nincs a Tudás fülön, egy későbbi körben jöhet.'
-                              : knowledgeLimitLeft
-                              ? 'Most megszerezheted a 📚 Tudás fülön →'
-                              : 'A Tudás fülön van, de ebben a körben már nem tanulhatsz többet.'}
+                              : !knowledgeLimitLeft
+                              ? 'A Tudás fülön van, de ebben a körben már nem tanulhatsz többet.'
+                              : !live && stepCard
+                              ? `A Tudás fülön van (${formatHUF(stepCard.price)}), de most nincs rá fedezeted →`
+                              : 'Most megszerezheted a 📚 Tudás fülön →'}
                           </span>
                         </span>
                       );
