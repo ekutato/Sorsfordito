@@ -93,6 +93,11 @@ export function FieldCardView({ card, hasKnowledge, balance, trapSeconds = TRAP_
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: '#E8DDC6' }}>
                   <div className="h-full transition-all duration-1000 ease-linear" style={{ width: `${(left / trapSeconds) * 100}%`, background: left <= 5 ? '#C93C30' : '#F2A33A' }} />
                 </div>
+                {knowledgeName && (
+                  <p className="text-sm" style={{ color: '#5C5240' }}>
+                    {/^[aáeéiíoóöőuúüű]/i.test(knowledgeName) ? 'Az' : 'A'} „{knowledgeName}” tudással ezt a csapdát azonnal felismernéd, és nem tudna sürgetni.
+                  </p>
+                )}
               </>
             )}
             <button onClick={() => setChecked(true)} className="pulse-cta w-full h-12 rounded-xl text-base font-bold" style={{ background: '#1A1A1A', color: '#F2A33A' }}>

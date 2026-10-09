@@ -23,6 +23,7 @@ export const SITUATION_REQUIRES: Record<string, Requires> = {
   'fate-know-02': { presets: ['career_start'] }, // weboldal-javítás (fejlesztő)
   'gen-invest-review': { hasPortfolio: true },
   'hiv-atalanyado': { hasBusiness: true },
+  'hiv-tbsz-lekotes': { hasInvestment: ['inv-tbsz-etf'] },
 
   // --- Autó ---
   'fate-gen-02': CAR, 'fate-gen-18': CAR, 'fate-gen-13': CAR, 'fate-gen-27': CAR, 'fate-know-12': CAR,

@@ -60,13 +60,13 @@ export const EXTRA_TRAP_CARDS: FieldCard[] = [
     id: 'trap-penzvisszaszerzes',
     field: 'trap',
     title: '„Visszaszerezzük az elveszett pénzed”',
-    body: 'Tegyük fel, hogy tavaly egy kriptós „befektetési platformon” elveszett 80 000 Ft-od. Most hív valaki az MNB-n belüli Pénzügyi Békéltető Testület nevében: a kárpótlás elindult, de előbb 30 000 Ft „adót” kell utalnod a visszafizetéshez.',
+    body: 'Hív valaki az MNB-n belüli Pénzügyi Békéltető Testület nevében: szerinte egy kriptós „befektetési platformon” elveszett 80 000 Ft-od, a kárpótlás elindult, de előbb 30 000 Ft „adót” kell utalnod a visszafizetéshez.',
     redFlags: [
       'Sem az MNB-nek, sem az adóhatóságnak nincs jogköre a kicsalt pénz visszaszerzésére.',
       'Előre kér pénzt („adó”, „díj”) a visszafizetéshez.',
-      'Pont a korábbi károdról tud - a csalók gyakran a saját korábbi áldozataikat hívják újra.',
+      'Olyan kárról beszél, amely veled meg sem történt - vagy ha igen, pont arról tud: a csalók találomra hívnak, illetve a korábbi áldozataikat hívják újra.',
     ],
-    highlightWithKnowledge: 'know-crypto',
+    highlightWithKnowledge: 'know-digital',
     options: [
       { label: 'Leteszem, és az MNB hivatalos ügyfélszolgálatán rákérdezek', effects: [{ target: 'wellbeing.egyensuly', amount: 1 }],
         outcome: 'Megerősítik: ilyen kárpótlás nincs, a hívás csalás. Kivédted, és feljelentést teszel.' },
@@ -654,7 +654,7 @@ export const EXTRA_OFFICE_CARDS: FieldCard[] = [
     id: 'hiv-tbsz-lekotes',
     field: 'office',
     title: 'Hivatal: ne törd meg a TBSZ-t',
-    body: 'Tegyük fel, hogy tavaly nyitottál tartós befektetési számlát (TBSZ), most pedig kellene egy kis pénz. Ha a lekötést a harmadik év vége előtt megszakítod, a hozam után 13% szochót is fizetned kell; az ötéves lekötés végén 0%-ot.',
+    body: 'Van tartós befektetési számlád (TBSZ), most pedig kellene egy kis pénz. Ha a lekötést a harmadik év vége előtt megszakítod, a hozam után 13% szochót is fizetned kell; az ötéves lekötés végén 0%-ot.',
     options: [
       { label: 'A vésztartalékomból oldom meg, a TBSZ-hez nem nyúlok', effects: [],
         outcome: 'A befektetésed tovább dolgozik, az öt év végén a hozam szochómentes.' },
