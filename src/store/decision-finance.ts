@@ -146,12 +146,19 @@ export function decisionCost(option: DecisionOption): number {
   return Math.max(0, invested - balance - disbursed);
 }
 
-/** Választható-e: fedezet kell; ha egyik sem fizethető ki, a legolcsóbb választható (nincs zsákutca) */
+/** Választható-e: fedezet kell. Ha egyik sem fizethető ki, a döntés kihagyható (nem lehet mínuszba vinni) */
 export function affordableOptions(options: DecisionOption[], balance: number): Set<string> {
-  const ok = options.filter((o) => decisionCost(o) <= Math.max(0, balance));
-  if (ok.length) return new Set(ok.map((o) => o.id));
-  const cheapest = [...options].sort((a, b) => decisionCost(a) - decisionCost(b))[0];
-  return new Set(cheapest ? [cheapest.id] : []);
+  return new Set(options.filter((o) => decisionCost(o) <= Math.max(0, balance)).map((o) => o.id));
+}
+
+/** Fedezet híján kihagyott döntés (a naplóban jelölve, többé nem jön elő) */
+export function skipDecision(decision: Pick<DecisionCard, 'id' | 'title'>): void {
+  useGameStore.getState().logEvent({
+    type: 'decision',
+    description: `${decision.title}: kihagyva (nem volt rá fedezet)`,
+    financialImpact: 0,
+    details: { decisionCardId: decision.id },
+  });
 }
 
 /** A döntés pénzügyi szerkezete röviden (előnézethez): befektetés, hitel, előtörlesztés, vagyontárgy */

@@ -15,7 +15,7 @@ import { BOARD } from '@/data/board';
 import { GlossaryText } from '@/ui/components/GlossaryTerm';
 import type { DecisionOption, LifeSituationId, TimeScale } from '@/types/game';
 import { liveCurrentData, LIVE_DATA } from '@/data/live';
-import { applyDecisionOption, affordableOptions, decisionCost, financeNotes } from '@/store/decision-finance';
+import { applyDecisionOption, affordableOptions, decisionCost, financeNotes, skipDecision } from '@/store/decision-finance';
 import { EffectAmount } from '@/ui/components/Money';
 
 const LIVE = liveCurrentData();
@@ -245,6 +245,12 @@ export function DecisionView() {
               </motion.button>
               );
             })}
+            {affordable.size === 0 && (
+              <button onClick={() => { skipDecision(decision); setPhase('round_invest'); }}
+                className="pulse-cta w-full rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-sm font-semibold">
+                Most egyik sem fér bele - kihagyom ezt a döntést
+              </button>
+            )}
           </div>
         )}
       </div>

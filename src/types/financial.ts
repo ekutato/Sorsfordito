@@ -250,7 +250,8 @@ export type DebtType =
   | 'family_loan'      // Csaladi kolcson
   | 'business_loan'    // Vallalkozasi hitel
   | 'car_loan'         // Autohitel
-  | 'baby_loan';       // Babavaro
+  | 'baby_loan'        // Babavaro
+  | 'overdue';         // Késedelmes tartozás (ki nem fizetett számlák)
 
 export interface Debt {
   id: string;

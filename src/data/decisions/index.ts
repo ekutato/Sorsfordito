@@ -46,8 +46,9 @@ function mapRoundsToScale(
   sprintRounds: number[],
   targetTotalRounds: number
 ): number[] {
+  // Az 1. kör döntése (pl. pályaválasztás, lakhatás) minden módban az 1. körben marad: előbb dől el, merre indulsz
   const mapped = sprintRounds.map((r) =>
-    Math.max(1, Math.min(targetTotalRounds, Math.round((r / SPRINT_TOTAL_ROUNDS) * targetTotalRounds)))
+    r === 1 ? 1 : Math.max(1, Math.min(targetTotalRounds, Math.round((r / SPRINT_TOTAL_ROUNDS) * targetTotalRounds)))
   );
   // Deduplikáció + rendezés
   const unique = [...new Set(mapped)].sort((a, b) => a - b);
@@ -505,8 +506,11 @@ function fillGapsWithGenericDecisions(
 
   // A generikus döntések bármelyik üres körben jöhetnek: az első, amelyik a játékos helyzetéhez illik
   // (pl. hitelkezelés csak hitellel, befektetési áttekintés csak befektetéssel), és mindegyik egyszer
-  const generics: DecisionCard[] = emptyRounds.length
-    ? GENERIC_LATE_GAME_DECISIONS.map((gen) => ({ ...gen, availableAtRounds: emptyRounds }))
+  // A karakter első döntése előtt nem jön generikus döntés (előbb dől el, merre indul)
+  const firstOwn = Math.min(...mappedSprintDecisions.flatMap((d) => d.availableAtRounds), targetTotal);
+  const genericRounds = emptyRounds.filter((r) => r > firstOwn);
+  const generics: DecisionCard[] = genericRounds.length
+    ? GENERIC_LATE_GAME_DECISIONS.map((gen) => ({ ...gen, availableAtRounds: genericRounds }))
     : [];
 
   return [...mappedSprintDecisions, ...generics];

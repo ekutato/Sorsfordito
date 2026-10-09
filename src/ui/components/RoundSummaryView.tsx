@@ -8,6 +8,7 @@ import { TIME_SCALE_CONFIGS } from '@/types/game';
 import { formatHUF } from '@/engine/financial-calculator';
 import { MoneyDelta } from '@/ui/components/Money';
 import { BalanceHighlight, InvestmentTable } from './MoneyOverview';
+import { CrisisPanel } from './CrisisPanel';
 
 export function RoundSummaryView() {
   const game = useGameStore((s) => s.game);
@@ -120,13 +121,7 @@ export function RoundSummaryView() {
       </div>
 
       {/* Figyelmeztetesek */}
-      {sheet.balance < 0 && (
-        <div className="game-card card-type-fate">
-          <p className="text-sm text-card-fate font-semibold">
-            ⚠️ Negatív egyenleg! A következő körben válságkezelés vár.
-          </p>
-        </div>
-      )}
+      <CrisisPanel />
 
       {sheet.computed.emergencyFundMonths < 1 && sheet.balance > 0 && (
         <div className="game-card border-card-knowledge/30 border">
@@ -138,7 +133,7 @@ export function RoundSummaryView() {
       )}
 
       {/* Asztali játék: közös körzárás */}
-      {inTable && !iAmDone && (
+      {inTable && !iAmDone && sheet.balance >= 0 && (
         <button onClick={markDone} className="pulse-cta w-full font-bold py-3.5 rounded-xl text-[#0E1525]" style={{ background: '#F2A33A' }}>
           ✓ Kész vagyok a fordulóval
         </button>
@@ -151,7 +146,7 @@ export function RoundSummaryView() {
       )}
 
       {/* Tovabb gomb */}
-      {(!inTable || (iAmDone && tableMovedOn)) && <button
+      {sheet.balance >= 0 && (!inTable || (iAmDone && tableMovedOn)) && <button
         onClick={handleNext}
         className={`pulse-cta w-full font-bold py-3.5 rounded-xl transition-colors ${
           isLastRound
