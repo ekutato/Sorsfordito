@@ -1,5 +1,6 @@
 'use client';
 
+import { ProjectionRow } from '@/ui/components/Projection';
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
@@ -855,6 +856,7 @@ function InvestPhase() {
                       <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-2">
                         <p className="text-blue-300">💡 <GlossaryText text={selectedInvestment.realWorldInfo} /></p>
                       </div>
+                      <ProjectionRow optionId={selectedInvestment.id} value={selectedInvestment.entryPrice} monthlyIncome={monthlyInvestmentIncome(selectedInvestment)} />
                       <button
                         onClick={() => handleBuyInvestment(selectedInvestment.id)}
                         disabled={!canAfford || !!needsKnowledge || investBoughtThisRound >= MAX_INVEST_PER_ROUND}

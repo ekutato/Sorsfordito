@@ -1,6 +1,7 @@
 'use client';
 
 // Átlátható pénzmozgás: kiemelt egyenleg (előző → most) és a befektetések tételes táblája.
+import { ProjectionRow } from './Projection';
 import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { formatHUF } from '@/engine/financial-calculator';
 import { signedHUF } from '@/engine/money-sign';
@@ -65,6 +66,7 @@ export function InvestmentTable({ sheet, round, monthsInRound, title = 'Befektet
                   {' '}<b className="text-money-positive">+{formatHUF(income)}</b>{monthsInRound > 1 ? ` (${monthsInRound} hónap)` : ' / hó'}
                 </p>
               )}
+              {!r.optionId.startsWith('asset:') && <ProjectionRow optionId={r.optionId} value={r.currentValue} monthlyIncome={r.monthlyIncome} />}
             </li>
           );
         })}

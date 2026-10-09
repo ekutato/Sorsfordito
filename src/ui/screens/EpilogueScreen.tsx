@@ -1,5 +1,7 @@
 'use client';
 
+import { ProjectionRow } from '@/ui/components/Projection';
+import { INVESTMENT_OPTIONS } from '@/data/investment-options';
 import { shareImage } from '@/ui/share';
 import { EndMoneyComparison } from '@/ui/components/MoneyOverview';
 import { useState, useCallback } from 'react';
@@ -248,6 +250,18 @@ export function EpilogueScreen() {
       <div className="game-card">
         <h3 className="font-display text-lg font-semibold mb-3">💼 Mit hoztak a befektetéseid?</h3>
         <EndMoneyComparison game={game} />
+        {sheet.investments.some((i) => !i.optionId.startsWith('asset:')) && (
+          <div className="game-card mt-3">
+            <h4 className="text-sm font-semibold">🔭 Ha megtartod a befektetéseidet</h4>
+            <p className="text-xs text-[var(--color-text-muted)] mb-2">A játék {game.config.timeScale === 'sprint' ? 'egy éve' : 'ideje'} rövid ahhoz, hogy a befektetés igazán megmutassa magát. Így nőhet tovább:</p>
+            {sheet.investments.filter((i) => !i.optionId.startsWith('asset:')).map((i) => (
+              <div key={i.optionId} className="mb-2">
+                <b className="text-sm">{INVESTMENT_OPTIONS.find((o) => o.id === i.optionId)?.name ?? i.optionId}</b>
+                <ProjectionRow optionId={i.optionId} value={i.currentValue} monthlyIncome={i.monthlyIncome} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Penzugyi osszesites */}
