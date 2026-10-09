@@ -383,7 +383,7 @@ export const INVESTMENT_OPTIONS_RAW: InvestmentOption[] = [
 
   {
     id: 'inv-professional-cert',
-    name: 'Szakmai képzés / OKJ',
+    name: 'Szakmai képzés (tanfolyam, vizsga)',
     category: 'education',
     description:
       'Szakmai továbbképzés, ami tartósan megemeli a fizetésedet. ' +

@@ -17,7 +17,7 @@ export function ProjectionRow({ optionId, value, monthlyIncome }: { optionId: st
           <div key={pt.years}>
             <div className="text-[11px] text-[var(--color-text-muted)]">{pt.years} év múlva</div>
             <div className="font-mono text-xs font-semibold">{p.kind === 'market' ? '~' : ''}{short(pt.mid)}</div>
-            {p.kind === 'market' && <div className="font-mono text-[11px] text-[var(--color-text-muted)]">{short(pt.low)}-{short(pt.high)}</div>}
+            {p.kind === 'market' && pt.high > pt.low && <div className="font-mono text-[11px] text-[var(--color-text-muted)]">{short(pt.low)}-{short(pt.high)}</div>}
             <div className="text-[11px] text-[var(--color-text-muted)]">mai pénzben {short(pt.real)}</div>
           </div>
         ))}

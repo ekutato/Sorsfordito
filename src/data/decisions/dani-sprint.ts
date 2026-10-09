@@ -273,7 +273,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     situation:
       'Eltelt {{elapsed}} az első munkanapod óta. A főnököd elégedett, de a fizetésemelés nem jön. ' +
       'Közben egy startup megkeresett: +80 000 Ft/hó, de bizonytalan cég. ' +
-      'A másik opció: esti OKJ-képzés, ami fél év múlva +50 000 Ft/hó béremelést hozna.',
+      'A másik opció: esti szakmai képzés, ami fél év múlva +50 000 Ft/hó béremelést hozna.',
     options: [
       {
         id: 'dani-d05-a',
@@ -299,9 +299,9 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'dani-d05-c',
-        label: 'Képzésbe fektetsz (OKJ / szakmai)',
+        label: 'Képzésbe fektetsz (szakmai tanfolyam)',
         description:
-          'Esti OKJ-képzés: –150 000 Ft (egyszeri). 6 hónap tanulás, utána ' +
+          'Esti szakmai képzés: –150 000 Ft (egyszeri). 6 hónap tanulás, utána ' +
           '+50 000 Ft/hó tartós béremelkedés. Rövid távon fáj, hosszú távon megéri.',
         financialEffects: [
         ],

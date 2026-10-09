@@ -55,7 +55,7 @@ export function projectInvestment(inv: { optionId: string; currentValue: number;
         const mid = Math.round(grow(inv.currentValue, band.mid, y));
         return { years: y, low: Math.round(grow(inv.currentValue, band.low, y)), mid, high: Math.round(grow(inv.currentValue, band.high, y)), real: deflate(mid, y) };
       }),
-      note: `${band.label}: múltbeli éves hozam ${band.low.toLocaleString('hu-HU')}-${band.high.toLocaleString('hu-HU')}% (átlag ${band.mid.toLocaleString('hu-HU')}%; ${band.basis}). A múltbeli hozam nem garancia, rövid távon nagy esés is lehet.`,
+      note: `${band.label}: múltbeli éves hozam ${band.basis}. A szám a hosszú távú átlaggal, a sáv a jobb időszakkal számol. A múltbeli hozam nem garancia, rövid távon nagy esés is lehet.`,
     };
   }
   const monthly = inv.monthlyIncome ?? 0;
