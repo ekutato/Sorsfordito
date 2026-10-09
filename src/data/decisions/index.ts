@@ -854,7 +854,7 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
     round: 0,
     title: 'Vészhelyzeti kiadás!',
     description:
-      'Elromlott a mosógéped, és sürgős fogorvosi kezelésre is szükséged van. ' +
+      'Elromlott a telefonod, és sürgős fogorvosi kezelésre is szükséged van. ' +
       'Összesen 80 000 Ft váratlan kiadás. Felkészültél a vészhelyzetre?',
     type: 'negative' as const,
     effects: [{ target: 'balance', amount: -80_000 }],

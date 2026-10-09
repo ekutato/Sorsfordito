@@ -6,6 +6,7 @@ import { MOVE_OUT_CHOICES, type Requires } from '@/engine/situation';
 
 const CAR: Requires = { ownsCar: true };
 const AT_OWN_HOME: Requires = { livesWithParents: false };
+const OWN_HOME: Requires = { ownsHome: true };
 
 export const SITUATION_REQUIRES: Record<string, Requires> = {
   // --- Hitel ---
@@ -57,7 +58,9 @@ export const SITUATION_REQUIRES: Record<string, Requires> = {
   'gen-education-upgrade': { employed: true },  // a képzés után béremelés
 
   // --- Lakhatás ---
-  'fate-gen-12': AT_OWN_HOME, 'fate-gen-14': AT_OWN_HOME, 'fate-gen-24': AT_OWN_HOME, 'fate-gen-28': AT_OWN_HOME,
+  // Háztartási gép, vízvezeték, villany: a saját lakás gondja. Otthon a szülők, albérletben és kollégiumban
+  // jellemzően a bérbeadó (illetve a kollégium) javíttatja a lakás tartozékait.
+  'fate-gen-12': OWN_HOME, 'fate-gen-14': OWN_HOME, 'fate-gen-24': OWN_HOME, 'fate-gen-28': OWN_HOME,
   'fel-csalad': AT_OWN_HOME,                   // "Régen voltál otthon"
   'hiv-lakcim': { chose: MOVE_OUT_CHOICES },   // "Elköltöztél"
   'tal-lakotars': { sharesFlat: false },
