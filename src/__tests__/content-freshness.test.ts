@@ -23,7 +23,7 @@ describe('élő adatok a szövegekben', () => {
     const missing: string[] = [];
     for (const it of items) for (const t of it.texts) for (const v of varsIn(t)) {
       // a játékos saját adatai (pl. salary, balance) a nézetben töltődnek
-      if (!LIVE_VAR_DEFS[v] && ['salary', 'balance', 'netWorth', 'income', 'housing', 'cashflow', 'transport', 'loanPayments', 'months', 'rent_bp', 'rent_rural'].includes(v)) continue;
+      if (!LIVE_VAR_DEFS[v] && ['salary', 'balance', 'netWorth', 'income', 'housing', 'cashflow', 'transport', 'loanPayments', 'elapsed', 'rent_bp', 'rent_rural'].includes(v)) continue;
       if (!LIVE_VAR_DEFS[v]) { missing.push(`${it.label}: {{${v}}} ismeretlen`); continue; }
       if (liveVar(v) === undefined) missing.push(`${it.label}: {{${v}}} nincs érték`);
     }

@@ -60,7 +60,7 @@ export const EXTRA_TRAP_CARDS: FieldCard[] = [
     id: 'trap-penzvisszaszerzes',
     field: 'trap',
     title: '„Visszaszerezzük az elveszett pénzed”',
-    body: 'Tavaly egy kriptós „befektetési platformon” elveszett 80 000 Ft-od. Most hív valaki az MNB-n belüli Pénzügyi Békéltető Testület nevében: a kárpótlás elindult, de előbb 30 000 Ft „adót” kell utalnod a visszafizetéshez.',
+    body: 'Tegyük fel, hogy tavaly egy kriptós „befektetési platformon” elveszett 80 000 Ft-od. Most hív valaki az MNB-n belüli Pénzügyi Békéltető Testület nevében: a kárpótlás elindult, de előbb 30 000 Ft „adót” kell utalnod a visszafizetéshez.',
     redFlags: [
       'Sem az MNB-nek, sem az adóhatóságnak nincs jogköre a kicsalt pénz visszaszerzésére.',
       'Előre kér pénzt („adó”, „díj”) a visszafizetéshez.',

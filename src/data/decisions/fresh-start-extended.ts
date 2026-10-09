@@ -28,7 +28,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
     category: 'Pályaválasztás',
     title: 'Egyetem befejezése',
     situation:
-      'Már 2+ éve tanulsz és/vagy dolgozol. Az alapképzésed végéhez közeledik, ' +
+      'Az érettségi óta eltelt {{elapsed}}. Az alapképzésed végéhez közeledik, ' +
       'vagy már munkatapasztalatot szereztél. Az egyenleged: {{balance}} Ft. ' +
       'Mi legyen a következő lépés? A döntés hosszú távon meghatározza a karriered.',
     dynamicVariables: {
@@ -55,8 +55,8 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Elég volt a tanulásból! Pályakezdőként keresel munkát: nettó ~280 000 Ft/hó. ' +
           'Végre saját bevétel, de a munkahelyre járás is pénzbe kerül.',
+        setsSalary: { amount: 280_000, description: 'Pályakezdő nettó fizetés' },
         financialEffects: [
-          { target: 'salary', amount: 280_000, description: 'Pályakezdő nettó fizetés' },
           { target: 'transport', amount: 15_000, description: 'Munkába járás költsége' },
         ],
         didYouKnow:
@@ -106,8 +106,8 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Stabil, jól fizető multi (autóipar, pénzügyi szolgáltatás, IT stb.). ' +
           'Nettó ~350 000 Ft/hó + cafeteria. De a bejárás drágább, és dress code is van.',
+        setsSalary: { amount: 350_000, description: 'Multinacionális nettó fizetés' },
         financialEffects: [
-          { target: 'salary', amount: 350_000, description: 'Multinacionális nettó fizetés' },
           { target: 'transport', amount: 20_000, description: 'Bejárás az irodába' },
           { target: 'other', amount: 15_000, description: 'Dress code és megjelenés' },
         ],
@@ -121,8 +121,8 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Kisebb magyar cég: nettó ~280 000 Ft/hó. Kevesebb pénz, de rugalmasabb munkaidő, ' +
           'közvetlenebb főnök, és szélesebb feladatkör – gyorsabban tanulsz.',
+        setsSalary: { amount: 280_000, description: 'KKV nettó fizetés' },
         financialEffects: [
-          { target: 'salary', amount: 280_000, description: 'KKV nettó fizetés' },
           { target: 'transport', amount: 10_000, description: 'Közeli munkahely' },
         ],
         didYouKnow:
@@ -135,9 +135,8 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Egy induló vállalkozáshoz csatlakozol: nettó ~250 000 Ft/hó, de részvényopciót kapsz. ' +
           'Ha beindul a cég: nagy nyereség. Ha nem: tapasztalat és tanulság.',
-        financialEffects: [
-          { target: 'salary', amount: 250_000, description: 'Startup fizetés' },
-        ],
+        setsSalary: { amount: 250_000, description: 'Startup fizetés' },
+        financialEffects: [],
         unlocksInvestment: ['inv-online-biz'],
         didYouKnow:
           'A startupok 90%-a elbukik, de a maradék 10% extrém hozamot ad. ' +
@@ -285,7 +284,7 @@ export const FRESH_START_EXTENDED_DECISIONS: DecisionCard[] = [
     category: 'Karrier',
     title: 'Karrierugrás',
     situation:
-      'Öt év munkatapasztalattal a hátad mögött elérkeztél egy fordulóponthoz. ' +
+      'Az érettségid óta eltelt {{elapsed}}, van már munkatapasztalatod, és elérkeztél egy fordulóponthoz. ' +
       'Az egyenleged: {{balance}} Ft, a nettó vagyonod: {{netWorth}} Ft. ' +
       'Mit lépsz? A döntés meghatározza a következő évtizedet.',
     dynamicVariables: {

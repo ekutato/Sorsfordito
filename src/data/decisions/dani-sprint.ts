@@ -102,7 +102,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Pénzkezelés',
     title: 'Az első szabad pénzed',
     situation:
-      'Két hónap munka után van {{balance}} Ft a számládon. ' +
+      '{{elapsed}} munka után van {{balance}} Ft a számládon. ' +
       'A hónap végén {{cashflow}} Ft marad a kiadások után. ' +
       'A kollegáid hétvégi programokra hívnak, a szüleid azt mondják „spórolj!".',
     dynamicVariables: {
@@ -271,7 +271,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Karrier',
     title: 'Karrierváltás vagy stabilitás?',
     situation:
-      'Fél éve dolgozol. A főnököd elégedett, de a fizetésemelés nem jön. ' +
+      'Eltelt {{elapsed}} az első munkanapod óta. A főnököd elégedett, de a fizetésemelés nem jön. ' +
       'Közben egy startup megkeresett: +80 000 Ft/hó, de bizonytalan cég. ' +
       'A másik opció: esti OKJ-képzés, ami fél év múlva +50 000 Ft/hó béremelést hozna.',
     options: [
@@ -326,7 +326,7 @@ export const DANI_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Stratégia',
     title: 'Év végi mérleg',
     situation:
-      'Egy év telt el. Egyenleged: {{balance}} Ft. Nettó vagyonod: {{netWorth}} Ft. ' +
+      'Eltelt {{elapsed}}. Egyenleged: {{balance}} Ft. Nettó vagyonod: {{netWorth}} Ft. ' +
       'Szabad cashflow-d: {{cashflow}} Ft/hó. Az új év közeleg – mi legyen a terved?',
     dynamicVariables: {
       balance: 'player.balance',

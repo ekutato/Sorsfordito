@@ -116,6 +116,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'inh-d02-c',
+        requires: { ownsHome: true },
         label: 'Refinanszírozol – olcsóbb hitelt veszel fel',
         description:
           'Banki személyi kölcsön 12.5% → kiváltod 8%-os lakáscélúra (ha van fedezet). ' +
@@ -318,7 +319,7 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Stratégia',
     title: 'Év végi mérleg',
     situation:
-      'Egy év telt el az örökség óta. Egyenleged: {{balance}} Ft. ' +
+      'Eltelt {{elapsed}} az örökség óta. Egyenleged: {{balance}} Ft. ' +
       'Nettó vagyonod: {{netWorth}} Ft. Szabad cashflow: {{cashflow}} Ft/hó. ' +
       'Az örökség megfordította az életed – de jó irányba?',
     dynamicVariables: {
@@ -360,8 +361,8 @@ export const INHERITANCE_DECISIONS_SPRINT: DecisionCard[] = [
         description:
           'Az örökség biztonsági hálót adott. Most mersz váltani: ' +
           'új szakma, magasabb fizetés, de 3-6 hónap átmeneti idő fizetés nélkül.',
+        setsSalary: { amount: 0, description: '3 hónap fizetés nélkül (felmondás)' },
         financialEffects: [
-          { target: 'salary', amount: -420_000, description: '3 hónap fizetés nélkül (felmondás)' },
           { target: 'balance', amount: -100_000, description: 'Képzési költség' },
         ],
         ongoingEffects: [
@@ -390,8 +391,8 @@ export const INHERITANCE_SCRIPTED_FATE_EVENTS = [
   },
   {
     id: 'fate-inh-02', round: 2, title: 'Adó-visszatérítés',
-    description: 'A NAV feldolgozta a bevallásod: 65 000 Ft visszajár családi kedvezményként.',
-    type: 'positive' as const, effects: [{ target: 'balance', amount: 65_000 }],
+    description: 'A NAV feldolgozta a bevallásod: az önkéntes nyugdíjpénztári befizetésed után járó 20%-os adójóváírást (legfeljebb évi 150 000 Ft) a pénztárszámládra utalják. Ez nem készpénz: a nyugdíjcélú megtakarításodat növeli.',
+    type: 'positive' as const, effects: [],
   },
   {
     id: 'fate-inh-03', round: 3, title: 'Autó meghibásodás',
@@ -425,8 +426,8 @@ export const INHERITANCE_SCRIPTED_FATE_EVENTS = [
   },
   {
     id: 'fate-inh-07', round: 7, title: 'Állampapír-kamat érkezett',
-    description: 'Megérkezett az állampapírod kamata: +42 000 Ft. A PMÁP évente egyszer fizet kamatot (most {{pmap_yield}}%), és a kamat adómentes!',
-    type: 'positive' as const, effects: [{ target: 'balance', amount: 42_000 }],
+    description: 'Megérkezett az állampapírod kamata. A PMÁP évente egyszer fizet kamatot (most {{pmap_yield}}%), és a kamat adómentes! A játékban a kamat havi bontásban már a passzív jövedelmed része, ezért itt nem kapsz külön összeget.',
+    type: 'positive' as const, effects: [],
   },
   {
     id: 'fate-inh-08', round: 8, title: 'Lakbéremelés',

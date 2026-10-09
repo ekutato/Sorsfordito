@@ -27,7 +27,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
     category: 'Lakhatás',
     title: 'Lakás-előtakarékosság',
     situation:
-      'Már 2+ éve dolgozol, {{balance}} Ft van a számládon. Akár albérletben, akár még otthon laksz, ' +
+      'Az első munkanapod óta eltelt {{elapsed}}, {{balance}} Ft van a számládon. Akár albérletben, akár még otthon laksz, ' +
       'egyre jobban érzed: saját lakás kellene. Lakásvásárlásra gondolsz — de hogyan?',
     dynamicVariables: {
       balance: 'player.balance',
@@ -58,6 +58,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
       },
       {
         id: 'dani-ext-01-c',
+        requires: { chose: ['dani-d01-a', 'dani-d01-c'] },
         label: 'Marad az albérlet, inkább befektetsz',
         description:
           'Nem rohansz lakást venni. Ehelyett 300 000 Ft-ot TBSZ számlára teszel ETF-be. ' +
@@ -165,6 +166,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Otthagyod az alkalmazotti létet és független tanácsadóként dolgozol. ' +
           'Induló költségek: –100 000 Ft, de havi +150 000 Ft bevétel (ha van ügyfél).',
+        setsSalary: { amount: 0, description: 'Az alkalmazotti fizetés megszűnik' },
         financialEffects: [
           { target: 'balance', amount: -100_000, description: 'Freelance startup költségek (eszköz, szoftver, könyvelő)' },
         ],
@@ -196,6 +198,7 @@ export const DANI_EXTENDED_DECISIONS: DecisionCard[] = [
         description:
           'Felmondasz és a saját vállalkozásodra koncentrálsz. Induló befektetés: –500 000 Ft ' +
           '(eszközök, marketing, könyvelő). Várható bevétel: +450 000 Ft/hó, de kockázatos.',
+        setsSalary: { amount: 0, description: 'Az alkalmazotti fizetés megszűnik' },
         financialEffects: [
           { target: 'balance', amount: -500_000, description: 'Vállalkozás indítás (eszközök, marketing, könyvelő)' },
         ],

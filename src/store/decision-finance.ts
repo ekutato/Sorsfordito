@@ -99,6 +99,14 @@ export function applyDecisionOption(decision: Pick<DecisionCard, 'id' | 'title'>
   if (!game) return;
   const pid = game.players[game.activePlayerIndex].playerId;
 
+  if (option.setsSalary) {
+    const current = game.players[game.activePlayerIndex].financialSheet.income.salary;
+    applyTarget(pid, 'salary', option.setsSalary.amount - current, option.setsSalary.description);
+  }
+  if (option.raisesSalaryPct) {
+    const current = useGameStore.getState().game!.players[game.activePlayerIndex].financialSheet.income.salary;
+    applyTarget(pid, 'salary', Math.round((current * option.raisesSalaryPct) / 100 / 1000) * 1000, `Fizetésemelés (+${option.raisesSalaryPct}%)`);
+  }
   for (const e of option.financialEffects) applyTarget(pid, e.target, e.amount, e.description);
 
   // Tartós hatások: azonnal vagy késleltetve indulnak, és ha van időtartamuk, lejárnak
@@ -156,6 +164,8 @@ export function financeNotes(option: DecisionOption): Array<{ text: string; tone
     const l = resolveLoan(option.takesLoan);
     out.push({ text: `Hitel: ${formatHUF(l.principal)}, ${l.ratePct.toLocaleString('hu-HU')}%, törlesztő ${formatHUF(l.monthlyPayment)}/hó`, tone: 'bad' });
   }
+  if (option.raisesSalaryPct) out.push({ text: `Fizetésemelés: +${option.raisesSalaryPct}% a mostani fizetésedből`, tone: 'good' });
+  if (option.setsSalary) out.push({ text: option.setsSalary.amount > 0 ? `Új fizetés: ${formatHUF(option.setsSalary.amount)}/hó (a mostani helyett)` : 'A mostani fizetésed megszűnik', tone: option.setsSalary.amount > 0 ? 'info' : 'bad' });
   if (option.acquiresAsset) out.push({ text: `Vagyontárgy: ${option.acquiresAsset.name}`, tone: 'info' });
   if (option.paysOffLoan) out.push({ text: option.paysOffLoan.amount ? `Előtörlesztés: ${formatHUF(option.paysOffLoan.amount)}` : 'Végtörlesztés: a hitel megszűnik', tone: 'good' });
   if (option.adjustsLoan) out.push({ text: `Hitelkiváltás: törlesztő ${option.adjustsLoan.paymentDelta < 0 ? '\u2212' : '+'}${formatHUF(Math.abs(option.adjustsLoan.paymentDelta))}/hó`, tone: 'good' });

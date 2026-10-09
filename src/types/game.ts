@@ -5,6 +5,7 @@
 
 import type { DebtType, FinancialSheet, HUF, Percentage } from './financial';
 import type { WellbeingTarget } from './wellbeing';
+import type { Requires } from '@/engine/situation';
 
 // --- Jatek allapot ---
 
@@ -286,18 +287,8 @@ export interface DecisionCard {
   characterPresets: CharacterPresetId[];
 
   /** Melyik kor(ok)ben jelenik meg */
-  /** Feltétel: csak albérletben lakónak jelenik meg (otthon lakva a lakhatás csak hozzájárulás) */
-  requires?: {
-    rentsHome?: boolean;
-    /** A szülőknél lakik (nincs albérlet) */
-    livesHome?: boolean;
-    /** Csak akkor, ha korábban ezek egyikét választotta (ág, pl. egyetem) */
-    chose?: string[];
-    /** Csak ha van ilyen típusú tartozása */
-    hasDebtType?: string;
-    /** Munkaviszonya van (engine/employment.ts) */
-    employed?: boolean;
-  };
+  /** Feltétel: a játékos helyzete (engine/situation.ts, közös a kártyákkal) */
+  requires?: Requires;
   availableAtRounds: number[];
 
   /** Elofeltetelek (korabbi dontesek) */
@@ -337,6 +328,12 @@ export interface DecisionOption {
   /** Hitelfelvétel valódi tartozásként (a törlesztő a tartozásból jön, lejáratkor megszűnik) */
   takesLoan?: LoanSpec;
 
+  /** Százalékos fizetésemelés a mostani fizetésből (pl. 20 = +20%) */
+  raisesSalaryPct?: number;
+
+  /** Az eddigi fizetés helyére lép (munkahelyváltás, felmondás: 0) - nem adódik hozzá a régihez */
+  setsSalary?: { amount: HUF; description: string };
+
   /** Hitel előtörlesztése (amount nélkül: teljes végtörlesztés) */
   paysOffLoan?: { type?: DebtType; amount?: HUF };
 
@@ -344,7 +341,7 @@ export interface DecisionOption {
   adjustsLoan?: { type?: DebtType; paymentDelta: HUF; ratePct?: number };
 
   /** Csak akkor választható, ha korábban ezek egyikét választotta (pl. kollégium: tanuló) */
-  requires?: { chose?: string[] };
+  requires?: Requires;
 
   /** Tartós vagyontárgy (lakás, autó, üzletrész): a nettó vagyonban szerepel */
   acquiresAsset?: {

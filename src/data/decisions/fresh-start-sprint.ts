@@ -93,7 +93,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Pénzkezelés',
     title: 'Az első saját pénzed',
     situation:
-      'Két hónap eltelt, az egyenleged: {{balance}} Ft. ' +
+      'Eltelt {{elapsed}}, az egyenleged: {{balance}} Ft. ' +
       'Akár ösztöndíj, akár fizetés – ez a TE pénzed, de a szüleid szólnak: ' +
       '„Segíts a háztartásba!" Közben a haverjaink koncertre hívnak.',
     dynamicVariables: {
@@ -263,8 +263,8 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Életmód',
     title: 'Maradj vagy költözz?',
     situation:
-      'Egy éve érettségiztel. A szüleidnél élsz, de egyre inkább önálló akarsz lenni. ' +
-      'A haverod kollégiumi helyet ajánl, vagy albérletet néznétek ketten. ' +
+      'Az érettségi óta eltelt {{elapsed}}. A szüleidnél élsz, de egyre inkább önálló akarsz lenni. ' +
+      'Van, aki kollégiumba megy, a haverod pedig albérletet nézne veled ketten. ' +
       'Egyenleged: {{balance}} Ft, bevételed: {{income}} Ft/hó.',
     dynamicVariables: {
       balance: 'player.balance',
@@ -324,7 +324,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
     category: 'Közlekedés',
     title: 'Kell a saját autó?',
     situation:
-      'Havonta {{transport}} Ft-ot költesz közlekedésre (BKK bérlet / vonat). ' +
+      'Havonta {{transport}} Ft-ot költesz közlekedésre (bérlet / vonat). A jogosítványt a nyári szünetben megszerezted. ' +
       'Egy ismerős eladná a 10 éves kisautóját 1 200 000 Ft-ért. ' +
       'A szalonban pedig 0 Ft önerővel kínálnak új autót hitelre. ' +
       'Megéri saját kocsit tartani, vagy a tömegközlekedés az okosabb?',
@@ -338,10 +338,10 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         description:
           '10 éves kisautó, 120 000 km. Ára: 1 200 000 Ft készpénzben. ' +
           'Havi fenntartás: KGFB ~8 000 Ft, benzin ~25 000 Ft, szerviz ~12 000 Ft/hó átlag. ' +
-          'Cserébe a BKK bérlet megszűnik.',
+          'Cserébe a bérlet megszűnik.',
         financialEffects: [
           { target: 'balance', amount: -1_200_000, description: 'Használt autó vételára' },
-          { target: 'transport', amount: -15_000, description: 'BKK bérlet megszűnik' },
+          { target: 'transport', amount: -15_000, description: 'A bérlet megszűnik' },
           { target: 'other', amount: 45_000, description: 'Autó fenntartás (KGFB + benzin + szerviz)' },
         ],
         didYouKnow:
@@ -352,6 +352,8 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'fs-d05b-b',
+        // A bank jövedelem nélkül nem ad autóhitelt
+        requires: { employed: true, minSalary: 200_000 },
         label: 'Autóhitelre veszel újat',
         description:
           'Új belépő kategóriás kisautó, 5 500 000 Ft. Önerő: 500 000 Ft, hitel: 5 000 000 Ft, ' +
@@ -359,7 +361,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
           'A banknak CASCO biztosítás kötelező (évi ~120 000 Ft).',
         financialEffects: [
           { target: 'balance', amount: -500_000, description: 'Autóhitel önerő' },
-          { target: 'transport', amount: -15_000, description: 'BKK bérlet megszűnik' },
+          { target: 'transport', amount: -15_000, description: 'A bérlet megszűnik' },
           { target: 'other', amount: 55_000, description: 'Fenntartás (KGFB + CASCO + benzin + szerviz)' },
         ],
         didYouKnow:
@@ -394,9 +396,9 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
   {
     id: 'fs-d06',
     category: 'Stratégia',
-    title: 'Egy éves mérleg',
+    title: 'Eddigi mérleged',
     situation:
-      'Egy év telt el az érettségid óta. Egyenleged: {{balance}} Ft. ' +
+      'Eltelt {{elapsed}} az érettségid óta. Egyenleged: {{balance}} Ft. ' +
       'Nettó vagyonod: {{netWorth}} Ft. {{income}} Ft jön be havonta. ' +
       'Sokat tanultál – mit csinálsz a következő évvel?',
     dynamicVariables: {
@@ -409,7 +411,7 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
         id: 'fs-d06-a',
         label: 'Extra bevételt keresel (mellékállás)',
         description:
-          'Diákmunka / futár / webshop – havi +50-80 000 Ft extra. ' +
+          'Diákmunka (ha tanulsz), hétvégi futármunka vagy webshop – havi +50-80 000 Ft extra. ' +
           'Időigényes, de gyorsítja a megtakarítást.',
         financialEffects: [],
         ongoingEffects: [
@@ -419,10 +421,10 @@ export const FRESH_START_DECISIONS_SPRINT: DecisionCard[] = [
       },
       {
         id: 'fs-d06-b',
-        label: 'Képzésbe fektetsz (nyelvvizsga/jogosítvány)',
+        label: 'Képzésbe fektetsz (nyelvvizsga)',
         description:
-          'Nyelvvizsga: ~50 000 Ft. Jogosítvány: ~250 000 Ft. ' +
-          'Hosszú távú befektetés: a nyelvvizsga +10-15% bérelőnyt jelent.',
+          'Nyelvtanfolyam és nyelvvizsga: összesen kb. 150 000 Ft. ' +
+          'Hosszú távú befektetés: a nyelvtudás a fizetésedben is meglátszhat.',
         financialEffects: [
         ],
         unlocksInvestment: ['inv-language'],

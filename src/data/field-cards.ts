@@ -11,6 +11,8 @@ import { createRng, seedFromString, shuffle } from '@/engine/rng';
 import { EXTRA_TRAP_CARDS, EXTRA_TEMPTATION_CARDS, EXTRA_RECHARGE_CARDS, EXTRA_ENCOUNTER_CARDS, EXTRA_OFFICE_CARDS } from './field-cards-extra';
 import type { WellbeingKey } from '@/types/wellbeing';
 import { isEmployed } from '@/engine/employment';
+import { effectsFit, meets, type Requires, type Situation } from '@/engine/situation';
+import { withSituationRequires } from './situation-requires';
 
 export interface FieldEffect {
   target: string;
@@ -24,6 +26,8 @@ export interface FieldOption {
   durationMonths?: number;
   /** Mi történik - a választás után jelenik meg */
   outcome: string;
+  /** Csak ilyen helyzetben választható (pl. túlóra csak munkaviszonnyal) */
+  requires?: Requires;
   /** Életmódbeli választásnál a jólléti hatást a játékos mérlegeli (nincs univerzális igazság) */
   reflection?: { keys: WellbeingKey[]; prompt: string };
 }
@@ -56,23 +60,24 @@ export interface FieldCard {
   requires?: CardRequires;
 }
 
-export interface CardRequires {
-  /** Csak ezeknél a karaktereknél (pl. diák) */
-  presets?: string[];
-  /** Albérletben / saját lakásban él (elköltözött) */
-  rentsHome?: boolean;
-  /** Van ilyen befektetése vagy vagyontárgya */
-  hasInvestment?: string[];
-  /** Van fizetése (béremelés csak ekkor) */
-  hasSalary?: boolean;
-  /** Munkaviszonya van (munkahelyi lapok) */
-  employed?: boolean;
+/** A mezőkártya feltétele: a közös helyzet-feltétel (engine/situation.ts) */
+export type CardRequires = Requires;
+/** A játékos helyzete a kártyák szűréséhez */
+export interface CardContext { preset: string; housing: number; investments: string[]; salary?: number; /** A játékos eddigi döntései (opcióazonosítók) */ chosen?: string[]; /** A teljes helyzet: ha megvan, ez szűr */ situation?: Situation }
+
+/** Választható-e a mezőkártya opciója (feltétel + nem módosít nem létező kiadást) */
+export function fieldOptionFits(o: FieldOption, s?: Situation): boolean {
+  if (!s) return true;
+  return meets(o.requires, s) && effectsFit(o.effects.filter((e) => e.amount < 0), s);
 }
 
-/** A játékos helyzete a kártyák szűréséhez */
-export interface CardContext { preset: string; housing: number; investments: string[]; salary?: number; /** A játékos eddigi döntései (opcióazonosítók) */ chosen?: string[] }
+/** A kártya a helyzethez illő opciókkal */
+export function fittedCard(card: FieldCard, s?: Situation): FieldCard {
+  return s ? { ...card, options: card.options.filter((o) => fieldOptionFits(o, s)) } : card;
+}
 
 export function cardFits(card: FieldCard, ctx?: CardContext): boolean {
+  if (ctx?.situation) return meets(withSituationRequires(card.id, card.requires), ctx.situation) && fittedCard(card, ctx.situation).options.length > 0;
   const r = card.requires;
   if (!r || !ctx) return true;
   if (r.presets && !r.presets.includes(ctx.preset)) return false;
@@ -202,7 +207,7 @@ export const RECHARGE_CARDS: FieldCard[] = [
       { label: 'Wellness hétvége (40 000 Ft)', effects: [{ target: 'balance', amount: -40_000 }],
         reflection: { keys: ['eletero'], prompt: 'Wellness hétvége: van, akit tényleg kipihentet, van, akinek az ára miatt nem az igazi.' },
         outcome: 'Kipihented magad - ennek ára volt.' },
-      { label: 'Túlórát vállalok', effects: [{ target: 'balance', amount: 30_000 }, { target: 'wellbeing.eletero', amount: -1 }],
+      { label: 'Túlórát vállalok', requires: { employed: true }, effects: [{ target: 'balance', amount: 30_000 }, { target: 'wellbeing.eletero', amount: -1 }],
         outcome: 'Több pénz, kevesebb pihenés.' },
     ],
     realStep: 'A pihenés is befektetés: a kiégés drágább, mint egy szabad hétvége.',
@@ -259,7 +264,8 @@ export const ALL_FIELD_CARDS: FieldCard[] = [...TRAP_CARDS, ...TEMPTATION_CARDS,
 function newsRequires(effects: Array<{ target: string }>): CardRequires | undefined {
   const r: CardRequires = {};
   if (effects.some((e) => e.target === 'housing')) r.rentsHome = true;
-  if (effects.some((e) => e.target === 'salary')) r.hasSalary = true;
+  // Béremelés-hír csak munkavállalónak (az ösztöndíj nem bér)
+  if (effects.some((e) => e.target === 'salary')) r.employed = true;
   return Object.keys(r).length ? r : undefined;
 }
 
@@ -269,7 +275,8 @@ export function marketNewsCard(index: number, ctx?: CardContext): FieldCard | un
   for (let k = 0; k < items.length; k++) {
     const i = (index + k) % items.length;
     const card = newsCard(items[i], i);
-    if (cardFits(card, ctx)) return card;
+    // A hír hatása is csak létező kiadást érinthet (otthon lakónak nincs albérlet-, élelmiszer- vagy rezsiköltsége)
+    if (cardFits(card, ctx) && (!ctx?.situation || effectsFit(card.options[0].effects, ctx.situation))) return card;
   }
   return undefined;
 }
@@ -308,9 +315,10 @@ export function cardForField(field: FieldType, visit: number, seed?: string, sha
     // A helyzethez nem illő lap kimarad: a pakli következő illő lapja jön
     for (let k = 0; k < deck.length; k++) {
       const c = deck[(start + k) % deck.length];
-      if (cardFits(c, ctx)) return c;
+      if (cardFits(c, ctx)) return fittedCard(c, ctx?.situation);
     }
-    return deck[start % deck.length];
+    // Nincs a helyzethez illő lap: inkább nincs mezőkártya, mint egy nem illő
+    return ctx?.situation ? undefined : deck[start % deck.length];
   };
   switch (field) {
     case 'trap': return pick(TRAP_CARDS);

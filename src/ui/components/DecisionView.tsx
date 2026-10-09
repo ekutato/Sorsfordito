@@ -1,5 +1,8 @@
 'use client';
 
+import { TIME_SCALE_CONFIGS } from '@/types/game';
+import { elapsedText } from '@/engine/situation';
+import { situationOfGame } from '@/engine/situation';
 import { useState } from 'react';
 import { SUBJECTIVE_WELLBEING } from '@/data/wellbeing-effects';
 import { liveVar } from '@/data/live/vars';
@@ -56,6 +59,7 @@ export function DecisionView() {
     chosen: (game.eventLog ?? []).map((e) => e.details?.optionId as string | undefined).filter((x): x is string => !!x),
     debtTypes: player.financialSheet.debts.map((d) => d.type),
     salary: player.financialSheet.income.salary,
+    situation: situationOfGame(game),
   };
   // Körönként egy döntés: ha ebben a körben már döntöttél, az marad a képernyőn (a "Tudtad?" panellel)
   const decidedNow = (game.eventLog ?? []).find((e) => e.type === 'decision' && e.round === game.currentRound && e.details?.decisionCardId);
@@ -91,7 +95,10 @@ export function DecisionView() {
   }
 
   // Dinamikus változó feloldás: path → formázott érték
-  const resolvedVars: Record<string, string> = {};
+  const resolvedVars: Record<string, string> = {
+    // A játék kezdete óta eltelt idő (a mód léptéke szerint: Sprintben hónap, Maratonban negyedév)
+    elapsed: elapsedText(Math.max(1, (game.currentRound - 1) * (TIME_SCALE_CONFIGS[game.config.timeScale]?.monthsPerRound ?? 1))),
+  };
   if (decision.dynamicVariables) {
     for (const [key, path] of Object.entries(decision.dynamicVariables)) {
       let raw: any;
@@ -123,7 +130,7 @@ export function DecisionView() {
   const economicDefaults: Record<string, number> = {
     inflation: cd?.inflation ?? LIVE.inflation,
     pmap_yield: cd?.pmapYield ?? LIVE.pmapYield,
-    dh1_rate: 0,
+    dh1_rate: LIVE_DATA_DH1,
     rent_bp: cd?.avgRentBudapest ?? LIVE.avgRentBudapest,
     rent_rural: cd?.avgRentRural ?? LIVE.avgRentRural,
     bux_index: cd?.buxIndex ?? LIVE.buxIndex,

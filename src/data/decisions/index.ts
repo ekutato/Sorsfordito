@@ -5,6 +5,8 @@
 // ============================================================================
 
 import type { DecisionCard, LifeSituationId, TimeScale } from '@/types/game';
+import { meets, type Requires, type Situation } from '@/engine/situation';
+import { withSituationRequires } from '../situation-requires';
 import { TIME_SCALE_CONFIGS } from '@/types/game';
 
 // --- Sprint döntésfák ---
@@ -105,7 +107,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
     category: 'Karrier',
     title: 'Karrierváltás?',
     situation:
-      'Már {{months}} hónapja dolgozol a jelenlegi munkádban. Egyenleged: {{balance}} Ft. ' +
+      'Egy ideje már a jelenlegi munkahelyeden dolgozol. Egyenleged: {{balance}} Ft. ' +
       'Kaptál egy ajánlatot egy másik cégtől. A fizetésed most {{salary}} Ft/hó.',
     dynamicVariables: {
       balance: 'player.balance',
@@ -117,9 +119,8 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         label: 'Váltasz: +20% fizetés, új kihívás',
         description:
           'Az új cég 20%-kal többet kínál, de próbaidő alatt 3 hónap bizonytalan.',
-        financialEffects: [
-          { target: 'salary', amount: 60_000, description: 'Fizetésemelés új munkahelyről' },
-        ],
+        raisesSalaryPct: 20,
+        financialEffects: [],
         didYouKnow:
           'A legnagyobb fizetésemelés Magyarországon munkahelyváltáskor jön: átlag 15-25%. ' +
           'Belső emelés ritkán haladja meg az évi 5-8%-ot.',
@@ -129,9 +130,8 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         label: 'Maradsz: stabilitás + emelést kérsz',
         description:
           'Beszélsz a főnökkel, és sikerül 10%-os emelést kialkudnod.',
-        financialEffects: [
-          { target: 'salary', amount: 30_000, description: 'Fizetésemelés (belső)' },
-        ],
+        raisesSalaryPct: 10,
+        financialEffects: [],
         didYouKnow:
           'Tipp: éves teljesítményértékeléskor mindig kérj emelést! ' +
           'A legtöbb munkáltató számít rá, és automatikus emelés ritkán van.',
@@ -163,9 +163,8 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         label: 'Agresszív: ETF + részvény',
         description:
           'Pénzed nagyobb részét tőzsdébe teszed. Magasabb hozam, de nagyobb kockázat.',
-        financialEffects: [
-          { target: 'balance', amount: -200_000, description: 'ETF vásárlás' },
-        ],
+        financialEffects: [],
+        invests: [{ optionId: 'inv-tbsz-etf', amount: 200_000 }],
         didYouKnow:
           'Az amerikai részvénypiac (S&P 500) átlagos éves hozama ~10% volt (1926-2024). ' +
           'De volt olyan év, amikor -37% esett (2008). Türelem kell!',
@@ -175,9 +174,8 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
         label: 'Kiegyensúlyozott: PMÁP + vegyes',
         description:
           'Az állampapír biztonságos, a PMÁP kamata az inflációt követi.',
-        financialEffects: [
-          { target: 'balance', amount: -100_000, description: 'PMÁP vásárlás' },
-        ],
+        financialEffects: [],
+        invests: [{ optionId: 'inv-pmap', amount: 100_000 }],
         didYouKnow:
           'A PMÁP (Prémium Magyar Állampapír) kamata most {{pmap_yield}}%: az előző évi átlagos inflációt ({{prev_year_inflation}}%) követi egy kis prémiummal. ' +
           'Államgarancia, évente egyszeri kamatfizetés, és lejárat előtt is visszaváltható.',
@@ -211,6 +209,7 @@ export const GENERIC_LATE_GAME_DECISIONS: DecisionCard[] = [
     options: [
       {
         id: 'gen-life-a',
+        requires: { sharesFlat: true },
         label: 'Feljebb lépsz (drágább albérlet)',
         description:
           'Saját lakás, nem lakótárssal. Kényelmesebb, de +80 000 Ft/hó.',
@@ -504,24 +503,11 @@ function fillGapsWithGenericDecisions(
     }
   }
 
-  // Generikus döntéseket párosával osztjuk ki az üres körökbe
-  const generics: DecisionCard[] = [];
-  const genericPool = [...GENERIC_LATE_GAME_DECISIONS];
-  let i = 0;
-
-  while (i < emptyRounds.length && genericPool.length > 0) {
-    const gen = genericPool.shift()!;
-    const r1 = emptyRounds[i];
-    // Ha van szomszédos üres kör is, 2 körös ablakot adunk
-    const r2 = (i + 1 < emptyRounds.length && emptyRounds[i + 1] - r1 <= 2)
-      ? emptyRounds[i + 1]
-      : r1;
-    generics.push({
-      ...gen,
-      availableAtRounds: r1 === r2 ? [r1] : [r1, r2],
-    });
-    i += (r1 === r2 ? 1 : 2);
-  }
+  // A generikus döntések bármelyik üres körben jöhetnek: az első, amelyik a játékos helyzetéhez illik
+  // (pl. hitelkezelés csak hitellel, befektetési áttekintés csak befektetéssel), és mindegyik egyszer
+  const generics: DecisionCard[] = emptyRounds.length
+    ? GENERIC_LATE_GAME_DECISIONS.map((gen) => ({ ...gen, availableAtRounds: emptyRounds }))
+    : [];
 
   return [...mappedSprintDecisions, ...generics];
 }
@@ -848,12 +834,13 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
         options: [
           'A havi törlesztőrészlet legyen minél alacsonyabb',
           'A futamidő legyen minél hosszabb',
-          'Az új hitel THM-je legalább 2%-kal alacsonyabb legyen',
+          'A teljes visszafizetendő összeg, díjakkal együtt',
         ],
         correctIndex: 2,
         explanation:
-          'A THM az egyetlen összehasonlítási szám! Ha az új THM legalább 2%-kal alacsonyabb, ' +
-          'megéri a váltás. A hosszabb futamidő alacsonyabb törlesztőt jelent, de TÖBB összes kamatot.',
+          'A kiváltás akkor éri meg, ha az új hitel teljes visszafizetendő összege (a THM-ből adódik) a váltás ' +
+          'költségeivel - előtörlesztési díj, új hitel díjai - együtt is kisebb, mint a régié. ' +
+          'A hosszabb futamidő alacsonyabb törlesztőt jelent, de TÖBB összes kamatot.',
       },
       successEffects: [{ target: 'loanPayments', amount: -15_000 }],
       noKnowledgeMessage:
@@ -990,13 +977,14 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
         question: 'Mi a legjobb stratégia tőzsdei pánik idején hosszú távú befektetőként?',
         options: [
           'Azonnal eladni mindent, mielőtt tovább esik',
-          'Többet venni kedvezményes áron (DCA stratégia)',
+          'Tartani a tervet, a rendszeres befizetést folytatni (DCA)',
           'Átváltani mindent kriptóba',
         ],
         correctIndex: 1,
         explanation:
-          'A DCA (Dollar Cost Averaging) stratégia szerint rendszeresen, fix összegért veszel — ' +
-          'eséskor több részvényt kapsz, emelkedéskor kevesebbet. Hosszú távon ez a legjobb stratégia.',
+          'A DCA (Dollar Cost Averaging) szerint rendszeresen, fix összeget fektetsz be, az ártól függetlenül: ' +
+          'eséskor ugyanannyi pénzért több részesedést kapsz, emelkedéskor kevesebbet. Nyereséget nem garantál, ' +
+          'de kiveszi az érzelmeket a döntésből - pánikban eladni a veszteséget teszi véglegessé.',
       },
       successEffects: [{ target: 'balance', amount: 60_000 }],
       noKnowledgeMessage:
@@ -1018,11 +1006,11 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
       requiredKnowledgeId: 'know-inflation',
       quiz: {
         question: 'Mi a reálhozam, ha a bankbetéted 6%-ot fizet és az infláció 4%?',
-        options: ['10%', '6%', '~2%'],
+        options: ['~2%', '10%', '~0,3%'],
         correctIndex: 2,
         explanation:
-          'Reálhozam ≈ nominális hozam – infláció = 6% – 4% = 2%. ' +
-          'A bankbetét kamatából le kell vonni az inflációt — csak a maradék a valódi „nyereség".',
+          'A bankbetét kamatából előbb levonják a 28% kamatadót (15% SZJA + 13% szocho): 6% × 0,72 = 4,32%. ' +
+          'Ebből jön le az infláció: 4,32% – 4% ≈ 0,3% a reálhozam. A lakossági állampapír kamata adómentes.',
       },
       successEffects: [{ target: 'balance', amount: 45_000 }],
       noKnowledgeMessage:
@@ -1277,10 +1265,11 @@ export function getDecisionsFor(
 export const RENT_THRESHOLD = 100_000;
 
 /** A játékos helyzete a döntések szűréséhez: korábbi választások, fennálló tartozások */
-export interface DecisionContext { chosen?: string[]; debtTypes?: string[]; salary?: number }
+export interface DecisionContext { chosen?: string[]; debtTypes?: string[]; salary?: number; situation?: Situation }
 
 /** Választható-e az opció a játékos ágán (pl. kollégium csak tanulónak) */
 export function optionFits(o: DecisionCard['options'][number], ctx?: DecisionContext): boolean {
+  if (ctx?.situation) return meets(o.requires, ctx.situation);
   const c = o.requires?.chose;
   return !c || !ctx?.chosen || c.some((id) => ctx.chosen!.includes(id));
 }
@@ -1293,12 +1282,13 @@ export function fittingOptions(d: DecisionCard, ctx?: DecisionContext): Decision
 /** Illik-e a döntés a játékos ágához és helyzetéhez */
 export function decisionFits(d: DecisionCard, housing?: number, ctx?: DecisionContext): boolean {
   if (fittingOptions(d, ctx).length === 0) return false;
+  if (ctx?.situation) return meets(withSituationRequires(d.id, d.requires), ctx.situation);
   const r = d.requires;
   if (!r) return true;
   if (r.rentsHome && housing !== undefined && housing < RENT_THRESHOLD) return false;
   if (r.livesHome && housing !== undefined && housing >= RENT_THRESHOLD) return false;
   if (r.chose && ctx?.chosen && !r.chose.some((id) => ctx.chosen!.includes(id))) return false;
-  if (r.hasDebtType && ctx?.debtTypes && !ctx.debtTypes.includes(r.hasDebtType)) return false;
+  if (r.hasDebtType && ctx?.debtTypes && ![r.hasDebtType].flat().some((t) => ctx.debtTypes!.includes(t))) return false;
   if (r.employed && ctx?.salary !== undefined && !isEmployed(ctx.salary, ctx.chosen)) return false;
   return true;
 }
@@ -1351,19 +1341,8 @@ export type FateEventEntry = {
       data: Record<string, unknown>;
     };
   }>;
-  /** Feltételek: az esemény csak akkor jelenik meg, ha a feltételek teljesülnek */
-  requires?: {
-    /** Játékosnak van fizetése (salary > 0) */
-    hasSalary?: boolean;
-    /** Munkaviszonya van (munkáltatói juttatás, munkahelyi helyzet) - engine/employment.ts */
-    employed?: boolean;
-    /** Csak akkor, ha korábban ezek egyikét választotta (ág, pl. tanul) */
-    chose?: string[];
-    /** Játékosnak van magas közlekedési kiadása (autó-proxy: transport >= 25000) */
-    hasHighTransport?: boolean;
-    /** Albérletben lakik (lakhatási kiadás >= 100 000 Ft/hó; otthon lakva csak hozzájárulás van) */
-    rentsHome?: boolean;
-  };
+  /** Feltételek: az esemény csak akkor jelenik meg, ha illik a játékos helyzetéhez (engine/situation.ts) */
+  requires?: Requires & { hasHighTransport?: boolean };
   /** Tudáspróba: a játékos a megszerzett tudásból kap kérdést, helyes válasz = jutalom */
   knowledgeCheck?: {
     requiredKnowledgeId: string;

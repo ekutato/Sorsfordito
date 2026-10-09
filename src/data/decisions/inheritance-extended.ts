@@ -219,9 +219,9 @@ export const INHERITANCE_EXTENDED_DECISIONS: DecisionCard[] = [
         label: 'Saját tanácsadó cég alapítása',
         description:
           'Felmondasz és saját tanácsadó céget indítasz. Az átmeneti jövedelemkiesés fájdalmas ' +
-          '(-420 000 Ft/hó fizetés + 1M Ft indulás), de ha beindul: 600 000 Ft/hó bevétel.',
+          '(megszűnik a fizetésed + 1M Ft indulás), de ha beindul: 600 000 Ft/hó bevétel.',
+        setsSalary: { amount: 0, description: 'Felmondás – a fizetés megszűnik' },
         financialEffects: [
-          { target: 'salary', amount: -420_000, description: 'Felmondás – fizetés megszűnése' },
           { target: 'balance', amount: -1_000_000, description: 'Cégalapítás + indulási költségek' },
         ],
         ongoingEffects: [
