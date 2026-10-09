@@ -581,8 +581,8 @@ export const GENERIC_FATE_EVENTS: FateEventEntry[] = [
     effects: [{ target: 'balance', amount: -60_000 }],
   },
   {
-    id: 'fate-gen-08', round: 0, title: 'Fogorvos + szemüveg',
-    description: 'Félévente esedékes fogorvosi vizsgálat + új szemüveg/kontaktlencse: –40 000 Ft.',
+    id: 'fate-gen-08', round: 0, title: 'Új szemüveg',
+    description: 'Romlott a látásod: új szemüveg vagy kontaktlencse kell, –40 000 Ft. (A fogászati szűrés és a sürgős fogászati ellátás érvényes TAJ-kártyával TB-ből ingyenes - érdemes kihasználni.)',
     type: 'negative' as const,
     effects: [{ target: 'balance', amount: -40_000 }],
   },
@@ -858,8 +858,8 @@ export const GENERIC_KNOWLEDGE_FATE_EVENTS: FateEventEntry[] = [
     round: 0,
     title: 'Vészhelyzeti kiadás!',
     description:
-      'Elromlott a telefonod, és sürgős fogorvosi kezelésre is szükséged van. ' +
-      'Összesen 80 000 Ft váratlan kiadás. Felkészültél a vészhelyzetre?',
+      'Elromlott a laptopod, ami a tanuláshoz vagy a munkához kell: a javítás 80 000 Ft. ' +
+      'Felkészültél a váratlan kiadásra?',
     type: 'negative' as const,
     effects: [{ target: 'balance', amount: -80_000 }],
     knowledgeCheck: {
