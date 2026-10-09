@@ -1,5 +1,6 @@
 'use client';
 
+import { shareImage } from '@/ui/share';
 import { EndMoneyComparison } from '@/ui/components/MoneyOverview';
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -18,7 +19,7 @@ export function EpilogueScreen() {
   const resetGame = useGameStore((s) => s.resetGame);
   const table = useTableStore((s) => s.table);
   const leaveTable = useTableStore((s) => s.leave);
-  const [shareState, setShareState] = useState<'idle' | 'generating' | 'done'>('idle');
+  const [shareState, setShareState] = useState<'idle' | 'generating' | 'done' | 'downloaded' | 'failed'>('idle');
 
   if (!game) return null;
 
@@ -170,38 +171,20 @@ export function EpilogueScreen() {
     ctx.textAlign = 'center';
     ctx.font = '12px system-ui, sans-serif';
     ctx.fillStyle = '#475569';
-    ctx.fillText('penzugyi-sorsfordito.hu · Valós adatok. Valós döntések.', W / 2, H - 35);
+    ctx.fillText('nexai.hu/sorsfordito · Valós adatok. Valós döntések.', W / 2, H - 35);
 
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
   }, [epilogue, sheet, player, preset, game]);
 
   const handleShare = useCallback(async () => {
     setShareState('generating');
-    try {
-      const blob = await generateShareImage();
-      const file = new File([blob], 'penzugyi-sorsfordito-eredmeny.png', { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: `Pénzügyi Sorsfordító — ${epilogue.title}`,
-          text: `${epilogue.emoji} ${epilogue.title} | Vagyon: ${formatHUF(sheet.computed.netWorth)} | Szabadság: ${sheet.computed.financialFreedomPercent}%`,
-          files: [file],
-        });
-      } else {
-        // Fallback: letöltés
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'penzugyi-sorsfordito-eredmeny.png';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch {
-      // Share cancelled — nem hiba
-    } finally {
-      setShareState('done');
-      setTimeout(() => setShareState('idle'), 2000);
-    }
+    const blob = await generateShareImage().catch(() => null);
+    const result = blob
+      ? await shareImage(blob, 'penzugyi-sorsfordito-eredmeny.png', `Pénzügyi Sorsfordító — ${epilogue.title}`,
+          `${epilogue.emoji} ${epilogue.title} | Vagyon: ${formatHUF(sheet.computed.netWorth)} | Szabadság: ${sheet.computed.financialFreedomPercent}% | nexai.hu/sorsfordito`)
+      : 'failed';
+    setShareState(result === 'failed' ? 'failed' : result === 'downloaded' ? 'downloaded' : result === 'shared' ? 'done' : 'idle');
+    if (result !== 'failed') setTimeout(() => setShareState('idle'), 2500);
   }, [generateShareImage, epilogue, sheet]);
 
   return (
@@ -360,7 +343,9 @@ export function EpilogueScreen() {
                      hover:bg-white/5 disabled:opacity-50 text-white py-3.5 rounded-xl transition-colors"
         >
           {shareState === 'generating' ? '⏳ Kép készítése...'
-            : shareState === 'done' ? '✅ Elkészült!'
+            : shareState === 'done' ? '✅ Megosztva'
+            : shareState === 'downloaded' ? '✅ A kép letöltődött'
+            : shareState === 'failed' ? '⚠️ Nem sikerült - próbáld újra'
             : '📤 Eredmény megosztása'}
         </button>
       </motion.div>
