@@ -23,6 +23,7 @@ const GUARDS: Array<{ re: RegExp; ok: (s: Situation) => boolean; why: string }> 
   { re: /kollégád|kolléga hív|főnököd|munkahelyeden|céged|munkáltatód/i, ok: (s) => s.employed, why: 'munkahely nélkül' },
   { re: /adó-visszaigénylés|családi adókedvezmény|családi kedvezmény/i, ok: (s) => s.paysSzja, why: 'SZJA nélkül' },
   { re: /régen voltál otthon/i, ok: (s) => !s.livesWithParents, why: 'otthon lakónak' },
+  { re: /fogorvos|fogad|fogászati kezelés/i, ok: () => false, why: 'fizetős fogászat (TB-ből ingyenes)' },
   { re: /mosógép|hűtőszekrény|vízszerelő|villanyszerelő/i, ok: (s) => s.ownsHome, why: 'saját lakás nélkül (háztartási javítás)' },
 ];
 

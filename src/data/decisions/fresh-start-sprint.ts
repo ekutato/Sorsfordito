@@ -464,9 +464,9 @@ export const FRESH_START_SCRIPTED_FATE_EVENTS = [
   {
     id: 'fate-fs-02', round: 2, title: 'Váratlan egészségügyi kiadás',
     description:
-      'Elromlott egy fogad, és a TB csak részben fedezi a kezelést. ' +
-      'Fogorvos + gyógyszer: –35 000 Ft.',
-    type: 'negative' as const, effects: [{ target: 'balance', amount: -35_000 }],
+      'Influenzás lettél: patikai gyógyszer és vitaminok - a vény nélküli szereket teljes áron fizeted. ' +
+      'Összesen –15 000 Ft.',
+    type: 'negative' as const, effects: [{ target: 'balance', amount: -15_000 }],
   },
   {
     id: 'fate-fs-03', round: 3, requires: { chose: ['fs-d01-a', 'fs-d01-b'] }, title: 'Ösztöndíj-bónusz',
@@ -519,7 +519,7 @@ export const FRESH_START_SCRIPTED_FATE_EVENTS = [
       'jóval több, mint az alap élelmiszer-büdzsé. Változtatsz?',
     type: 'decision' as const, effects: [],
     options: [
-      { label: 'Otthon főzök, batchelek (–8 000 Ft/hó)', effects: [{ target: 'food', amount: -8_000 }] },
+      { label: 'Otthon főzök, előre több adagot (–8 000 Ft/hó)', effects: [{ target: 'food', amount: -8_000 }] },
       { label: 'Marad így, nem akarok spórolni az evésen', effects: [{ target: 'food', amount: 10_000 }] },
     ],
   },

@@ -47,6 +47,8 @@ function fits(e: FateEventEntry, sheet: DrawInput['sheet'], chosen?: string[], s
     // A kártya azonnali hatása és a tudáspróba jutalma is csak létező dologra vonatkozhat (pl. törlesztő csak hitellel)
     const effects = [...e.effects, ...(e.knowledgeCheck?.successEffects ?? [])];
     if (!effectsFit(effects, situation)) return false;
+    // Döntéses kártyánál legalább egy opció a valós helyzetre vonatkozzon (pl. nem létező étkezési kiadás nem csökkenthető)
+    if (e.options?.length && !e.options.some((o) => effectsFit(o.effects, situation))) return false;
     const { hasHighTransport, ...r } = (withSituationRequires(e.id, e.requires) ?? {}) as NonNullable<FateEventEntry['requires']>;
     if (hasHighTransport && !situation.ownsCar) return false;
     return meets(r, situation);

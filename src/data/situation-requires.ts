@@ -61,7 +61,8 @@ export const SITUATION_REQUIRES: Record<string, Requires> = {
   // Háztartási gép, vízvezeték, villany: a saját lakás gondja. Otthon a szülők, albérletben és kollégiumban
   // jellemzően a bérbeadó (illetve a kollégium) javíttatja a lakás tartozékait.
   'fate-gen-12': OWN_HOME, 'fate-gen-14': OWN_HOME, 'fate-gen-24': OWN_HOME, 'fate-gen-28': OWN_HOME,
-  'fel-csalad': AT_OWN_HOME,                   // "Régen voltál otthon"
+  'fel-csalad': AT_OWN_HOME,
+  'fate-fs-07': AT_OWN_HOME,                   // étkezési szokások: rendelés, kávézó, saját főzés                   // "Régen voltál otthon"
   'hiv-lakcim': { chose: MOVE_OUT_CHOICES },   // "Elköltöztél"
   'tal-lakotars': { sharesFlat: false },
   'fs-ext-03': { livesWithParents: true },     // "Elég volt a szülőknél?"
